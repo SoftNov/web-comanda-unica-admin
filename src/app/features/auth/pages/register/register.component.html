@@ -1,0 +1,162 @@
+<app-auth-shell
+  eyebrow="Comece agora"
+  title="Criar sua conta"
+  subtitle="Sem mensalidade. Você paga apenas pelas comandas que utilizar."
+>
+  @if (submitted()) {
+    <div class="form-alert form-alert--success" role="status">
+      <span class="material-icons" aria-hidden="true">check_circle</span>
+      Conta criada com sucesso! Enviamos as instruções de acesso para o seu e-mail.
+    </div>
+    <p class="form-footer">
+      <a class="field__link" routerLink="/entrar">Ir para a tela de login</a>
+    </p>
+  } @else {
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+      <div class="field">
+        <label class="field__label" for="register-name">Nome completo</label>
+        <div class="field__control">
+          <input
+            id="register-name"
+            type="text"
+            class="field__input"
+            [class.field__input--invalid]="form.controls.fullName.invalid && form.controls.fullName.touched"
+            formControlName="fullName"
+            placeholder="Seu nome"
+            autocomplete="name"
+          >
+        </div>
+        @if (form.controls.fullName.invalid && form.controls.fullName.touched) {
+          <span class="field__error">Informe seu nome completo.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="register-business">Nome do estabelecimento</label>
+        <div class="field__control">
+          <input
+            id="register-business"
+            type="text"
+            class="field__input"
+            [class.field__input--invalid]="form.controls.businessName.invalid && form.controls.businessName.touched"
+            formControlName="businessName"
+            placeholder="Ex: Restaurante Exemplo"
+            autocomplete="organization"
+          >
+        </div>
+        @if (form.controls.businessName.invalid && form.controls.businessName.touched) {
+          <span class="field__error">Informe o nome do seu estabelecimento.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="register-email">E-mail</label>
+        <div class="field__control">
+          <input
+            id="register-email"
+            type="email"
+            class="field__input"
+            [class.field__input--invalid]="form.controls.email.invalid && form.controls.email.touched"
+            formControlName="email"
+            placeholder="voce@seurestaurante.com"
+            autocomplete="email"
+          >
+        </div>
+        @if (form.controls.email.invalid && form.controls.email.touched) {
+          <span class="field__error">
+            {{ form.controls.email.errors?.['required'] ? 'Informe seu e-mail.' : 'Informe um e-mail válido.' }}
+          </span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="register-phone">WhatsApp <span class="field__optional">(opcional)</span></label>
+        <div class="field__control">
+          <input
+            id="register-phone"
+            type="tel"
+            class="field__input"
+            formControlName="phone"
+            placeholder="(00) 00000-0000"
+            autocomplete="tel"
+          >
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="register-password">Senha</label>
+        <div class="field__control">
+          <input
+            id="register-password"
+            [type]="showPassword() ? 'text' : 'password'"
+            class="field__input"
+            [class.field__input--invalid]="form.controls.password.invalid && form.controls.password.touched"
+            formControlName="password"
+            placeholder="Crie uma senha"
+            autocomplete="new-password"
+          >
+          <button
+            type="button"
+            class="field__toggle"
+            (click)="togglePassword()"
+            [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+          >
+            <span class="material-icons" aria-hidden="true">{{ showPassword() ? 'visibility_off' : 'visibility' }}</span>
+          </button>
+        </div>
+        @if (form.controls.password.invalid && form.controls.password.touched) {
+          <span class="field__error">A senha deve ter ao menos 6 caracteres.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="register-confirm-password">Confirmar senha</label>
+        <div class="field__control">
+          <input
+            id="register-confirm-password"
+            [type]="showConfirmPassword() ? 'text' : 'password'"
+            class="field__input"
+            [class.field__input--invalid]="form.errors?.['passwordMismatch'] && form.controls.confirmPassword.touched"
+            formControlName="confirmPassword"
+            placeholder="Repita a senha"
+            autocomplete="new-password"
+          >
+          <button
+            type="button"
+            class="field__toggle"
+            (click)="toggleConfirmPassword()"
+            [attr.aria-label]="showConfirmPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+          >
+            <span class="material-icons" aria-hidden="true">{{ showConfirmPassword() ? 'visibility_off' : 'visibility' }}</span>
+          </button>
+        </div>
+        @if (form.errors?.['passwordMismatch'] && form.controls.confirmPassword.touched) {
+          <span class="field__error">As senhas não coincidem.</span>
+        }
+      </div>
+
+      <div class="field" style="margin-top: 24px;">
+        <label class="field__checkbox">
+          <input type="checkbox" formControlName="acceptTerms">
+          Li e aceito os <a routerLink="/termos-de-uso" target="_blank" rel="noopener">Termos de Uso</a> e a
+          <a routerLink="/politica-de-privacidade" target="_blank" rel="noopener">Política de Privacidade</a>.
+        </label>
+        @if (form.controls.acceptTerms.invalid && form.controls.acceptTerms.touched) {
+          <span class="field__error">É necessário aceitar os termos para continuar.</span>
+        }
+      </div>
+
+      <button type="submit" class="btn btn--primary" style="width: 100%; margin-top: 28px;" appRipple [disabled]="isSubmitting()">
+        @if (isSubmitting()) {
+          Criando conta…
+        } @else {
+          Criar minha conta
+        }
+      </button>
+    </form>
+
+    <p class="form-footer">
+      Já tem uma conta? <a class="field__link" routerLink="/entrar">Entrar</a>
+    </p>
+  }
+</app-auth-shell>

@@ -1,0 +1,45 @@
+<footer class="footer" id="contato" role="contentinfo">
+  <div class="container footer__inner">
+    <div class="footer__brand">
+      <a class="footer__logo" routerLink="/" aria-label="Comanda Única — página inicial">
+        <span class="footer__logo-mark" aria-hidden="true"></span>
+        <span>Comanda<strong>Única</strong></span>
+      </a>
+      <p class="footer__tagline">
+        A comanda digital que faz seu restaurante crescer sem custos fixos. Pague apenas pelas comandas que você usa.
+      </p>
+      <ul class="footer__socials">
+        @for (social of socials; track social.label) {
+          <li>
+            <a [href]="social.href" [attr.aria-label]="social.label" target="_blank" rel="noopener noreferrer">
+              <app-social-icon [name]="social.icon" />
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+
+    <div class="footer__groups">
+      @for (group of groups; track group.title) {
+        <div class="footer__group">
+          <h3>{{ group.title }}</h3>
+          <ul>
+            @for (link of group.links; track link.label) {
+              <li>
+                @if (link.route) {
+                  <a [routerLink]="link.route">{{ link.label }}</a>
+                } @else {
+                  <a routerLink="/" [fragment]="link.fragment">{{ link.label }}</a>
+                }
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="footer__bottom container">
+    <p>&copy; {{ year }} Comanda Única. Todos os direitos reservados.</p>
+  </div>
+</footer>

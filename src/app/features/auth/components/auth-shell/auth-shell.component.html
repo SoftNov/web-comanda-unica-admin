@@ -1,0 +1,45 @@
+<div class="auth">
+  <aside class="auth__branding">
+    <div class="auth__glow auth__glow--accent" aria-hidden="true"></div>
+    <div class="auth__glow auth__glow--success" aria-hidden="true"></div>
+    <div class="auth__grid" aria-hidden="true"></div>
+
+    <a class="auth__logo" routerLink="/" aria-label="Comanda Única — página inicial">
+      <span class="auth__logo-mark" aria-hidden="true"></span>
+      <span>Comanda<strong>Única</strong></span>
+    </a>
+
+    <div class="auth__branding-content">
+      <h2>A comanda digital que faz seu restaurante crescer sem custos fixos.</h2>
+      <ul class="auth__highlights">
+        @for (item of highlights; track item) {
+          <li>
+            <span class="material-icons" aria-hidden="true">check_circle</span>
+            {{ item }}
+          </li>
+        }
+      </ul>
+    </div>
+
+    <p class="auth__branding-footer">&copy; {{ year }} Comanda Única</p>
+  </aside>
+
+  <main class="auth__panel">
+    <div class="auth__card">
+      <a class="auth__mobile-logo" routerLink="/" aria-label="Comanda Única — página inicial">
+        <span class="auth__logo-mark" aria-hidden="true"></span>
+        <span>Comanda<strong>Única</strong></span>
+      </a>
+
+      @if (eyebrow) {
+        <span class="eyebrow">{{ eyebrow }}</span>
+      }
+      <h1>{{ title }}</h1>
+      @if (subtitle) {
+        <p class="auth__subtitle">{{ subtitle }}</p>
+      }
+
+      <ng-content />
+    </div>
+  </main>
+</div>

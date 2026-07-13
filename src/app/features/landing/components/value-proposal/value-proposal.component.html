@@ -1,0 +1,37 @@
+<section class="value section">
+  <div class="container">
+    <div class="section-heading section-heading--center" appScrollReveal="up">
+      <span class="eyebrow">Modelo de cobrança</span>
+      <h2 class="section-title" style="margin-top: 16px;">Chega de pagar mensalidades caras</h2>
+      <p class="section-subtitle">
+        Enquanto outros sistemas cobram mensalidades fixas independentemente do movimento do seu restaurante,
+        o Comanda Única cobra apenas quando existe utilização. Se não houver atendimento, não haverá cobrança.
+        Você cresce. Nós crescemos com você.
+      </p>
+    </div>
+
+    <div class="value__stats" appScrollReveal="up" [revealDelay]="80">
+      <div class="value__stat">
+        <strong><span [appCountUp]="0" countPrefix="R$ ">0</span></strong>
+        <p>cobrado quando não há uso da plataforma</p>
+      </div>
+      <div class="value__stat">
+        <strong><span [appCountUp]="100" countSuffix="%">0</span></strong>
+        <p>operação em nuvem, sem instalação</p>
+      </div>
+      <div class="value__stat">
+        <strong>∞</strong>
+        <p>usuários, mesas e comandas ilimitados</p>
+      </div>
+    </div>
+
+    <div class="value__grid">
+      @for (card of cards; track card.label; let i = $index) {
+        <div class="value__card card card--hover" appScrollReveal="up" [revealDelay]="i * 60">
+          <span class="material-icons" aria-hidden="true">{{ card.icon }}</span>
+          <p>{{ card.label }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>

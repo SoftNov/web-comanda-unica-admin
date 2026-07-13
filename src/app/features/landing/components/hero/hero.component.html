@@ -1,0 +1,113 @@
+<section class="hero" id="top">
+  <div class="hero__backdrop" aria-hidden="true">
+    <div class="hero__glow hero__glow--accent"></div>
+    <div class="hero__glow hero__glow--success"></div>
+    <div class="hero__grid"></div>
+  </div>
+
+  <div class="container hero__inner">
+    <div class="hero__content" appScrollReveal="up">
+      <span class="eyebrow">
+        <span class="eyebrow__dot" aria-hidden="true"></span>
+        Sem mensalidade • Pague apenas pelo uso
+      </span>
+
+      <h1 class="hero__title">
+        A comanda digital que faz seu restaurante <span>crescer</span> sem custos fixos.
+      </h1>
+
+      <p class="hero__text">
+        Controle comandas, mesas, pedidos, caixa e funcionários em uma única plataforma.
+        Você paga somente pelas comandas realmente utilizadas.
+        <strong>Sem mensalidades. Sem fidelidade.</strong>
+      </p>
+
+      <div class="hero__actions">
+        <a routerLink="/criar-conta" class="btn btn--primary" appRipple>Começar Agora</a>
+        <a href="#contato" class="btn btn--ghost" appRipple>Solicitar Demonstração</a>
+      </div>
+
+      <div class="hero__trust">
+        <span><span class="material-icons" aria-hidden="true">verified</span> Sem fidelidade</span>
+        <span><span class="material-icons" aria-hidden="true">bolt</span> Implantação rápida</span>
+        <span><span class="material-icons" aria-hidden="true">cloud_done</span> 100% Cloud</span>
+      </div>
+    </div>
+
+    <div
+      class="hero__mockup"
+      appScrollReveal="fade"
+      [revealDelay]="150"
+      [style.transform]="'translateY(' + parallaxOffset() + 'px)'"
+    >
+      <div class="mockup">
+        <div class="mockup__bar">
+          <span></span><span></span><span></span>
+          <p>painel.comandaunica.com</p>
+        </div>
+
+        <div class="mockup__body">
+          <div class="mockup__stats">
+            <div class="mockup__stat">
+              <p>Faturamento hoje</p>
+              <strong>R$ 4.382</strong>
+              <span class="mockup__delta mockup__delta--up">+18%</span>
+            </div>
+            <div class="mockup__stat">
+              <p>Comandas abertas</p>
+              <strong>27</strong>
+              <span class="mockup__delta mockup__delta--up">+4</span>
+            </div>
+            <div class="mockup__stat">
+              <p>Mesas ocupadas</p>
+              <strong>12/18</strong>
+              <span class="mockup__delta">estável</span>
+            </div>
+          </div>
+
+          <div class="mockup__chart">
+            <p class="mockup__chart-title">Pedidos por hora</p>
+            <div class="mockup__bars">
+              <span style="--h: 30%"></span>
+              <span style="--h: 45%"></span>
+              <span style="--h: 38%"></span>
+              <span style="--h: 62%"></span>
+              <span style="--h: 80%"></span>
+              <span style="--h: 58%"></span>
+              <span style="--h: 90%"></span>
+              <span style="--h: 70%"></span>
+            </div>
+          </div>
+
+          <div class="mockup__orders">
+            <div class="mockup__order">
+              <span class="mockup__order-dot"></span>
+              <p>Mesa 04 — 2x Burger Artesanal</p>
+              <span>R$ 68,00</span>
+            </div>
+            <div class="mockup__order">
+              <span class="mockup__order-dot"></span>
+              <p>Mesa 09 — Combo Cerveja</p>
+              <span>R$ 42,50</span>
+            </div>
+            <div class="mockup__order">
+              <span class="mockup__order-dot mockup__order-dot--pending"></span>
+              <p>Mesa 12 — Aguardando cozinha</p>
+              <span>R$ 91,00</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockup__floating mockup__floating--qr" aria-hidden="true">
+        <span class="material-icons">qr_code_2</span>
+        <p>Mesa 07</p>
+      </div>
+
+      <div class="mockup__floating mockup__floating--confirm" aria-hidden="true">
+        <span class="material-icons">check_circle</span>
+        <p>Pedido #128 confirmado</p>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,57 @@
+<section class="testimonials section">
+  <div class="container">
+    <div class="section-heading section-heading--center" appScrollReveal="up">
+      <span class="eyebrow">Depoimentos</span>
+      <h2 class="section-title" style="margin-top: 16px;">O que dizem sobre o Comanda Única</h2>
+      <p class="section-subtitle">
+        Exemplos ilustrativos de como o Comanda Única pode transformar a operação do seu estabelecimento.
+      </p>
+    </div>
+
+    <div class="testimonials__carousel" appScrollReveal="up" [revealDelay]="80">
+      <button type="button" class="testimonials__nav testimonials__nav--prev" (click)="prev()" aria-label="Depoimento anterior">
+        <span class="material-icons" aria-hidden="true">chevron_left</span>
+      </button>
+
+      <div class="testimonials__track" aria-live="polite">
+        @for (t of testimonials; track t.name) {
+          @if ($index === activeIndex()) {
+            <article class="testimonials__card card">
+              <div class="testimonials__stars" aria-label="Avaliação de 5 de 5 estrelas">
+                @for (star of [1, 2, 3, 4, 5]; track star) {
+                  <span class="material-icons" aria-hidden="true">star</span>
+                }
+              </div>
+              <p class="testimonials__quote">"{{ t.quote }}"</p>
+              <div class="testimonials__author">
+                <span class="testimonials__avatar">{{ t.initials }}</span>
+                <div>
+                  <strong>{{ t.name }}</strong>
+                  <p>{{ t.role }} — {{ t.company }}</p>
+                </div>
+              </div>
+              <span class="testimonials__disclaimer">Exemplo ilustrativo, não representa um cliente real.</span>
+            </article>
+          }
+        }
+      </div>
+
+      <button type="button" class="testimonials__nav testimonials__nav--next" (click)="next()" aria-label="Próximo depoimento">
+        <span class="material-icons" aria-hidden="true">chevron_right</span>
+      </button>
+    </div>
+
+    <div class="testimonials__dots" role="tablist" aria-label="Selecionar depoimento">
+      @for (t of testimonials; track t.name; let i = $index) {
+        <button
+          type="button"
+          role="tab"
+          [class.is-active]="i === activeIndex()"
+          [attr.aria-selected]="i === activeIndex()"
+          [attr.aria-label]="'Ver depoimento ' + (i + 1)"
+          (click)="goTo(i)"
+        ></button>
+      }
+    </div>
+  </div>
+</section>

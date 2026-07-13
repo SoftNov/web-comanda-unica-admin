@@ -1,0 +1,55 @@
+<header class="header" [class.header--scrolled]="isScrolled()" role="banner">
+  <div class="container header__inner">
+    <a class="header__logo" routerLink="/" (click)="closeMenu()" aria-label="Comanda Única — página inicial">
+      <span class="header__logo-mark" aria-hidden="true">
+        <span class="header__logo-dot"></span>
+      </span>
+      <span class="header__logo-text">Comanda<strong>Única</strong></span>
+    </a>
+
+    <nav class="header__nav" aria-label="Navegação principal">
+      <ul>
+        @for (link of navLinks; track link.fragment) {
+          <li>
+            <a routerLink="/" [fragment]="link.fragment">{{ link.label }}</a>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <div class="header__actions">
+      <a routerLink="/entrar" class="btn btn--ghost btn--sm" appRipple>Entrar</a>
+      <a routerLink="/criar-conta" class="btn btn--primary btn--sm" appRipple>Criar Conta</a>
+    </div>
+
+    <button
+      type="button"
+      class="header__burger"
+      [class.is-open]="isMenuOpen()"
+      (click)="toggleMenu()"
+      [attr.aria-expanded]="isMenuOpen()"
+      aria-controls="mobile-nav"
+      [attr.aria-label]="isMenuOpen() ? 'Fechar menu de navegação' : 'Abrir menu de navegação'"
+    >
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
+
+  @if (isMenuOpen()) {
+    <nav id="mobile-nav" class="header__mobile-nav" aria-label="Navegação móvel">
+      <ul>
+        @for (link of navLinks; track link.fragment) {
+          <li>
+            <a routerLink="/" [fragment]="link.fragment" (click)="closeMenu()">{{ link.label }}</a>
+          </li>
+        }
+      </ul>
+      <div class="header__mobile-actions">
+        <a routerLink="/entrar" class="btn btn--ghost" (click)="closeMenu()">Entrar</a>
+        <a routerLink="/criar-conta" class="btn btn--primary" (click)="closeMenu()">Criar Conta</a>
+      </div>
+    </nav>
+  }
+</header>

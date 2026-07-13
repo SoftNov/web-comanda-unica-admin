@@ -1,0 +1,50 @@
+.cta {
+  padding-block: var(--section-padding-y);
+  background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%);
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.12), transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1), transparent 40%);
+  }
+}
+
+.cta__inner {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 640px;
+
+  h2 {
+    font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+    color: #06210f;
+  }
+
+  p {
+    margin-top: 16px;
+    font-size: 1.0625rem;
+    color: rgba(6, 33, 15, 0.82);
+  }
+}
+
+.cta__actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 36px;
+}
+
+.cta__ghost {
+  color: #06210f;
+  border-color: rgba(6, 33, 15, 0.3);
+
+  &:hover {
+    background: rgba(6, 33, 15, 0.08);
+    border-color: #06210f;
+  }
+}

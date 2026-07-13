@@ -1,0 +1,86 @@
+<app-auth-shell
+  eyebrow="Bem-vindo de volta"
+  title="Entrar na sua conta"
+  subtitle="Acesse o painel administrativo do seu estabelecimento."
+>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+    <div class="field">
+      <label class="field__label" for="login-email">E-mail</label>
+      <div class="field__control">
+        <input
+          id="login-email"
+          type="email"
+          class="field__input"
+          [class.field__input--invalid]="form.controls.email.invalid && form.controls.email.touched"
+          formControlName="email"
+          placeholder="voce@seurestaurante.com"
+          autocomplete="email"
+          [attr.aria-invalid]="form.controls.email.invalid && form.controls.email.touched"
+          aria-describedby="login-email-error"
+        >
+      </div>
+      @if (form.controls.email.invalid && form.controls.email.touched) {
+        <span class="field__error" id="login-email-error">
+          {{ form.controls.email.errors?.['required'] ? 'Informe seu e-mail.' : 'Informe um e-mail válido.' }}
+        </span>
+      }
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="login-password">Senha</label>
+      <div class="field__control">
+        <input
+          id="login-password"
+          [type]="showPassword() ? 'text' : 'password'"
+          class="field__input"
+          [class.field__input--invalid]="form.controls.password.invalid && form.controls.password.touched"
+          formControlName="password"
+          placeholder="Sua senha"
+          autocomplete="current-password"
+          [attr.aria-invalid]="form.controls.password.invalid && form.controls.password.touched"
+          aria-describedby="login-password-error"
+        >
+        <button
+          type="button"
+          class="field__toggle"
+          (click)="togglePassword()"
+          [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+        >
+          <span class="material-icons" aria-hidden="true">{{ showPassword() ? 'visibility_off' : 'visibility' }}</span>
+        </button>
+      </div>
+      @if (form.controls.password.invalid && form.controls.password.touched) {
+        <span class="field__error" id="login-password-error">
+          {{ form.controls.password.errors?.['required'] ? 'Informe sua senha.' : 'A senha deve ter ao menos 6 caracteres.' }}
+        </span>
+      }
+    </div>
+
+    <div class="field__row">
+      <label class="field__checkbox">
+        <input type="checkbox" formControlName="remember">
+        Lembrar de mim
+      </label>
+      <a class="field__link" href="#recuperar-senha">Esqueci minha senha</a>
+    </div>
+
+    @if (submitError()) {
+      <div class="form-alert form-alert--error" role="alert">
+        <span class="material-icons" aria-hidden="true">error</span>
+        {{ submitError() }}
+      </div>
+    }
+
+    <button type="submit" class="btn btn--primary" style="width: 100%; margin-top: 28px;" appRipple [disabled]="isSubmitting()">
+      @if (isSubmitting()) {
+        Entrando…
+      } @else {
+        Entrar
+      }
+    </button>
+  </form>
+
+  <p class="form-footer">
+    Ainda não tem uma conta? <a class="field__link" routerLink="/criar-conta">Criar conta gratuita</a>
+  </p>
+</app-auth-shell>

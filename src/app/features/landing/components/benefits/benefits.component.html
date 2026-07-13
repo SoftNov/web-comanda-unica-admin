@@ -1,0 +1,21 @@
+<section class="benefits section" id="recursos">
+  <div class="container">
+    <div class="section-heading section-heading--center" appScrollReveal="up">
+      <span class="eyebrow">Recursos</span>
+      <h2 class="section-title" style="margin-top: 16px;">Tudo que seu restaurante precisa, em um só lugar</h2>
+      <p class="section-subtitle">
+        Do pedido ao pagamento, cada etapa do atendimento conectada em tempo real.
+      </p>
+    </div>
+
+    <div class="benefits__grid">
+      @for (benefit of benefits; track benefit.title; let i = $index) {
+        <article class="benefits__card card card--hover" appScrollReveal="up" [revealDelay]="i * 60">
+          <span class="benefits__icon material-icons" aria-hidden="true">{{ benefit.icon }}</span>
+          <h3>{{ benefit.title }}</h3>
+          <p>{{ benefit.description }}</p>
+        </article>
+      }
+    </div>
+  </div>
+</section>

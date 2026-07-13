@@ -1,0 +1,20 @@
+<section class="features section" id="diferenciais">
+  <div class="container">
+    <div class="section-heading section-heading--center" appScrollReveal="up">
+      <span class="eyebrow">Diferenciais</span>
+      <h2 class="section-title" style="margin-top: 16px;">Tecnologia de ponta para o seu negócio</h2>
+      <p class="section-subtitle">
+        Infraestrutura robusta, segura e sempre atualizada — sem esforço técnico da sua parte.
+      </p>
+    </div>
+
+    <div class="features__grid">
+      @for (item of differentials; track item.label; let i = $index) {
+        <div class="features__item" appScrollReveal="up" [revealDelay]="i * 40">
+          <span class="material-icons" aria-hidden="true">{{ item.icon }}</span>
+          <p>{{ item.label }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>

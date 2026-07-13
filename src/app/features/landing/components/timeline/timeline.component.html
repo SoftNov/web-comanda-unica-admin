@@ -1,0 +1,29 @@
+<section class="timeline section" id="como-funciona">
+  <div class="container">
+    <div class="section-heading section-heading--center" appScrollReveal="up">
+      <span class="eyebrow">Como funciona</span>
+      <h2 class="section-title" style="margin-top: 16px;">Do cadastro ao pagamento em 8 passos</h2>
+      <p class="section-subtitle">
+        Um fluxo simples, pensado para operar sem fricção no dia a dia do seu estabelecimento.
+      </p>
+    </div>
+
+    <ol class="timeline__list">
+      @for (step of steps; track step.title; let i = $index; let last = $last) {
+        <li class="timeline__item" appScrollReveal="up" [revealDelay]="i * 70">
+          <div class="timeline__marker">
+            <span class="material-icons" aria-hidden="true">{{ step.icon }}</span>
+            @if (!last) {
+              <span class="timeline__connector" aria-hidden="true"></span>
+            }
+          </div>
+          <div class="timeline__content">
+            <span class="timeline__step">Passo {{ i + 1 }}</span>
+            <h3>{{ step.title }}</h3>
+            <p>{{ step.description }}</p>
+          </div>
+        </li>
+      }
+    </ol>
+  </div>
+</section>
