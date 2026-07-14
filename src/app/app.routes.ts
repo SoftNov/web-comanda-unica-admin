@@ -17,6 +17,12 @@ export const routes: Routes = [
     title: 'Criar Conta — Comanda Única'
   },
   {
+    path: 'ativar-conta/:token',
+    loadComponent: () =>
+      import('./features/auth/pages/activate-account/activate-account.component').then((m) => m.ActivateAccountComponent),
+    title: 'Ativar Conta — Comanda Única'
+  },
+  {
     path: 'termos-de-uso',
     loadComponent: () => import('./features/legal/pages/terms/terms.component').then((m) => m.TermsComponent),
     title: 'Termos de Uso — Comanda Única'

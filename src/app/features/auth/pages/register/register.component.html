@@ -12,147 +12,444 @@
       <a class="field__link" routerLink="/entrar">Ir para a tela de login</a>
     </p>
   } @else {
+    <ol class="steps" aria-label="Etapas do cadastro">
+      <li class="steps__item" [class.steps__item--active]="currentStep() === 1" [class.steps__item--done]="currentStep() > 1">
+        <span class="steps__index">1</span>
+        <span class="steps__label">Criar conta</span>
+      </li>
+      <li class="steps__item" [class.steps__item--active]="currentStep() === 2" [class.steps__item--done]="currentStep() > 2">
+        <span class="steps__index">2</span>
+        <span class="steps__label">Dados da empresa</span>
+      </li>
+      <li class="steps__item" [class.steps__item--active]="currentStep() === 3">
+        <span class="steps__index">3</span>
+        <span class="steps__label">Endereço</span>
+      </li>
+    </ol>
+
     <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
-      <div class="field">
-        <label class="field__label" for="register-name">Nome completo</label>
-        <div class="field__control">
-          <input
-            id="register-name"
-            type="text"
-            class="field__input"
-            [class.field__input--invalid]="form.controls.fullName.invalid && form.controls.fullName.touched"
-            formControlName="fullName"
-            placeholder="Seu nome"
-            autocomplete="name"
-          >
-        </div>
-        @if (form.controls.fullName.invalid && form.controls.fullName.touched) {
-          <span class="field__error">Informe seu nome completo.</span>
-        }
-      </div>
+      @if (currentStep() === 1) {
+        <div formGroupName="account">
+          <h2 class="step-heading">Responsável pela conta</h2>
 
-      <div class="field">
-        <label class="field__label" for="register-business">Nome do estabelecimento</label>
-        <div class="field__control">
-          <input
-            id="register-business"
-            type="text"
-            class="field__input"
-            [class.field__input--invalid]="form.controls.businessName.invalid && form.controls.businessName.touched"
-            formControlName="businessName"
-            placeholder="Ex: Restaurante Exemplo"
-            autocomplete="organization"
-          >
-        </div>
-        @if (form.controls.businessName.invalid && form.controls.businessName.touched) {
-          <span class="field__error">Informe o nome do seu estabelecimento.</span>
-        }
-      </div>
+          <div class="field">
+            <label class="field__label" for="register-name">Nome completo</label>
+            <div class="field__control">
+              <input
+                id="register-name"
+                type="text"
+                class="field__input"
+                [class.field__input--invalid]="account.controls.fullName.invalid && account.controls.fullName.touched"
+                formControlName="fullName"
+                placeholder="Seu nome"
+                autocomplete="name"
+              >
+            </div>
+            @if (account.controls.fullName.invalid && account.controls.fullName.touched) {
+              <span class="field__error">Informe seu nome completo.</span>
+            }
+          </div>
 
-      <div class="field">
-        <label class="field__label" for="register-email">E-mail</label>
-        <div class="field__control">
-          <input
-            id="register-email"
-            type="email"
-            class="field__input"
-            [class.field__input--invalid]="form.controls.email.invalid && form.controls.email.touched"
-            formControlName="email"
-            placeholder="voce@seurestaurante.com"
-            autocomplete="email"
-          >
-        </div>
-        @if (form.controls.email.invalid && form.controls.email.touched) {
-          <span class="field__error">
-            {{ form.controls.email.errors?.['required'] ? 'Informe seu e-mail.' : 'Informe um e-mail válido.' }}
-          </span>
-        }
-      </div>
+          <div class="field">
+            <label class="field__label" for="register-cpf">CPF</label>
+            <div class="field__control">
+              <input
+                id="register-cpf"
+                type="text"
+                inputmode="numeric"
+                class="field__input"
+                [class.field__input--invalid]="account.controls.cpf.invalid && account.controls.cpf.touched"
+                formControlName="cpf"
+                placeholder="000.000.000-00"
+                maxlength="14"
+                (input)="onCpfInput($event)"
+              >
+            </div>
+            @if (account.controls.cpf.invalid && account.controls.cpf.touched) {
+              <span class="field__error">
+                {{ account.controls.cpf.errors?.['required'] ? 'Informe seu CPF.' : 'Informe um CPF válido.' }}
+              </span>
+            }
+          </div>
 
-      <div class="field">
-        <label class="field__label" for="register-phone">WhatsApp <span class="field__optional">(opcional)</span></label>
-        <div class="field__control">
-          <input
-            id="register-phone"
-            type="tel"
-            class="field__input"
-            formControlName="phone"
-            placeholder="(00) 00000-0000"
-            autocomplete="tel"
-          >
-        </div>
-      </div>
+          <div class="field">
+            <label class="field__label" for="register-email">E-mail</label>
+            <div class="field__control">
+              <input
+                id="register-email"
+                type="email"
+                class="field__input"
+                [class.field__input--invalid]="account.controls.email.invalid && account.controls.email.touched"
+                formControlName="email"
+                placeholder="voce@seurestaurante.com"
+                autocomplete="email"
+              >
+            </div>
+            @if (account.controls.email.invalid && account.controls.email.touched) {
+              <span class="field__error">
+                {{ account.controls.email.errors?.['required'] ? 'Informe seu e-mail.' : 'Informe um e-mail válido.' }}
+              </span>
+            }
+          </div>
 
-      <div class="field">
-        <label class="field__label" for="register-password">Senha</label>
-        <div class="field__control">
-          <input
-            id="register-password"
-            [type]="showPassword() ? 'text' : 'password'"
-            class="field__input"
-            [class.field__input--invalid]="form.controls.password.invalid && form.controls.password.touched"
-            formControlName="password"
-            placeholder="Crie uma senha"
-            autocomplete="new-password"
-          >
-          <button
-            type="button"
-            class="field__toggle"
-            (click)="togglePassword()"
-            [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
-          >
-            <span class="material-icons" aria-hidden="true">{{ showPassword() ? 'visibility_off' : 'visibility' }}</span>
+          <div class="field">
+            <label class="field__label" for="register-phone">Celular</label>
+            <div class="field__control">
+              <input
+                id="register-phone"
+                type="tel"
+                inputmode="numeric"
+                class="field__input"
+                [class.field__input--invalid]="account.controls.phone.invalid && account.controls.phone.touched"
+                formControlName="phone"
+                placeholder="(00) 00000-0000"
+                maxlength="15"
+                autocomplete="tel"
+                (input)="onAccountPhoneInput($event)"
+              >
+            </div>
+            @if (account.controls.phone.invalid && account.controls.phone.touched) {
+              <span class="field__error">Informe seu celular.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="register-password">Senha</label>
+            <div class="field__control">
+              <input
+                id="register-password"
+                [type]="showPassword() ? 'text' : 'password'"
+                class="field__input"
+                [class.field__input--invalid]="account.controls.password.invalid && account.controls.password.touched"
+                formControlName="password"
+                placeholder="Crie uma senha"
+                autocomplete="new-password"
+              >
+              <button
+                type="button"
+                class="field__toggle"
+                (click)="togglePassword()"
+                [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+              >
+                <span class="material-icons" aria-hidden="true">{{ showPassword() ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
+            @if (account.controls.password.invalid && account.controls.password.touched) {
+              <span class="field__error">A senha deve ter ao menos 6 caracteres.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="register-confirm-password">Confirmar senha</label>
+            <div class="field__control">
+              <input
+                id="register-confirm-password"
+                [type]="showConfirmPassword() ? 'text' : 'password'"
+                class="field__input"
+                [class.field__input--invalid]="account.errors?.['passwordMismatch'] && account.controls.confirmPassword.touched"
+                formControlName="confirmPassword"
+                placeholder="Repita a senha"
+                autocomplete="new-password"
+              >
+              <button
+                type="button"
+                class="field__toggle"
+                (click)="toggleConfirmPassword()"
+                [attr.aria-label]="showConfirmPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+              >
+                <span class="material-icons" aria-hidden="true">{{ showConfirmPassword() ? 'visibility_off' : 'visibility' }}</span>
+              </button>
+            </div>
+            @if (account.errors?.['passwordMismatch'] && account.controls.confirmPassword.touched) {
+              <span class="field__error">As senhas não coincidem.</span>
+            }
+          </div>
+        </div>
+
+        <button type="button" class="btn btn--primary" style="width: 100%; margin-top: 28px;" appRipple (click)="goToNextStep()">
+          Continuar
+        </button>
+      }
+
+      @if (currentStep() === 2) {
+        <div formGroupName="company">
+          <h2 class="step-heading">Informações do estabelecimento</h2>
+
+          <div class="field">
+            <label class="field__label" for="register-business-name">Nome Fantasia</label>
+            <div class="field__control">
+              <input
+                id="register-business-name"
+                type="text"
+                class="field__input"
+                [class.field__input--invalid]="company.controls.businessName.invalid && company.controls.businessName.touched"
+                formControlName="businessName"
+                placeholder="Ex: Restaurante Exemplo"
+                autocomplete="organization"
+              >
+            </div>
+            @if (company.controls.businessName.invalid && company.controls.businessName.touched) {
+              <span class="field__error">Informe o nome do seu estabelecimento.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="register-cnpj">CNPJ</label>
+            <div class="field__control">
+              <input
+                id="register-cnpj"
+                type="text"
+                inputmode="numeric"
+                class="field__input"
+                [class.field__input--invalid]="company.controls.cnpj.invalid && company.controls.cnpj.touched"
+                formControlName="cnpj"
+                placeholder="00.000.000/0000-00"
+                maxlength="18"
+                (input)="onCnpjInput($event)"
+              >
+            </div>
+            @if (company.controls.cnpj.invalid && company.controls.cnpj.touched) {
+              <span class="field__error">
+                {{ company.controls.cnpj.errors?.['required'] ? 'Informe o CNPJ.' : 'Informe um CNPJ válido.' }}
+              </span>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="register-segment">Segmento</label>
+            <div class="field__control">
+              <select
+                id="register-segment"
+                class="field__input"
+                [class.field__input--invalid]="company.controls.segment.invalid && company.controls.segment.touched"
+                formControlName="segment"
+              >
+                <option value="" disabled>Selecione um segmento</option>
+                @for (item of segments; track item) {
+                  <option [value]="item">{{ item }}</option>
+                }
+              </select>
+            </div>
+            @if (company.controls.segment.invalid && company.controls.segment.touched) {
+              <span class="field__error">Selecione o segmento do seu estabelecimento.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="register-business-phone">Telefone</label>
+            <div class="field__control">
+              <input
+                id="register-business-phone"
+                type="tel"
+                inputmode="numeric"
+                class="field__input"
+                [class.field__input--invalid]="company.controls.businessPhone.invalid && company.controls.businessPhone.touched"
+                formControlName="businessPhone"
+                placeholder="(00) 00000-0000"
+                maxlength="15"
+                autocomplete="tel"
+                (input)="onBusinessPhoneInput($event)"
+              >
+            </div>
+            @if (company.controls.businessPhone.invalid && company.controls.businessPhone.touched) {
+              <span class="field__error">Informe o telefone do estabelecimento.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="register-business-email">E-mail</label>
+            <div class="field__control">
+              <input
+                id="register-business-email"
+                type="email"
+                class="field__input"
+                [class.field__input--invalid]="company.controls.businessEmail.invalid && company.controls.businessEmail.touched"
+                formControlName="businessEmail"
+                placeholder="contato@seurestaurante.com"
+                autocomplete="email"
+              >
+            </div>
+            @if (company.controls.businessEmail.invalid && company.controls.businessEmail.touched) {
+              <span class="field__error">
+                {{ company.controls.businessEmail.errors?.['required'] ? 'Informe o e-mail do estabelecimento.' : 'Informe um e-mail válido.' }}
+              </span>
+            }
+          </div>
+        </div>
+
+        <div class="step-actions">
+          <button type="button" class="btn btn--ghost" appRipple (click)="goToPreviousStep()">
+            Voltar
+          </button>
+          <button type="button" class="btn btn--primary" appRipple (click)="goToNextStep()">
+            Continuar
           </button>
         </div>
-        @if (form.controls.password.invalid && form.controls.password.touched) {
-          <span class="field__error">A senha deve ter ao menos 6 caracteres.</span>
-        }
-      </div>
+      }
 
-      <div class="field">
-        <label class="field__label" for="register-confirm-password">Confirmar senha</label>
-        <div class="field__control">
-          <input
-            id="register-confirm-password"
-            [type]="showConfirmPassword() ? 'text' : 'password'"
-            class="field__input"
-            [class.field__input--invalid]="form.errors?.['passwordMismatch'] && form.controls.confirmPassword.touched"
-            formControlName="confirmPassword"
-            placeholder="Repita a senha"
-            autocomplete="new-password"
-          >
-          <button
-            type="button"
-            class="field__toggle"
-            (click)="toggleConfirmPassword()"
-            [attr.aria-label]="showConfirmPassword() ? 'Ocultar senha' : 'Mostrar senha'"
-          >
-            <span class="material-icons" aria-hidden="true">{{ showConfirmPassword() ? 'visibility_off' : 'visibility' }}</span>
+      @if (currentStep() === 3) {
+        <div formGroupName="address">
+          <h2 class="step-heading">Localização do estabelecimento</h2>
+
+          <div class="field">
+            <label class="field__label" for="register-cep">CEP</label>
+            <div class="field__control">
+              <input
+                id="register-cep"
+                type="text"
+                inputmode="numeric"
+                class="field__input"
+                [class.field__input--invalid]="address.controls.cep.invalid && address.controls.cep.touched"
+                formControlName="cep"
+                placeholder="00000-000"
+                maxlength="9"
+                (input)="onCepInput($event)"
+                (blur)="onCepBlur()"
+              >
+            </div>
+            @if (isLookingUpCep()) {
+              <span class="field__hint">Buscando endereço…</span>
+            } @else if (cepNotFound()) {
+              <span class="field__error">CEP não encontrado. Preencha o endereço manualmente.</span>
+            } @else if (address.controls.cep.invalid && address.controls.cep.touched) {
+              <span class="field__error">
+                {{ address.controls.cep.errors?.['required'] ? 'Informe o CEP.' : 'Informe um CEP válido.' }}
+              </span>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="register-street">Rua <span class="field__optional">(preenchimento automático)</span></label>
+            <div class="field__control">
+              <input
+                id="register-street"
+                type="text"
+                class="field__input"
+                [class.field__input--invalid]="address.controls.street.invalid && address.controls.street.touched"
+                formControlName="street"
+                placeholder="Nome da rua"
+                autocomplete="address-line1"
+              >
+            </div>
+            @if (address.controls.street.invalid && address.controls.street.touched) {
+              <span class="field__error">Informe a rua.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="register-number">Número</label>
+            <div class="field__control">
+              <input
+                id="register-number"
+                type="text"
+                class="field__input"
+                [class.field__input--invalid]="address.controls.number.invalid && address.controls.number.touched"
+                formControlName="number"
+                placeholder="Nº"
+              >
+            </div>
+            @if (address.controls.number.invalid && address.controls.number.touched) {
+              <span class="field__error">Informe o número.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="register-complement">Complemento <span class="field__optional">(opcional)</span></label>
+            <div class="field__control">
+              <input
+                id="register-complement"
+                type="text"
+                class="field__input"
+                formControlName="complement"
+                placeholder="Sala, bloco, referência..."
+              >
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="register-neighborhood">Bairro <span class="field__optional">(preenchimento automático)</span></label>
+            <div class="field__control">
+              <input
+                id="register-neighborhood"
+                type="text"
+                class="field__input"
+                [class.field__input--invalid]="address.controls.neighborhood.invalid && address.controls.neighborhood.touched"
+                formControlName="neighborhood"
+                placeholder="Bairro"
+              >
+            </div>
+            @if (address.controls.neighborhood.invalid && address.controls.neighborhood.touched) {
+              <span class="field__error">Informe o bairro.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="register-city">Cidade <span class="field__optional">(preenchimento automático)</span></label>
+            <div class="field__control">
+              <input
+                id="register-city"
+                type="text"
+                class="field__input"
+                [class.field__input--invalid]="address.controls.city.invalid && address.controls.city.touched"
+                formControlName="city"
+                placeholder="Cidade"
+              >
+            </div>
+            @if (address.controls.city.invalid && address.controls.city.touched) {
+              <span class="field__error">Informe a cidade.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="register-state">Estado <span class="field__optional">(preenchimento automático)</span></label>
+            <div class="field__control">
+              <input
+                id="register-state"
+                type="text"
+                class="field__input"
+                [class.field__input--invalid]="address.controls.state.invalid && address.controls.state.touched"
+                formControlName="state"
+                placeholder="UF"
+                maxlength="2"
+              >
+            </div>
+            @if (address.controls.state.invalid && address.controls.state.touched) {
+              <span class="field__error">Informe o estado.</span>
+            }
+          </div>
+        </div>
+
+        <div class="field" style="margin-top: 24px;">
+          <label class="field__checkbox">
+            <input type="checkbox" formControlName="acceptTerms">
+            Li e aceito os <a routerLink="/termos-de-uso" target="_blank" rel="noopener">Termos de Uso</a> e a
+            <a routerLink="/politica-de-privacidade" target="_blank" rel="noopener">Política de Privacidade</a>.
+          </label>
+          @if (acceptTerms.invalid && acceptTerms.touched) {
+            <span class="field__error">É necessário aceitar os termos para continuar.</span>
+          }
+        </div>
+
+        @if (submitError()) {
+          <div class="form-alert form-alert--error" role="alert">
+            <span class="material-icons" aria-hidden="true">error_outline</span>
+            {{ submitError() }}
+          </div>
+        }
+
+        <div class="step-actions">
+          <button type="button" class="btn btn--ghost" appRipple (click)="goToPreviousStep()">
+            Voltar
+          </button>
+          <button type="submit" class="btn btn--primary" appRipple [disabled]="isSubmitting()">
+            @if (isSubmitting()) {
+              Criando conta…
+            } @else {
+              Criar minha conta
+            }
           </button>
         </div>
-        @if (form.errors?.['passwordMismatch'] && form.controls.confirmPassword.touched) {
-          <span class="field__error">As senhas não coincidem.</span>
-        }
-      </div>
-
-      <div class="field" style="margin-top: 24px;">
-        <label class="field__checkbox">
-          <input type="checkbox" formControlName="acceptTerms">
-          Li e aceito os <a routerLink="/termos-de-uso" target="_blank" rel="noopener">Termos de Uso</a> e a
-          <a routerLink="/politica-de-privacidade" target="_blank" rel="noopener">Política de Privacidade</a>.
-        </label>
-        @if (form.controls.acceptTerms.invalid && form.controls.acceptTerms.touched) {
-          <span class="field__error">É necessário aceitar os termos para continuar.</span>
-        }
-      </div>
-
-      <button type="submit" class="btn btn--primary" style="width: 100%; margin-top: 28px;" appRipple [disabled]="isSubmitting()">
-        @if (isSubmitting()) {
-          Criando conta…
-        } @else {
-          Criar minha conta
-        }
-      </button>
+      }
     </form>
 
     <p class="form-footer">

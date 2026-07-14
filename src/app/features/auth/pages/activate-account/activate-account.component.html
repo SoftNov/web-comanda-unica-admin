@@ -1,0 +1,35 @@
+<app-auth-shell
+  eyebrow="Confirmação de conta"
+  [title]="status() === 'success' ? 'Conta ativada!' : status() === 'error' ? errorTitle() : 'Ativando sua conta'"
+  [subtitle]="status() === 'loading' ? 'Aguarde enquanto confirmamos seu código de ativação.' : ''"
+>
+  @switch (status()) {
+    @case ('loading') {
+      <div class="activation-state">
+        <span class="activation-spinner" aria-hidden="true"></span>
+        <p class="activation-state__text">Confirmando seu código de ativação…</p>
+      </div>
+    }
+    @case ('success') {
+      <div class="form-alert form-alert--success" role="status">
+        <span class="material-icons" aria-hidden="true">check_circle</span>
+        {{ successMessage() }}
+      </div>
+      <a class="btn btn--primary" style="width: 100%; margin-top: 28px;" appRipple routerLink="/entrar">
+        Ir para o login
+      </a>
+    }
+    @case ('error') {
+      <div class="form-alert form-alert--error" role="alert">
+        <span class="material-icons" aria-hidden="true">error_outline</span>
+        {{ errorMessage() }}
+      </div>
+      <a class="btn btn--ghost" style="width: 100%; margin-top: 28px;" appRipple routerLink="/entrar">
+        Voltar para o login
+      </a>
+      <p class="form-footer">
+        Precisa de uma nova conta? <a class="field__link" routerLink="/criar-conta">Criar conta</a>
+      </p>
+    }
+  }
+</app-auth-shell>
