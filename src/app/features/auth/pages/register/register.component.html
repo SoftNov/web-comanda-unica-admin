@@ -441,7 +441,7 @@
           <button type="button" class="btn btn--ghost" appRipple (click)="goToPreviousStep()">
             Voltar
           </button>
-          <button type="submit" class="btn btn--primary" appRipple [disabled]="isSubmitting()">
+          <button type="submit" class="btn btn--primary" appRipple [disabled]="isSubmitting() || acceptTerms.invalid">
             @if (isSubmitting()) {
               Criando conta…
             } @else {
