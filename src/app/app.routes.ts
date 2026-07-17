@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
@@ -12,6 +13,12 @@ export const routes: Routes = [
     title: 'Entrar — Comanda Única'
   },
   {
+    path: 'recuperar-senha',
+    loadComponent: () =>
+      import('./features/auth/pages/forgot-password/forgot-password.component').then((m) => m.ForgotPasswordComponent),
+    title: 'Recuperar Senha — Comanda Única'
+  },
+  {
     path: 'criar-conta',
     loadComponent: () => import('./features/auth/pages/register/register.component').then((m) => m.RegisterComponent),
     title: 'Criar Conta — Comanda Única'
@@ -21,6 +28,72 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/auth/pages/activate-account/activate-account.component').then((m) => m.ActivateAccountComponent),
     title: 'Ativar Conta — Comanda Única'
+  },
+  {
+    path: 'painel',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/admin/layout/admin-layout/admin-layout.component').then((m) => m.AdminLayoutComponent),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      {
+        path: 'dashboard',
+        loadComponent: () => import('./features/admin/pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+        title: 'Dashboard — Comanda Única'
+      },
+      {
+        path: 'comandas',
+        loadComponent: () => import('./features/admin/pages/placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
+        data: { title: 'Comandas' },
+        title: 'Comandas — Comanda Única'
+      },
+      {
+        path: 'mesas',
+        loadComponent: () => import('./features/admin/pages/placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
+        data: { title: 'Mesas' },
+        title: 'Mesas — Comanda Única'
+      },
+      {
+        path: 'cardapio',
+        loadComponent: () => import('./features/admin/pages/placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
+        data: { title: 'Cardápio' },
+        title: 'Cardápio — Comanda Única'
+      },
+      {
+        path: 'pedidos',
+        loadComponent: () => import('./features/admin/pages/placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
+        data: { title: 'Pedidos' },
+        title: 'Pedidos — Comanda Única'
+      },
+      {
+        path: 'financeiro',
+        loadComponent: () => import('./features/admin/pages/placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
+        data: { title: 'Financeiro' },
+        title: 'Financeiro — Comanda Única'
+      },
+      {
+        path: 'funcionarios',
+        loadComponent: () => import('./features/admin/pages/placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
+        data: { title: 'Funcionários' },
+        title: 'Funcionários — Comanda Única'
+      },
+      {
+        path: 'configuracoes',
+        loadComponent: () => import('./features/admin/pages/placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
+        data: { title: 'Configurações' },
+        title: 'Configurações — Comanda Única'
+      },
+      {
+        path: 'configuracoes/perfil',
+        loadComponent: () => import('./features/admin/pages/settings/profile/profile.component').then((m) => m.ProfileComponent),
+        title: 'Meu Perfil — Comanda Única'
+      },
+      {
+        path: 'configuracoes/redefinir-senha',
+        loadComponent: () => import('./features/admin/pages/settings/security/security.component').then((m) => m.SecurityComponent),
+        title: 'Redefinir Senha — Comanda Única'
+      },
+      { path: '**', redirectTo: 'dashboard' }
+    ]
   },
   {
     path: 'termos-de-uso',

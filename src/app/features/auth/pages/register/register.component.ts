@@ -7,7 +7,9 @@ import { RippleDirective } from '../../../../shared/directives/ripple.directive'
 import { AccountsService, ApiErrorResponse, CreateAccountRequest } from '../../../../shared/services/accounts.service';
 import { CepService } from '../../../../shared/services/cep.service';
 import { cepValidator, cnpjValidator, cpfValidator } from '../../../../shared/validators/br-document.validator';
+import { passwordStrengthValidator } from '../../../../shared/validators/password.validator';
 import { formatCEP, formatCNPJ, formatCPF, formatCellphone, onlyDigits } from '../../../../shared/utils/br-format.util';
+import { PasswordRulesComponent } from '../../../../shared/components/password-rules/password-rules.component';
 
 function passwordsMatchValidator(control: AbstractControl): ValidationErrors | null {
   const password = control.get('password')?.value;
@@ -20,7 +22,7 @@ const STEP_COUNT = 3;
 @Component({
   selector: 'app-register',
   standalone: true,
-  imports: [ReactiveFormsModule, RouterLink, AuthShellComponent, RippleDirective],
+  imports: [ReactiveFormsModule, RouterLink, AuthShellComponent, RippleDirective, PasswordRulesComponent],
   templateUrl: './register.component.html',
   styleUrl: './register.component.scss'
 })
@@ -58,7 +60,7 @@ export class RegisterComponent {
       cpf: ['', [Validators.required, cpfValidator()]],
       email: ['', [Validators.required, Validators.email]],
       phone: ['', [Validators.required]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
+      password: ['', [Validators.required, passwordStrengthValidator()]],
       confirmPassword: ['', [Validators.required]]
     },
     { validators: passwordsMatchValidator }

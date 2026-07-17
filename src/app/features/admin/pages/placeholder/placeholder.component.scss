@@ -1,0 +1,24 @@
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 80px 24px;
+  color: var(--color-text-muted);
+}
+
+.placeholder__icon {
+  font-size: 40px;
+  color: var(--color-accent-hover);
+}
+
+.placeholder__title {
+  font-size: 1.375rem;
+  color: var(--color-text);
+}
+
+.placeholder__subtitle {
+  max-width: 420px;
+}

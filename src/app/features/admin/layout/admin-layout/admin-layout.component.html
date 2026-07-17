@@ -1,0 +1,135 @@
+<div class="admin-layout" [class.admin-layout--collapsed]="isSidebarCollapsed()">
+  @if (isMobileSidebarOpen()) {
+    <div class="admin-backdrop" (click)="closeMobileSidebar()"></div>
+  }
+
+  <aside class="admin-sidebar" [class.admin-sidebar--open]="isMobileSidebarOpen()">
+    <div class="admin-sidebar__brand">
+      @if (selectedCompany()?.logoUrl) {
+        <img class="admin-sidebar__logo admin-sidebar__logo--img" [src]="selectedCompany()?.logoUrl" alt="">
+      } @else {
+        <span class="admin-sidebar__logo">CU</span>
+      }
+      <span class="admin-sidebar__name">{{ selectedCompany()?.companyName ?? 'Comanda Única' }}</span>
+    </div>
+
+    <nav class="admin-sidebar__nav">
+      @for (item of menuItems; track item.label) {
+        @if (item.children) {
+          <button
+            type="button"
+            class="admin-sidebar__link admin-sidebar__link--group"
+            [class.admin-sidebar__link--expanded]="isGroupExpanded(item)"
+            (click)="toggleGroup(item, $event)"
+          >
+            <span class="material-icons" aria-hidden="true">{{ item.icon }}</span>
+            <span class="admin-sidebar__label">{{ item.label }}</span>
+            <span class="material-icons admin-sidebar__chevron" aria-hidden="true">
+              {{ isGroupExpanded(item) ? 'expand_less' : 'expand_more' }}
+            </span>
+          </button>
+
+          @if (isGroupExpanded(item)) {
+            <div class="admin-sidebar__submenu">
+              @for (child of item.children; track child.route) {
+                <a
+                  class="admin-sidebar__link admin-sidebar__link--child"
+                  [routerLink]="child.route"
+                  routerLinkActive="admin-sidebar__link--active"
+                  (click)="closeMobileSidebar()"
+                >
+                  <span class="material-icons" aria-hidden="true">{{ child.icon }}</span>
+                  <span class="admin-sidebar__label">{{ child.label }}</span>
+                </a>
+              }
+            </div>
+          }
+        } @else {
+          <a
+            class="admin-sidebar__link"
+            [routerLink]="item.route"
+            routerLinkActive="admin-sidebar__link--active"
+            (click)="closeMobileSidebar()"
+          >
+            <span class="material-icons" aria-hidden="true">{{ item.icon }}</span>
+            <span class="admin-sidebar__label">{{ item.label }}</span>
+          </a>
+        }
+      }
+    </nav>
+
+    <button type="button" class="admin-sidebar__collapse-toggle" (click)="toggleCollapse()">
+      <span class="material-icons" aria-hidden="true">{{ isSidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}</span>
+      <span class="admin-sidebar__label">Recolher menu</span>
+    </button>
+  </aside>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <button type="button" class="admin-topbar__icon-btn admin-topbar__menu-btn" (click)="toggleMobileSidebar(); $event.stopPropagation()" aria-label="Abrir menu">
+        <span class="material-icons" aria-hidden="true">menu</span>
+      </button>
+
+      <div class="admin-topbar__spacer"></div>
+
+      @if (companies().length > 1) {
+        <div class="admin-topbar__dropdown">
+          <button type="button" class="admin-topbar__company-btn" (click)="toggleCompanyMenu($event)">
+            @if (selectedCompany()?.logoUrl) {
+              <img class="admin-topbar__company-logo" [src]="selectedCompany()?.logoUrl" alt="">
+            } @else {
+              <span class="material-icons" aria-hidden="true">storefront</span>
+            }
+            <span class="admin-topbar__company-name">{{ selectedCompany()?.companyName }}</span>
+            <span class="material-icons" aria-hidden="true">expand_more</span>
+          </button>
+
+          @if (isCompanyMenuOpen()) {
+            <div class="admin-topbar__menu" (click)="$event.stopPropagation()">
+              @for (company of companies(); track company.companyId) {
+                <button
+                  type="button"
+                  class="admin-topbar__menu-item"
+                  [class.admin-topbar__menu-item--active]="company.companyId === selectedCompany()?.companyId"
+                  (click)="selectCompany(company.companyId)"
+                >
+                  <span>{{ company.companyName }}</span>
+                  <span class="admin-topbar__menu-item-role">{{ company.profileName }}</span>
+                </button>
+              }
+            </div>
+          }
+        </div>
+      }
+
+      <div class="admin-topbar__dropdown">
+        <button type="button" class="admin-topbar__user-btn" (click)="toggleUserMenu($event)">
+          @if (currentUser()?.avatarUrl) {
+            <img class="admin-topbar__avatar admin-topbar__avatar--img" [src]="currentUser()?.avatarUrl" alt="">
+          } @else {
+            <span class="admin-topbar__avatar">{{ userInitials }}</span>
+          }
+          <span class="admin-topbar__user-name">{{ currentUser()?.fullName }}</span>
+          <span class="material-icons" aria-hidden="true">expand_more</span>
+        </button>
+
+        @if (isUserMenuOpen()) {
+          <div class="admin-topbar__menu admin-topbar__menu--right" (click)="$event.stopPropagation()">
+            <div class="admin-topbar__menu-user">
+              <strong>{{ currentUser()?.fullName }}</strong>
+              <span>{{ currentUser()?.email }}</span>
+            </div>
+            <button type="button" class="admin-topbar__menu-item admin-topbar__menu-item--danger" (click)="logout()">
+              <span class="material-icons" aria-hidden="true">logout</span>
+              Sair
+            </button>
+          </div>
+        }
+      </div>
+    </header>
+
+    <main class="admin-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

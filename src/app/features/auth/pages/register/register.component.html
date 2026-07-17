@@ -135,8 +135,11 @@
               </button>
             </div>
             @if (account.controls.password.invalid && account.controls.password.touched) {
-              <span class="field__error">A senha deve ter ao menos 6 caracteres.</span>
+              <span class="field__error">
+                {{ account.controls.password.errors?.['required'] ? 'Informe uma senha.' : 'A senha não atende aos requisitos abaixo.' }}
+              </span>
             }
+            <app-password-rules [password]="account.controls.password.value" />
           </div>
 
           <div class="field">

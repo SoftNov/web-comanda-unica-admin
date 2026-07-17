@@ -1,0 +1,29 @@
+<div class="page-header">
+  <h1 class="page-title">Olá, {{ currentUser()?.fullName?.split(' ')?.[0] }} 👋</h1>
+  <p class="page-subtitle">
+    Este é o painel administrativo de {{ selectedCompany()?.companyName }}.
+  </p>
+</div>
+
+<div class="stat-grid">
+  <div class="card stat-card">
+    <span class="material-icons stat-card__icon" aria-hidden="true">receipt_long</span>
+    <span class="stat-card__label">Comandas abertas</span>
+    <span class="stat-card__value">—</span>
+  </div>
+  <div class="card stat-card">
+    <span class="material-icons stat-card__icon" aria-hidden="true">table_bar</span>
+    <span class="stat-card__label">Mesas ocupadas</span>
+    <span class="stat-card__value">—</span>
+  </div>
+  <div class="card stat-card">
+    <span class="material-icons stat-card__icon" aria-hidden="true">payments</span>
+    <span class="stat-card__label">Faturamento hoje</span>
+    <span class="stat-card__value">—</span>
+  </div>
+  <div class="card stat-card">
+    <span class="material-icons stat-card__icon" aria-hidden="true">groups</span>
+    <span class="stat-card__label">Funcionários ativos</span>
+    <span class="stat-card__value">—</span>
+  </div>
+</div>

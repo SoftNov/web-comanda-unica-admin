@@ -1,0 +1,14 @@
+<div class="page-header">
+  <h1 class="page-title">Redefinir senha</h1>
+  <p class="page-subtitle">Envie um código de verificação para o seu e-mail e crie uma nova senha de acesso.</p>
+</div>
+
+<div class="card security-card">
+  <app-password-reset-flow
+    [lockedEmail]="email"
+    successMessage="Senha atualizada com sucesso."
+    doneLinkPath="/painel/configuracoes"
+    doneLinkLabel="Voltar para configurações"
+    [footerLinkPath]="null"
+  />
+</div>

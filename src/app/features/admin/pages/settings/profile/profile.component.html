@@ -1,0 +1,371 @@
+<div class="page-header">
+  <h1 class="page-title">Meu perfil</h1>
+  <p class="page-subtitle">
+    Atualize sua foto e seus dados pessoais{{ canEditCompany() ? ', além dos dados da empresa e do endereço' : '' }}.
+  </p>
+</div>
+
+@if (canEditCompany()) {
+  <div class="tabs" role="tablist">
+    <button
+      type="button"
+      class="tabs__item"
+      role="tab"
+      [class.tabs__item--active]="activeTab() === 'personal'"
+      [attr.aria-selected]="activeTab() === 'personal'"
+      (click)="activeTab.set('personal')"
+    >
+      <span class="material-icons" aria-hidden="true">person</span>
+      Meus dados
+    </button>
+    <button
+      type="button"
+      class="tabs__item"
+      role="tab"
+      [class.tabs__item--active]="activeTab() === 'company'"
+      [attr.aria-selected]="activeTab() === 'company'"
+      (click)="activeTab.set('company')"
+    >
+      <span class="material-icons" aria-hidden="true">storefront</span>
+      Empresa
+    </button>
+  </div>
+}
+
+@if (isLoadingProfile()) {
+  <p class="field__hint">Carregando dados do perfil…</p>
+} @else if (loadProfileError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ loadProfileError() }}
+  </div>
+}
+
+<form (submit)="$event.preventDefault(); onSubmitProfile()" novalidate [class.is-loading]="isLoadingProfile()">
+  @if (!canEditCompany() || activeTab() === 'personal') {
+    <div class="card profile-card">
+      <h2 class="step-heading">Foto de perfil</h2>
+      <div class="image-upload">
+        <div class="image-upload__preview">
+          @if (avatarPreviewUrl()) {
+            <img [src]="avatarPreviewUrl()" alt="">
+          } @else {
+            <span class="material-icons" aria-hidden="true">person</span>
+          }
+        </div>
+        <div class="image-upload__actions">
+          <label class="btn btn--ghost btn--sm" for="avatar-input">
+            {{ isUploadingAvatar() ? 'Enviando…' : 'Escolher foto' }}
+          </label>
+          <input
+            id="avatar-input"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            hidden
+            [disabled]="isUploadingAvatar()"
+            (change)="onAvatarFileSelected($event)"
+          >
+          <span class="field__hint">JPG, PNG ou WEBP, até 5MB.</span>
+          @if (avatarError()) {
+            <span class="field__error">{{ avatarError() }}</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="card profile-card" [formGroup]="personalForm">
+      <h2 class="step-heading">Dados pessoais</h2>
+
+      <div class="field">
+        <label class="field__label" for="profile-email">E-mail</label>
+        <div class="field__control">
+          <input
+            id="profile-email"
+            type="email"
+            class="field__input"
+            [value]="personalEmail()"
+            disabled
+          >
+        </div>
+        <span class="field__hint">O e-mail de acesso não pode ser alterado por aqui.</span>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="profile-full-name">Nome completo</label>
+        <div class="field__control">
+          <input
+            id="profile-full-name"
+            type="text"
+            class="field__input"
+            [class.field__input--invalid]="personalForm.controls.fullName.invalid && personalForm.controls.fullName.touched"
+            formControlName="fullName"
+            placeholder="Seu nome"
+            autocomplete="name"
+          >
+        </div>
+        @if (personalForm.controls.fullName.invalid && personalForm.controls.fullName.touched) {
+          <span class="field__error">Informe seu nome completo (nome e sobrenome).</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="profile-phone">Telefone</label>
+        <div class="field__control">
+          <input
+            id="profile-phone"
+            type="tel"
+            inputmode="numeric"
+            class="field__input"
+            [class.field__input--invalid]="personalForm.controls.phone.invalid && personalForm.controls.phone.touched"
+            formControlName="phone"
+            placeholder="(00) 00000-0000"
+            maxlength="15"
+            autocomplete="tel"
+            (input)="onPersonalPhoneInput($event)"
+          >
+        </div>
+        @if (personalForm.controls.phone.invalid && personalForm.controls.phone.touched) {
+          <span class="field__error">Informe um telefone válido.</span>
+        }
+      </div>
+    </div>
+  }
+
+  @if (canEditCompany() && activeTab() === 'company') {
+    <div class="card profile-card" [formGroup]="companyForm">
+      <h2 class="step-heading">Dados da empresa</h2>
+
+      <div class="image-upload">
+        <div class="image-upload__preview image-upload__preview--square">
+          @if (logoPreviewUrl()) {
+            <img [src]="logoPreviewUrl()" alt="">
+          } @else {
+            <span class="material-icons" aria-hidden="true">storefront</span>
+          }
+        </div>
+        <div class="image-upload__actions">
+          <label class="btn btn--ghost btn--sm" for="logo-input">
+            {{ isUploadingLogo() ? 'Enviando…' : 'Escolher logomarca' }}
+          </label>
+          <input
+            id="logo-input"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            hidden
+            [disabled]="isUploadingLogo()"
+            (change)="onLogoFileSelected($event)"
+          >
+          <span class="field__hint">JPG, PNG ou WEBP, até 5MB.</span>
+          @if (logoError()) {
+            <span class="field__error">{{ logoError() }}</span>
+          }
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="profile-business-name">Nome fantasia</label>
+        <div class="field__control">
+          <input
+            id="profile-business-name"
+            type="text"
+            class="field__input"
+            [class.field__input--invalid]="companyForm.controls.businessName.invalid && companyForm.controls.businessName.touched"
+            formControlName="businessName"
+            placeholder="Ex: Restaurante Exemplo"
+            autocomplete="organization"
+          >
+        </div>
+        @if (companyForm.controls.businessName.invalid && companyForm.controls.businessName.touched) {
+          <span class="field__error">Informe o nome do estabelecimento.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="profile-business-phone">Telefone</label>
+        <div class="field__control">
+          <input
+            id="profile-business-phone"
+            type="tel"
+            inputmode="numeric"
+            class="field__input"
+            [class.field__input--invalid]="companyForm.controls.phone.invalid && companyForm.controls.phone.touched"
+            formControlName="phone"
+            placeholder="(00) 00000-0000"
+            maxlength="15"
+            autocomplete="tel"
+            (input)="onCompanyPhoneInput($event)"
+          >
+        </div>
+        @if (companyForm.controls.phone.invalid && companyForm.controls.phone.touched) {
+          <span class="field__error">Informe um telefone válido.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="profile-business-email">E-mail</label>
+        <div class="field__control">
+          <input
+            id="profile-business-email"
+            type="email"
+            class="field__input"
+            [class.field__input--invalid]="companyForm.controls.email.invalid && companyForm.controls.email.touched"
+            formControlName="email"
+            placeholder="contato@seurestaurante.com"
+            autocomplete="email"
+          >
+        </div>
+        @if (companyForm.controls.email.invalid && companyForm.controls.email.touched) {
+          <span class="field__error">Informe um e-mail válido.</span>
+        }
+      </div>
+    </div>
+
+    <div class="card profile-card" [formGroup]="addressForm">
+      <h2 class="step-heading">Endereço</h2>
+
+      <div class="field">
+        <label class="field__label" for="profile-cep">CEP</label>
+        <div class="field__control">
+          <input
+            id="profile-cep"
+            type="text"
+            inputmode="numeric"
+            class="field__input"
+            [class.field__input--invalid]="addressForm.controls.cep.invalid && addressForm.controls.cep.touched"
+            formControlName="cep"
+            placeholder="00000-000"
+            maxlength="9"
+            (input)="onCepInput($event)"
+            (blur)="onCepBlur()"
+          >
+        </div>
+        @if (isLookingUpCep()) {
+          <span class="field__hint">Buscando endereço…</span>
+        } @else if (cepNotFound()) {
+          <span class="field__error">CEP não encontrado. Preencha o endereço manualmente.</span>
+        } @else if (addressForm.controls.cep.invalid && addressForm.controls.cep.touched) {
+          <span class="field__error">Informe um CEP válido.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="profile-street">Rua</label>
+        <div class="field__control">
+          <input
+            id="profile-street"
+            type="text"
+            class="field__input"
+            [class.field__input--invalid]="addressForm.controls.street.invalid && addressForm.controls.street.touched"
+            formControlName="street"
+            placeholder="Nome da rua"
+            autocomplete="address-line1"
+          >
+        </div>
+        @if (addressForm.controls.street.invalid && addressForm.controls.street.touched) {
+          <span class="field__error">Informe a rua.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="profile-number">Número</label>
+        <div class="field__control">
+          <input
+            id="profile-number"
+            type="text"
+            class="field__input"
+            [class.field__input--invalid]="addressForm.controls.number.invalid && addressForm.controls.number.touched"
+            formControlName="number"
+            placeholder="Nº"
+          >
+        </div>
+        @if (addressForm.controls.number.invalid && addressForm.controls.number.touched) {
+          <span class="field__error">Informe o número.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="profile-complement">Complemento <span class="field__optional">(opcional)</span></label>
+        <div class="field__control">
+          <input
+            id="profile-complement"
+            type="text"
+            class="field__input"
+            formControlName="complement"
+            placeholder="Sala, bloco, referência..."
+          >
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="profile-neighborhood">Bairro</label>
+        <div class="field__control">
+          <input
+            id="profile-neighborhood"
+            type="text"
+            class="field__input"
+            [class.field__input--invalid]="addressForm.controls.neighborhood.invalid && addressForm.controls.neighborhood.touched"
+            formControlName="neighborhood"
+            placeholder="Bairro"
+          >
+        </div>
+        @if (addressForm.controls.neighborhood.invalid && addressForm.controls.neighborhood.touched) {
+          <span class="field__error">Informe o bairro.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="profile-city">Cidade</label>
+        <div class="field__control">
+          <input
+            id="profile-city"
+            type="text"
+            class="field__input"
+            [class.field__input--invalid]="addressForm.controls.city.invalid && addressForm.controls.city.touched"
+            formControlName="city"
+            placeholder="Cidade"
+          >
+        </div>
+        @if (addressForm.controls.city.invalid && addressForm.controls.city.touched) {
+          <span class="field__error">Informe a cidade.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="profile-state">Estado</label>
+        <div class="field__control">
+          <input
+            id="profile-state"
+            type="text"
+            class="field__input"
+            [class.field__input--invalid]="addressForm.controls.state.invalid && addressForm.controls.state.touched"
+            formControlName="state"
+            placeholder="UF"
+            maxlength="2"
+          >
+        </div>
+        @if (addressForm.controls.state.invalid && addressForm.controls.state.touched) {
+          <span class="field__error">Informe o estado.</span>
+        }
+      </div>
+    </div>
+  }
+
+  @if (profileSuccess()) {
+    <div class="form-alert form-alert--success" role="status">
+      <span class="material-icons" aria-hidden="true">check_circle</span>
+      Perfil atualizado com sucesso.
+    </div>
+  }
+  @if (profileError()) {
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      {{ profileError() }}
+    </div>
+  }
+
+  <div class="step-actions">
+    <button type="submit" class="btn btn--primary" appRipple [disabled]="isSubmittingProfile() || isLoadingProfile()">
+      {{ isSubmittingProfile() ? 'Salvando…' : 'Salvar alterações' }}
+    </button>
+  </div>
+</form>
