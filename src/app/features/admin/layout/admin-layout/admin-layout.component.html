@@ -14,7 +14,7 @@
     </div>
 
     <nav class="admin-sidebar__nav">
-      @for (item of menuItems; track item.label) {
+      @for (item of menuItems(); track item.label) {
         @if (item.children) {
           <button
             type="button"

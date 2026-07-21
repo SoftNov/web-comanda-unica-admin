@@ -2,6 +2,9 @@ export interface MenuItem {
   label: string;
   icon: string;
   route?: string;
+  // Quando informado, o item só aparece para usuários cujo profileCode na
+  // empresa selecionada esteja nesta lista. Sem "roles", o item é visível a todos.
+  roles?: string[];
   children?: MenuItem[];
 }
 
@@ -15,7 +18,7 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
   { label: 'Cardápio', icon: 'restaurant_menu', route: '/painel/cardapio' },
   { label: 'Pedidos', icon: 'point_of_sale', route: '/painel/pedidos' },
   { label: 'Financeiro', icon: 'payments', route: '/painel/financeiro' },
-  { label: 'Funcionários', icon: 'groups', route: '/painel/funcionarios' },
+  { label: 'Funcionários', icon: 'groups', route: '/painel/funcionarios', roles: ['ADMIN', 'OWNER', 'MANAGER'] },
   {
     label: 'Configurações',
     icon: 'settings',

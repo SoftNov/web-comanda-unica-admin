@@ -247,6 +247,16 @@ export class ProfileComponent {
       this.authService.updateAvatarUrl(owner.avatarUrl);
     }
 
+    // companyLogoUrl vem preenchida para qualquer perfil (ao contrário de "company",
+    // que só vem para OWNER/ADMIN), então é sempre essa fonte que alimenta o menu.
+    if (response.companyLogoUrl) {
+      this.logoPreviewUrl.set(response.companyLogoUrl);
+      const companyId = this.authService.selectedCompany()?.companyId;
+      if (companyId) {
+        this.authService.updateCompanyLogoUrl(companyId, response.companyLogoUrl);
+      }
+    }
+
     const company = response.company;
     if (!company) {
       return;
@@ -257,13 +267,6 @@ export class ProfileComponent {
       phone: company.phone ? formatCellphone(company.phone) : '',
       email: company.email ?? ''
     });
-    if (company.logoUrl) {
-      this.logoPreviewUrl.set(company.logoUrl);
-      const companyId = this.authService.selectedCompany()?.companyId;
-      if (companyId) {
-        this.authService.updateCompanyLogoUrl(companyId, company.logoUrl);
-      }
-    }
 
     const address = company.address;
     if (address) {

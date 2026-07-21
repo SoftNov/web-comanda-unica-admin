@@ -3,6 +3,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { AccountsService } from '../../../shared/services/accounts.service';
 import { CookieService } from '../../../shared/services/cookie.service';
 
 export interface LoginRequest {
@@ -86,6 +87,7 @@ const SESSION_COOKIE = 'cu_session';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly cookies = inject(CookieService);
+  private readonly accountsService = inject(AccountsService);
   private readonly router = inject(Router);
 
   private readonly session = signal<SessionData | null>(this.readSession());
@@ -119,6 +121,10 @@ export class AuthService {
           companies: response.companies,
           selectedCompanyId: response.companies[0]?.companyId ?? null
         };
+        // Descarta qualquer sessão/cache remanescente de um usuário anterior antes de
+        // gravar a nova, evitando que dados de outra conta vazem para esta sessão.
+        this.cookies.delete(SESSION_COOKIE);
+        this.accountsService.invalidateProfileCache();
         this.persistSession(session);
       })
     );
@@ -138,6 +144,7 @@ export class AuthService {
 
   logout(): void {
     this.cookies.delete(SESSION_COOKIE);
+    this.accountsService.invalidateProfileCache();
     this.session.set(null);
     this.router.navigateByUrl('/entrar');
   }

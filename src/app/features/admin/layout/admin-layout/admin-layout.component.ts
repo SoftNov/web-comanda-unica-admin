@@ -1,4 +1,4 @@
-import { Component, HostListener, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../auth/services/auth.service';
 import { AccountsService } from '../../../../shared/services/accounts.service';
@@ -16,18 +16,19 @@ export class AdminLayoutComponent {
   private readonly accountsService = inject(AccountsService);
   private readonly router = inject(Router);
 
-  readonly menuItems = ADMIN_MENU_ITEMS;
-
   readonly currentUser = this.authService.currentUser;
   readonly companies = this.authService.companies;
   readonly selectedCompany = this.authService.selectedCompany;
+
+  readonly profileCode = computed(() => this.selectedCompany()?.profileCode ?? null);
+  readonly menuItems = computed(() => this.filterMenuByProfile(ADMIN_MENU_ITEMS, this.profileCode()));
 
   readonly isMobileSidebarOpen = signal(false);
   readonly isSidebarCollapsed = signal(false);
   readonly isCompanyMenuOpen = signal(false);
   readonly isUserMenuOpen = signal(false);
   readonly expandedGroups = signal<ReadonlySet<string>>(
-    new Set(this.menuItems.filter((item) => this.isGroupActive(item)).map((item) => item.label))
+    new Set(this.menuItems().filter((item) => this.isGroupActive(item)).map((item) => item.label))
   );
 
   constructor() {
@@ -87,15 +88,25 @@ export class AdminLayoutComponent {
     return (item.children ?? []).some((child) => !!child.route && this.router.url.startsWith(child.route));
   }
 
+  private filterMenuByProfile(items: MenuItem[], profileCode: string | null): MenuItem[] {
+    return items
+      .filter((item) => !item.roles || (!!profileCode && item.roles.includes(profileCode)))
+      .map((item) => (item.children ? { ...item, children: this.filterMenuByProfile(item.children, profileCode) } : item));
+  }
+
   private syncProfileImages(): void {
     this.accountsService.getProfile().subscribe({
       next: (response) => {
         if (response.owner.avatarUrl) {
           this.authService.updateAvatarUrl(response.owner.avatarUrl);
         }
-        if (response.company?.logoUrl) {
-          const companyId = response.company.companyId;
-          this.authService.updateCompanyLogoUrl(companyId, response.company.logoUrl);
+        // companyLogoUrl vem preenchida para qualquer perfil (ao contrário de "company",
+        // que só vem para OWNER/ADMIN), então é sempre essa fonte que deve alimentar o menu.
+        if (response.companyLogoUrl) {
+          const companyId = this.selectedCompany()?.companyId;
+          if (companyId) {
+            this.authService.updateCompanyLogoUrl(companyId, response.companyLogoUrl);
+          }
         }
       },
       error: () => {

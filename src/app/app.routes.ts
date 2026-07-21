@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { profileGuard } from './core/guards/profile.guard';
 
 export const routes: Routes = [
   {
@@ -72,8 +73,8 @@ export const routes: Routes = [
       },
       {
         path: 'funcionarios',
-        loadComponent: () => import('./features/admin/pages/placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
-        data: { title: 'Funcionários' },
+        canActivate: [profileGuard(['ADMIN', 'OWNER', 'MANAGER'])],
+        loadComponent: () => import('./features/admin/pages/employees/employees.component').then((m) => m.EmployeesComponent),
         title: 'Funcionários — Comanda Única'
       },
       {

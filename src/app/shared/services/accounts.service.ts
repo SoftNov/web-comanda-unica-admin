@@ -123,6 +123,10 @@ export interface AccountProfileResponse {
   profileCode: string;
   profileName: string;
   owner: OwnerProfileResponse;
+  // Retornada para qualquer perfil de acesso — usar sempre esta para exibir a logo
+  // no menu/topo, já que "company" (com os demais dados da empresa) só vem
+  // preenchido para OWNER/ADMIN.
+  companyLogoUrl?: string | null;
   company: CompanyProfileResponse | null;
 }
 

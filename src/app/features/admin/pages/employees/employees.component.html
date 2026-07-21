@@ -1,0 +1,262 @@
+<div class="page-header page-header--row">
+  <div>
+    <h1 class="page-title">Funcionários</h1>
+    <p class="page-subtitle">
+      Gerencie os funcionários vinculados a {{ selectedCompany()?.companyName ?? 'sua empresa' }}.
+    </p>
+  </div>
+  <button type="button" class="btn btn--primary" appRipple (click)="openCreateModal()">
+    <span class="material-icons" aria-hidden="true">person_add</span>
+    Novo funcionário
+  </button>
+</div>
+
+@if (isLoadingList()) {
+  <p class="field__hint">Carregando funcionários…</p>
+} @else if (listError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ listError() }}
+  </div>
+} @else {
+  <div class="card table-card">
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>E-mail</th>
+            <th>Telefone</th>
+            <th>Perfil</th>
+            <th>Status</th>
+            <th class="data-table__actions-col">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (employees().length === 0) {
+            <tr>
+              <td colspan="6" class="data-table__empty">Nenhum funcionário encontrado.</td>
+            </tr>
+          }
+          @for (employee of employees(); track employee.employeeId) {
+            <tr>
+              <td>{{ employee.fullName }}</td>
+              <td>{{ employee.email }}</td>
+              <td>{{ formatPhoneDisplay(employee.phone) }}</td>
+              <td>{{ employee.profileName }}</td>
+              <td>
+                <span
+                  class="badge"
+                  [class.badge--success]="employee.status === 'ACTIVE'"
+                  [class.badge--muted]="employee.status !== 'ACTIVE'"
+                >
+                  {{ employee.status === 'ACTIVE' ? 'Ativo' : 'Inativo' }}
+                </span>
+              </td>
+              <td class="data-table__actions-col">
+                <button type="button" class="icon-btn" title="Editar" (click)="openEditModal(employee)">
+                  <span class="material-icons" aria-hidden="true">edit</span>
+                </button>
+                @if (employee.status === 'ACTIVE') {
+                  <button type="button" class="icon-btn icon-btn--danger" title="Desativar" (click)="requestDeactivate(employee)">
+                    <span class="material-icons" aria-hidden="true">block</span>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="pagination__info">{{ totalElements() }} funcionário(s) — {{ pageLabel() }}</span>
+      <div class="pagination__controls">
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="page() === 0" (click)="previousPage()">
+          <span class="material-icons" aria-hidden="true">chevron_left</span>
+          Anterior
+        </button>
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="isLast()" (click)="nextPage()">
+          Próxima
+          <span class="material-icons" aria-hidden="true">chevron_right</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (isModalOpen()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-card card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">{{ modalMode() === 'create' ? 'Novo funcionário' : 'Editar funcionário' }}</h2>
+        <button type="button" class="icon-btn" (click)="closeModal()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <form (submit)="$event.preventDefault(); submitEmployee()" novalidate [formGroup]="employeeForm">
+        <div class="field">
+          <label class="field__label" for="employee-full-name">Nome completo</label>
+          <div class="field__control">
+            <input
+              id="employee-full-name"
+              type="text"
+              class="field__input"
+              [class.field__input--invalid]="employeeForm.controls.fullName.invalid && employeeForm.controls.fullName.touched"
+              formControlName="fullName"
+              placeholder="Nome e sobrenome"
+              autocomplete="name"
+            >
+          </div>
+          @if (employeeForm.controls.fullName.invalid && employeeForm.controls.fullName.touched) {
+            <span class="field__error">Informe o nome completo (nome e sobrenome).</span>
+          }
+        </div>
+
+        @if (modalMode() === 'create') {
+          <div class="field">
+            <label class="field__label" for="employee-cpf">CPF</label>
+            <div class="field__control">
+              <input
+                id="employee-cpf"
+                type="text"
+                inputmode="numeric"
+                class="field__input"
+                [class.field__input--invalid]="employeeForm.controls.cpf.invalid && employeeForm.controls.cpf.touched"
+                formControlName="cpf"
+                placeholder="000.000.000-00"
+                maxlength="14"
+                (input)="onCpfInput($event)"
+              >
+            </div>
+            @if (employeeForm.controls.cpf.invalid && employeeForm.controls.cpf.touched) {
+              <span class="field__error">Informe um CPF válido.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="employee-email">E-mail</label>
+            <div class="field__control">
+              <input
+                id="employee-email"
+                type="email"
+                class="field__input"
+                [class.field__input--invalid]="employeeForm.controls.email.invalid && employeeForm.controls.email.touched"
+                formControlName="email"
+                placeholder="email@exemplo.com"
+                autocomplete="email"
+              >
+            </div>
+            @if (employeeForm.controls.email.invalid && employeeForm.controls.email.touched) {
+              <span class="field__error">Informe um e-mail válido.</span>
+            }
+          </div>
+        }
+
+        <div class="field">
+          <label class="field__label" for="employee-phone">Telefone</label>
+          <div class="field__control">
+            <input
+              id="employee-phone"
+              type="tel"
+              inputmode="numeric"
+              class="field__input"
+              [class.field__input--invalid]="employeeForm.controls.phone.invalid && employeeForm.controls.phone.touched"
+              formControlName="phone"
+              placeholder="(00) 00000-0000"
+              maxlength="15"
+              autocomplete="tel"
+              (input)="onPhoneInput($event)"
+            >
+          </div>
+          @if (employeeForm.controls.phone.invalid && employeeForm.controls.phone.touched) {
+            <span class="field__error">Informe um telefone válido.</span>
+          }
+        </div>
+
+        @if (modalMode() === 'create') {
+          <div class="field">
+            <label class="field__label" for="employee-password">Senha inicial</label>
+            <div class="field__control">
+              <input
+                id="employee-password"
+                type="password"
+                class="field__input"
+                [class.field__input--invalid]="employeeForm.controls.password.invalid && employeeForm.controls.password.touched"
+                formControlName="password"
+                placeholder="Mínimo 6 caracteres"
+                autocomplete="new-password"
+              >
+            </div>
+            @if (employeeForm.controls.password.invalid && employeeForm.controls.password.touched) {
+              <span class="field__error">A senha deve ter ao menos 6 caracteres, com letras e números.</span>
+            }
+          </div>
+        }
+
+        <div class="field">
+          <label class="field__label" for="employee-profile">Perfil de acesso</label>
+          <div class="field__control">
+            <select
+              id="employee-profile"
+              class="field__input"
+              [class.field__input--invalid]="employeeForm.controls.profileId.invalid && employeeForm.controls.profileId.touched"
+              formControlName="profileId"
+            >
+              <option value="" disabled>Selecione um perfil</option>
+              @for (profile of profileOptions(); track profile.id) {
+                <option [value]="profile.id">{{ profile.name }}</option>
+              }
+            </select>
+          </div>
+          @if (isLoadingProfiles()) {
+            <span class="field__hint">Carregando perfis…</span>
+          }
+          @if (employeeForm.controls.profileId.invalid && employeeForm.controls.profileId.touched) {
+            <span class="field__error">Selecione um perfil de acesso.</span>
+          }
+        </div>
+
+        @if (formError()) {
+          <div class="form-alert form-alert--error" role="alert">
+            <span class="material-icons" aria-hidden="true">error_outline</span>
+            {{ formError() }}
+          </div>
+        }
+
+        <div class="step-actions">
+          <button type="submit" class="btn btn--primary" appRipple [disabled]="isSubmitting()">
+            {{ isSubmitting() ? 'Salvando…' : 'Salvar' }}
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="closeModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+@if (employeeToDeactivate(); as employee) {
+  <div class="modal-backdrop" (click)="cancelDeactivate()">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <h2 class="step-heading">Desativar funcionário</h2>
+      <p class="field__hint">
+        Tem certeza que deseja desativar <strong>{{ employee.fullName }}</strong>? O acesso ao sistema será bloqueado imediatamente.
+      </p>
+
+      @if (deactivateError()) {
+        <div class="form-alert form-alert--error" role="alert">
+          <span class="material-icons" aria-hidden="true">error_outline</span>
+          {{ deactivateError() }}
+        </div>
+      }
+
+      <div class="step-actions">
+        <button type="button" class="btn btn--danger" [disabled]="isDeactivating()" (click)="confirmDeactivate()">
+          {{ isDeactivating() ? 'Desativando…' : 'Desativar' }}
+        </button>
+        <button type="button" class="btn btn--ghost" (click)="cancelDeactivate()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+}
