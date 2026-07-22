@@ -1,0 +1,399 @@
+:host {
+  display: block;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-header--row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: 1.75rem;
+  color: var(--color-text);
+}
+
+.page-subtitle {
+  margin-top: 8px;
+  font-size: 1rem;
+}
+
+.field__hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+// --- Abas -------------------------------------------------------------
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tabs__item {
+  padding: 10px 18px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+
+  &:hover {
+    color: var(--color-text);
+  }
+}
+
+.tabs__item--active {
+  color: var(--color-text);
+  border-bottom-color: var(--color-primary, #6366f1);
+}
+
+// --- Filtros ------------------------------------------------------------
+.filters-card {
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.filters-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  .field {
+    min-width: 160px;
+  }
+}
+
+.filters-row__search {
+  flex: 1;
+  min-width: 220px;
+}
+
+.filters-row__sort {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.filters-row__reset {
+  align-self: center;
+}
+
+// --- Cards de mesa --------------------------------------------------------
+.tables-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.table-item {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.table-item__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.table-item__number {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  color: var(--color-text);
+
+  .material-icons {
+    font-size: 20px;
+    color: var(--color-text-muted);
+  }
+}
+
+.table-item__name {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.table-item__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 0.8125rem;
+  }
+
+  dt {
+    color: var(--color-text-muted);
+  }
+
+  dd {
+    margin: 0;
+    color: var(--color-text);
+    font-weight: 600;
+  }
+}
+
+.table-item__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+
+.qr-preview {
+  display: flex;
+  justify-content: center;
+  padding: 16px 0;
+
+  img {
+    max-width: 220px;
+    width: 100%;
+    border-radius: var(--radius-sm);
+    background: #fff;
+    padding: 8px;
+  }
+}
+
+// --- Tabela de setores --------------------------------------------------
+.table-card {
+  padding: 8px 0 0;
+  overflow: hidden;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+
+  th,
+  td {
+    padding: 14px 20px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  thead th {
+    color: var(--color-text-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--color-border);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+  }
+}
+
+.data-table__actions-col {
+  text-align: right;
+}
+
+.data-table__empty {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 32px 20px;
+  white-space: normal;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.badge--success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.badge--muted {
+  background: rgba(203, 213, 225, 0.12);
+  color: var(--color-text-muted);
+}
+
+.badge--warning {
+  background: rgba(250, 204, 21, 0.14);
+  color: #facc15;
+}
+
+.badge--danger {
+  background: rgba(248, 113, 113, 0.14);
+  color: #f87171;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+
+  .material-icons {
+    font-size: 20px;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-text);
+  }
+
+  & + & {
+    margin-left: 4px;
+  }
+}
+
+.icon-btn--danger:hover {
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+}
+
+.pagination-card {
+  padding: 0;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+}
+
+.pagination__info {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.pagination__controls {
+  display: flex;
+  gap: 8px;
+}
+
+// --- Modais -----------------------------------------------------------
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 8, 20, 0.64);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 640px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 32px;
+}
+
+.modal-card--sm {
+  max-width: 420px;
+}
+
+.modal-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.step-heading {
+  margin-top: 0;
+  font-size: 1.0625rem;
+  color: var(--color-text);
+}
+
+.field__row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  .field {
+    flex: 1;
+    min-width: 180px;
+  }
+}
+
+.field__control--with-action {
+  display: flex;
+  gap: 8px;
+
+  select {
+    flex: 1;
+  }
+}
+
+.step-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+
+.btn--danger {
+  background: #f87171;
+  color: #2a0a0a;
+
+  &:hover {
+    filter: brightness(1.08);
+    transform: translateY(-2px);
+  }
+}
+
+select.field__input {
+  appearance: none;
+  cursor: pointer;
+}

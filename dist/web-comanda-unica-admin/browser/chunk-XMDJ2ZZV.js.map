@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/shared/services/cep.service.ts"],
+  "sourcesContent": ["import { HttpClient } from '@angular/common/http';\nimport { Injectable, inject } from '@angular/core';\nimport { Observable, map } from 'rxjs';\nimport { onlyDigits } from '../utils/br-format.util';\n\nexport interface CepAddress {\n  street: string;\n  neighborhood: string;\n  city: string;\n  state: string;\n}\n\ninterface ViaCepResponse {\n  logradouro: string;\n  bairro: string;\n  localidade: string;\n  uf: string;\n  erro?: boolean;\n}\n\n@Injectable({ providedIn: 'root' })\nexport class CepService {\n  private readonly http = inject(HttpClient);\n\n  lookup(cep: string): Observable<CepAddress | null> {\n    const digits = onlyDigits(cep);\n    return this.http.get<ViaCepResponse>(`https://viacep.com.br/ws/${digits}/json/`).pipe(\n      map((response) => {\n        if (!response || response.erro) {\n          return null;\n        }\n        return {\n          street: response.logradouro,\n          neighborhood: response.bairro,\n          city: response.localidade,\n          state: response.uf\n        };\n      })\n    );\n  }\n}\n"],
+  "mappings": ";;;;;;;;;;;AAqBM,IAAO,aAAP,MAAO,YAAU;EACJ,OAAO,OAAO,UAAU;EAEzC,OAAO,KAAW;AAChB,UAAM,SAAS,WAAW,GAAG;AAC7B,WAAO,KAAK,KAAK,IAAoB,4BAA4B,MAAM,QAAQ,EAAE,KAC/E,IAAI,CAAC,aAAY;AACf,UAAI,CAAC,YAAY,SAAS,MAAM;AAC9B,eAAO;MACT;AACA,aAAO;QACL,QAAQ,SAAS;QACjB,cAAc,SAAS;QACvB,MAAM,SAAS;QACf,OAAO,SAAS;;IAEpB,CAAC,CAAC;EAEN;;qCAlBW,aAAU;EAAA;4EAAV,aAAU,SAAV,YAAU,WAAA,YADG,OAAM,CAAA;;",
+  "names": []
+}

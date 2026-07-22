@@ -33,6 +33,24 @@ export function formatCEP(value: string): string {
     .replace(/(\d{5})(\d{1,3})$/, '$1-$2');
 }
 
+// Máscara de valor monetário (BRL): os últimos 2 dígitos digitados são sempre os centavos,
+// ex: "1234" -> "R$ 12,34". Usada nos campos de preço para digitação livre estilo caixa eletrônico.
+export function formatCurrencyInput(value: string | null | undefined): string {
+  const digits = onlyDigits(value).replace(/^0+(?=\d)/, '');
+  if (!digits) {
+    return '';
+  }
+  const cents = digits.padStart(3, '0');
+  const integerPart = cents.slice(0, -2).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  const decimalPart = cents.slice(-2);
+  return `R$ ${integerPart},${decimalPart}`;
+}
+
+export function parseCurrencyInput(value: string | null | undefined): number | null {
+  const digits = onlyDigits(value);
+  return digits ? Number(digits) / 100 : null;
+}
+
 export function isValidCPF(value: string): boolean {
   const cpf = onlyDigits(value);
   if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) {

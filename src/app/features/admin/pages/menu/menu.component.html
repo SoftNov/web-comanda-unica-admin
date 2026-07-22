@@ -1,0 +1,640 @@
+<div class="page-header page-header--row">
+  <div>
+    <h1 class="page-title">Cardápio</h1>
+    <p class="page-subtitle">
+      Gerencie os produtos e categorias do cardápio de {{ selectedCompany()?.companyName ?? 'sua empresa' }}.
+    </p>
+  </div>
+  @if (activeTab() === 'produtos') {
+    <button type="button" class="btn btn--primary" appRipple (click)="openCreateItemModal()">
+      <span class="material-icons" aria-hidden="true">add</span>
+      Novo produto
+    </button>
+  } @else {
+    <button type="button" class="btn btn--primary" appRipple (click)="openCreateCategoryModal()">
+      <span class="material-icons" aria-hidden="true">add</span>
+      Nova categoria
+    </button>
+  }
+</div>
+
+<div class="tabs">
+  <button type="button" class="tabs__item" [class.tabs__item--active]="activeTab() === 'produtos'" (click)="setActiveTab('produtos')">
+    Produtos
+  </button>
+  <button type="button" class="tabs__item" [class.tabs__item--active]="activeTab() === 'categorias'" (click)="setActiveTab('categorias')">
+    Categorias
+  </button>
+</div>
+
+@if (activeTab() === 'produtos') {
+  <div class="card filters-card">
+    <div class="filters-row">
+      <div class="field">
+        <label class="field__label" for="filter-category">Categoria</label>
+        <div class="field__control">
+          <select id="filter-category" class="field__input" [value]="filterCategoryId()" (change)="setCategoryFilter($any($event.target).value)">
+            <option value="">Todas</option>
+            @for (category of categories(); track category.id) {
+              <option [value]="category.id">{{ category.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="filter-active">Status</label>
+        <div class="field__control">
+          <select id="filter-active" class="field__input" [value]="filterActive()" (change)="setActiveFilter($any($event.target).value)">
+            <option value="all">Todos</option>
+            <option value="true">Ativo</option>
+            <option value="false">Inativo</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="filter-available">Disponibilidade</label>
+        <div class="field__control">
+          <select id="filter-available" class="field__input" [value]="filterAvailable()" (change)="setAvailableFilter($any($event.target).value)">
+            <option value="all">Todas</option>
+            <option value="true">Disponível</option>
+            <option value="false">Indisponível</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="filter-sort">Ordenar por</label>
+        <div class="field__control filters-row__sort">
+          <select id="filter-sort" class="field__input" [value]="sortBy()" (change)="setSortBy($any($event.target).value)">
+            @for (option of sortOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+          <button type="button" class="icon-btn" [title]="sortDirection() === 'ASC' ? 'Crescente' : 'Decrescente'" (click)="toggleSortDirection()">
+            <span class="material-icons" aria-hidden="true">{{ sortDirection() === 'ASC' ? 'arrow_upward' : 'arrow_downward' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="field filters-row__search">
+        <label class="field__label" for="filter-search">Buscar por nome</label>
+        <div class="field__control">
+          <input id="filter-search" type="text" class="field__input" placeholder="Nome do produto" [value]="searchName()" (input)="onSearchInput($event)">
+        </div>
+      </div>
+
+      <button type="button" class="btn btn--ghost btn--sm filters-row__reset" (click)="resetFilters()">
+        <span class="material-icons" aria-hidden="true">filter_alt_off</span>
+        Limpar filtros
+      </button>
+    </div>
+  </div>
+
+  @if (isLoadingList()) {
+    <p class="field__hint">Carregando produtos…</p>
+  } @else if (listError()) {
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      {{ listError() }}
+    </div>
+  } @else {
+    <div class="card table-card">
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Imagem</th>
+              <th>Nome</th>
+              <th>Categoria</th>
+              <th>Preço</th>
+              <th>Status</th>
+              <th>Disponibilidade</th>
+              <th>Destaque</th>
+              <th class="data-table__actions-col">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (items().length === 0) {
+              <tr>
+                <td colspan="8" class="data-table__empty">Nenhum produto encontrado.</td>
+              </tr>
+            }
+            @for (item of items(); track item.id) {
+              <tr>
+                <td>
+                  @if (item.imageUrl) {
+                    <img class="item-thumb" [src]="item.imageUrl" [alt]="item.name">
+                  } @else {
+                    <span class="item-thumb item-thumb--placeholder material-icons" aria-hidden="true">restaurant</span>
+                  }
+                </td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.categoryName }}</td>
+                <td>
+                  @if (isPromotionActive(item)) {
+                    <span class="price-old">{{ formatCurrency(item.price) }}</span>
+                    <span class="price-promo">{{ formatCurrency(item.promotionalPrice) }}</span>
+                  } @else {
+                    {{ formatCurrency(item.price) }}
+                  }
+                </td>
+                <td>
+                  <button type="button" class="badge-btn" (click)="toggleStatus(item)" title="Alternar status">
+                    <span class="badge" [class.badge--success]="item.active" [class.badge--muted]="!item.active">
+                      {{ item.active ? 'Ativo' : 'Inativo' }}
+                    </span>
+                  </button>
+                </td>
+                <td>
+                  <button type="button" class="badge-btn" (click)="toggleAvailability(item)" title="Alternar disponibilidade">
+                    <span class="badge" [class.badge--success]="item.available" [class.badge--muted]="!item.available">
+                      {{ item.available ? 'Disponível' : 'Indisponível' }}
+                    </span>
+                  </button>
+                </td>
+                <td>
+                  <button type="button" class="icon-btn" [class.icon-btn--highlight]="item.highlight" title="Alternar destaque" (click)="toggleHighlight(item)">
+                    <span class="material-icons" aria-hidden="true">{{ item.highlight ? 'star' : 'star_border' }}</span>
+                  </button>
+                </td>
+                <td class="data-table__actions-col">
+                  <button type="button" class="icon-btn" title="Editar" (click)="openEditItemModal(item)">
+                    <span class="material-icons" aria-hidden="true">edit</span>
+                  </button>
+                  <button type="button" class="icon-btn icon-btn--danger" title="Excluir" (click)="requestDeleteItem(item)">
+                    <span class="material-icons" aria-hidden="true">delete_outline</span>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <span class="pagination__info">{{ totalElements() }} produto(s) — {{ pageLabel() }}</span>
+        <div class="pagination__controls">
+          <button type="button" class="btn btn--ghost btn--sm" [disabled]="page() === 0" (click)="previousPage()">
+            <span class="material-icons" aria-hidden="true">chevron_left</span>
+            Anterior
+          </button>
+          <button type="button" class="btn btn--ghost btn--sm" [disabled]="isLast()" (click)="nextPage()">
+            Próxima
+            <span class="material-icons" aria-hidden="true">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+} @else {
+  @if (isLoadingCategories()) {
+    <p class="field__hint">Carregando categorias…</p>
+  } @else if (categoriesError()) {
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      {{ categoriesError() }}
+    </div>
+  } @else {
+    <div class="card table-card">
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Categoria</th>
+              <th>Ordem</th>
+              <th>Status</th>
+              <th class="data-table__actions-col">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (categories().length === 0) {
+              <tr>
+                <td colspan="4" class="data-table__empty">Nenhuma categoria cadastrada.</td>
+              </tr>
+            }
+            @for (category of categories(); track category.id) {
+              <tr>
+                <td>
+                  <span class="category-chip">
+                    <span class="category-chip__dot" [style.background]="category.color || 'var(--color-border)'"></span>
+                    <span class="material-icons" aria-hidden="true">{{ category.icon || 'restaurant' }}</span>
+                    {{ category.name }}
+                  </span>
+                </td>
+                <td>{{ category.displayOrder }}</td>
+                <td>
+                  <span class="badge" [class.badge--success]="category.active" [class.badge--muted]="!category.active">
+                    {{ category.active ? 'Ativo' : 'Inativo' }}
+                  </span>
+                </td>
+                <td class="data-table__actions-col">
+                  <button type="button" class="icon-btn" title="Editar" (click)="openEditCategoryModal(category)">
+                    <span class="material-icons" aria-hidden="true">edit</span>
+                  </button>
+                  <button type="button" class="icon-btn icon-btn--danger" title="Excluir" (click)="requestDeleteCategory(category)">
+                    <span class="material-icons" aria-hidden="true">delete_outline</span>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+}
+
+@if (isItemModalOpen()) {
+  <div class="modal-backdrop" (click)="closeItemModal()">
+    <div class="modal-card card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">{{ itemModalMode() === 'create' ? 'Novo produto' : 'Editar produto' }}</h2>
+        <button type="button" class="icon-btn" (click)="closeItemModal()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <form (submit)="$event.preventDefault(); submitItem()" novalidate [formGroup]="itemForm">
+        <h3 class="form-section-title">Dados básicos</h3>
+
+        <div class="field">
+          <label class="field__label" for="item-category">Categoria</label>
+          <div class="field__control field__control--with-action">
+            <select
+              id="item-category"
+              class="field__input"
+              [class.field__input--invalid]="itemForm.controls.categoryId.invalid && itemForm.controls.categoryId.touched"
+              formControlName="categoryId"
+            >
+              <option value="" disabled>Selecione uma categoria</option>
+              @for (category of categories(); track category.id) {
+                <option [value]="category.id">{{ category.name }}</option>
+              }
+            </select>
+            <button type="button" class="btn btn--ghost btn--sm" (click)="openCreateCategoryModal(true)">
+              <span class="material-icons" aria-hidden="true">add</span>
+              Nova
+            </button>
+          </div>
+          @if (itemForm.controls.categoryId.invalid && itemForm.controls.categoryId.touched) {
+            <span class="field__error">Selecione uma categoria.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="item-name">Nome</label>
+          <div class="field__control">
+            <input
+              id="item-name"
+              type="text"
+              class="field__input"
+              [class.field__input--invalid]="itemForm.controls.name.invalid && itemForm.controls.name.touched"
+              formControlName="name"
+              placeholder="Nome do produto"
+            >
+          </div>
+          @if (itemForm.controls.name.invalid && itemForm.controls.name.touched) {
+            <span class="field__error">Informe um nome entre 2 e 150 caracteres.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="item-description">Descrição</label>
+          <div class="field__control">
+            <textarea id="item-description" class="field__input" rows="3" formControlName="description" placeholder="Descrição do produto (opcional)"></textarea>
+          </div>
+        </div>
+
+        <h3 class="form-section-title">Preço</h3>
+
+        <div class="field__row">
+          <div class="field">
+            <label class="field__label" for="item-price">Preço</label>
+            <div class="field__control">
+              <input
+                id="item-price"
+                type="text"
+                inputmode="decimal"
+                class="field__input"
+                [class.field__input--invalid]="itemForm.controls.price.invalid && itemForm.controls.price.touched"
+                formControlName="price"
+                placeholder="R$ 0,00"
+                (input)="onPriceInput($event)"
+              >
+            </div>
+            @if (itemForm.controls.price.invalid && itemForm.controls.price.touched) {
+              <span class="field__error">Informe um preço válido.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="item-promotional-price">Preço promocional</label>
+            <div class="field__control">
+              <input
+                id="item-promotional-price"
+                type="text"
+                inputmode="decimal"
+                class="field__input"
+                formControlName="promotionalPrice"
+                placeholder="Opcional"
+                (input)="onPromotionalPriceInput($event)"
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="field__row">
+          <div class="field">
+            <label class="field__label" for="item-promotion-start">Início da promoção</label>
+            <div class="field__control">
+              <input id="item-promotion-start" type="datetime-local" class="field__input" formControlName="promotionStart">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="item-promotion-end">Fim da promoção</label>
+            <div class="field__control">
+              <input id="item-promotion-end" type="datetime-local" class="field__input" formControlName="promotionEnd">
+            </div>
+          </div>
+        </div>
+
+        <h3 class="form-section-title">Características</h3>
+
+        <div class="field__row field__row--checkboxes">
+          <label class="field__checkbox"><input type="checkbox" formControlName="highlight"> Destaque</label>
+          <label class="field__checkbox"><input type="checkbox" formControlName="newItem"> Novidade</label>
+          <label class="field__checkbox"><input type="checkbox" formControlName="spicy"> Picante</label>
+          <label class="field__checkbox"><input type="checkbox" formControlName="vegan"> Vegano</label>
+          <label class="field__checkbox"><input type="checkbox" formControlName="vegetarian"> Vegetariano</label>
+          <label class="field__checkbox"><input type="checkbox" formControlName="lactoseFree"> Sem lactose</label>
+          <label class="field__checkbox"><input type="checkbox" formControlName="glutenFree"> Sem glúten</label>
+          <label class="field__checkbox"><input type="checkbox" formControlName="alcoholic"> Alcoólico</label>
+        </div>
+
+        <h3 class="form-section-title">Dados extras</h3>
+
+        <div class="field__row">
+          <div class="field">
+            <label class="field__label" for="item-calories">Calorias</label>
+            <div class="field__control">
+              <input id="item-calories" type="number" min="0" class="field__input" formControlName="calories" placeholder="Opcional">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="item-weight">Peso (kg)</label>
+            <div class="field__control">
+              <input id="item-weight" type="number" step="0.01" min="0" class="field__input" formControlName="weight" placeholder="Opcional">
+            </div>
+          </div>
+        </div>
+
+        <div class="field__row">
+          <div class="field">
+            <label class="field__label" for="item-kitchen-sector">Setor de produção</label>
+            <div class="field__control">
+              <select id="item-kitchen-sector" class="field__input" formControlName="kitchenSector">
+                <option value="">Selecione um setor</option>
+                @for (option of kitchenSectorOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="item-display-order">Ordem de exibição</label>
+            <div class="field__control">
+              <input id="item-display-order" type="number" min="0" class="field__input" formControlName="displayOrder" placeholder="0">
+            </div>
+          </div>
+        </div>
+
+        <h3 class="form-section-title">Status</h3>
+
+        <div class="field__row">
+          <label class="field__checkbox"><input type="checkbox" formControlName="active"> Ativo</label>
+          <label class="field__checkbox"><input type="checkbox" formControlName="available"> Disponível para venda</label>
+        </div>
+
+        @if (itemModalMode() === 'edit' && editingItem(); as item) {
+          <h3 class="form-section-title">Galeria de imagens</h3>
+
+          <div class="gallery">
+            @for (image of item.images; track image.id) {
+              <div class="gallery__item">
+                <img [src]="image.imageUrl" [alt]="item.name">
+                <button type="button" class="icon-btn icon-btn--danger gallery__remove" title="Remover imagem" (click)="removeImage(image.id)">
+                  <span class="material-icons" aria-hidden="true">close</span>
+                </button>
+              </div>
+            }
+            @if (item.images.length === 0) {
+              <p class="field__hint">Nenhuma imagem cadastrada.</p>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="item-image-upload">Adicionar imagem</label>
+            <div class="field__control">
+              <input id="item-image-upload" type="file" class="field__input" accept="image/png,image/jpeg,image/webp" [disabled]="isUploadingImage()" (change)="onImageFileSelected($event)">
+            </div>
+            @if (isUploadingImage()) {
+              <span class="field__hint">Enviando imagem…</span>
+            }
+            @if (imageError()) {
+              <span class="field__error">{{ imageError() }}</span>
+            }
+          </div>
+        }
+
+        @if (itemFormError()) {
+          <div class="form-alert form-alert--error" role="alert">
+            <span class="material-icons" aria-hidden="true">error_outline</span>
+            {{ itemFormError() }}
+          </div>
+        }
+
+        <div class="step-actions">
+          <button type="submit" class="btn btn--primary" appRipple [disabled]="isSubmittingItem()">
+            {{ isSubmittingItem() ? 'Salvando…' : 'Salvar' }}
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="closeItemModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+@if (isCategoryModalOpen()) {
+  <div class="modal-backdrop" (click)="closeCategoryModal()">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">{{ categoryModalMode() === 'create' ? 'Nova categoria' : 'Editar categoria' }}</h2>
+        <button type="button" class="icon-btn" (click)="closeCategoryModal()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <form (submit)="$event.preventDefault(); submitCategory()" novalidate [formGroup]="categoryForm">
+        <div class="field">
+          <label class="field__label" for="category-name">Nome</label>
+          <div class="field__control">
+            <input
+              id="category-name"
+              type="text"
+              class="field__input"
+              [class.field__input--invalid]="categoryForm.controls.name.invalid && categoryForm.controls.name.touched"
+              formControlName="name"
+              placeholder="Ex: Bebidas, Sobremesas"
+            >
+          </div>
+          @if (categoryForm.controls.name.invalid && categoryForm.controls.name.touched) {
+            <span class="field__error">Informe um nome entre 2 e 100 caracteres.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="category-description">Descrição</label>
+          <div class="field__control">
+            <textarea id="category-description" class="field__input" rows="2" formControlName="description" placeholder="Opcional"></textarea>
+          </div>
+        </div>
+
+        <div class="field__row">
+          <div class="field">
+            <label class="field__label" id="category-icon-label">Ícone</label>
+            <div class="field__control icon-picker">
+              <button
+                type="button"
+                class="icon-picker__trigger"
+                aria-haspopup="true"
+                [attr.aria-expanded]="isIconPickerOpen()"
+                aria-labelledby="category-icon-label"
+                (click)="toggleIconPicker()"
+              >
+                <span class="material-icons" aria-hidden="true">{{ categoryForm.controls.icon.value || 'restaurant' }}</span>
+                <span class="icon-picker__trigger-label">{{ categoryForm.controls.icon.value || 'Selecionar ícone' }}</span>
+                <span class="material-icons icon-picker__chevron" aria-hidden="true">expand_more</span>
+              </button>
+
+              @if (isIconPickerOpen()) {
+                <div class="icon-picker__overlay" (click)="closeIconPicker()"></div>
+                <div class="icon-picker__panel" (click)="$event.stopPropagation()">
+                  <input
+                    type="text"
+                    class="field__input icon-picker__search"
+                    placeholder="Buscar ícone…"
+                    [value]="iconSearchTerm()"
+                    (input)="onIconSearchInput($event)"
+                  >
+                  <div class="icon-picker__grid">
+                    @for (icon of filteredIconOptions(); track icon) {
+                      <button
+                        type="button"
+                        class="icon-picker__option"
+                        [class.icon-picker__option--selected]="categoryForm.controls.icon.value === icon"
+                        [title]="icon"
+                        (click)="selectIcon(icon)"
+                      >
+                        <span class="material-icons" aria-hidden="true">{{ icon }}</span>
+                      </button>
+                    }
+                    @if (filteredIconOptions().length === 0) {
+                      <p class="field__hint icon-picker__empty">Nenhum ícone encontrado.</p>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="category-color">Cor</label>
+            <div class="field__control">
+              <input id="category-color" type="color" class="field__input field__input--color" formControlName="color">
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="category-display-order">Ordem de exibição</label>
+          <div class="field__control">
+            <input id="category-display-order" type="number" min="0" class="field__input" formControlName="displayOrder">
+          </div>
+        </div>
+
+        <div class="field__row">
+          <label class="field__checkbox"><input type="checkbox" formControlName="active"> Ativa</label>
+        </div>
+
+        @if (categoryFormError()) {
+          <div class="form-alert form-alert--error" role="alert">
+            <span class="material-icons" aria-hidden="true">error_outline</span>
+            {{ categoryFormError() }}
+          </div>
+        }
+
+        <div class="step-actions">
+          <button type="submit" class="btn btn--primary" appRipple [disabled]="isSubmittingCategory()">
+            {{ isSubmittingCategory() ? 'Salvando…' : 'Salvar' }}
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="closeCategoryModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+@if (itemToDelete(); as item) {
+  <div class="modal-backdrop" (click)="cancelDeleteItem()">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <h2 class="step-heading">Excluir produto</h2>
+      <p class="field__hint">
+        Tem certeza que deseja excluir <strong>{{ item.name }}</strong>? Esta ação não pode ser desfeita.
+      </p>
+
+      @if (deleteItemError()) {
+        <div class="form-alert form-alert--error" role="alert">
+          <span class="material-icons" aria-hidden="true">error_outline</span>
+          {{ deleteItemError() }}
+        </div>
+      }
+
+      <div class="step-actions">
+        <button type="button" class="btn btn--danger" [disabled]="isDeletingItem()" (click)="confirmDeleteItem()">
+          {{ isDeletingItem() ? 'Excluindo…' : 'Excluir' }}
+        </button>
+        <button type="button" class="btn btn--ghost" (click)="cancelDeleteItem()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (categoryToDelete(); as category) {
+  <div class="modal-backdrop" (click)="cancelDeleteCategory()">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <h2 class="step-heading">Excluir categoria</h2>
+      <p class="field__hint">
+        Tem certeza que deseja excluir <strong>{{ category.name }}</strong>? Esta ação não pode ser desfeita.
+      </p>
+
+      @if (deleteCategoryError()) {
+        <div class="form-alert form-alert--error" role="alert">
+          <span class="material-icons" aria-hidden="true">error_outline</span>
+          {{ deleteCategoryError() }}
+        </div>
+      }
+
+      <div class="step-actions">
+        <button type="button" class="btn btn--danger" [disabled]="isDeletingCategory()" (click)="confirmDeleteCategory()">
+          {{ isDeletingCategory() ? 'Excluindo…' : 'Excluir' }}
+        </button>
+        <button type="button" class="btn btn--ghost" (click)="cancelDeleteCategory()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+}

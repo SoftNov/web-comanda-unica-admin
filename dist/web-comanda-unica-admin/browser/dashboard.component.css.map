@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/admin/pages/dashboard/dashboard.component.scss"],
+  "sourcesContent": [".page-header {\n  margin-bottom: 28px;\n}\n\n.page-title {\n  font-size: 1.75rem;\n  color: var(--color-text);\n}\n\n.page-subtitle {\n  margin-top: 8px;\n  font-size: 1rem;\n}\n\n.stat-grid {\n  display: grid;\n  grid-template-columns: repeat(4, 1fr);\n  gap: 20px;\n\n  @media (max-width: 1024px) {\n    grid-template-columns: repeat(2, 1fr);\n  }\n\n  @media (max-width: 560px) {\n    grid-template-columns: 1fr;\n  }\n}\n\n.stat-card {\n  display: flex;\n  flex-direction: column;\n  gap: 10px;\n  padding: 24px;\n}\n\n.stat-card__icon {\n  color: var(--color-accent-hover);\n  font-size: 22px;\n}\n\n.stat-card__label {\n  font-size: 0.875rem;\n  color: var(--color-text-muted);\n}\n\n.stat-card__value {\n  font-size: 1.75rem;\n  font-weight: 700;\n  color: var(--color-text);\n}\n"],
+  "mappings": ";AAAA,CAAA;AACE,iBAAA;;AAGF,CAAA;AACE,aAAA;AACA,SAAA,IAAA;;AAGF,CAAA;AACE,cAAA;AACA,aAAA;;AAGF,CAAA;AACE,WAAA;AACA,yBAAA,OAAA,CAAA,EAAA;AACA,OAAA;;AAEA,OAAA,CAAA,SAAA,EAAA;AALF,GAAA;AAMI,2BAAA,OAAA,CAAA,EAAA;;;AAGF,OAAA,CAAA,SAAA,EAAA;AATF,GAAA;AAUI,2BAAA;;;AAIJ,CAAA;AACE,WAAA;AACA,kBAAA;AACA,OAAA;AACA,WAAA;;AAGF,CAAA;AACE,SAAA,IAAA;AACA,aAAA;;AAGF,CAAA;AACE,aAAA;AACA,SAAA,IAAA;;AAGF,CAAA;AACE,aAAA;AACA,eAAA;AACA,SAAA,IAAA;;",
+  "names": []
+}

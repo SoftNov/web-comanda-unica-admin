@@ -1,0 +1,502 @@
+<div class="page-header page-header--row">
+  <div>
+    <h1 class="page-title">Mesas</h1>
+    <p class="page-subtitle">
+      Gerencie as mesas e setores do salão de {{ selectedCompany()?.companyName ?? 'sua empresa' }}.
+    </p>
+  </div>
+  @if (activeTab() === 'mesas') {
+    @if (canManageTables()) {
+      <button type="button" class="btn btn--primary" appRipple (click)="openCreateTableModal()">
+        <span class="material-icons" aria-hidden="true">add</span>
+        Nova mesa
+      </button>
+    }
+  } @else {
+    @if (canManageSectors()) {
+      <button type="button" class="btn btn--primary" appRipple (click)="openCreateSectorModal()">
+        <span class="material-icons" aria-hidden="true">add</span>
+        Novo setor
+      </button>
+    }
+  }
+</div>
+
+<div class="tabs">
+  <button type="button" class="tabs__item" [class.tabs__item--active]="activeTab() === 'mesas'" (click)="setActiveTab('mesas')">
+    Mesas
+  </button>
+  <button type="button" class="tabs__item" [class.tabs__item--active]="activeTab() === 'setores'" (click)="setActiveTab('setores')">
+    Setores
+  </button>
+</div>
+
+@if (activeTab() === 'mesas') {
+  <div class="card filters-card">
+    <div class="filters-row">
+      <div class="field">
+        <label class="field__label" for="filter-sector">Setor</label>
+        <div class="field__control">
+          <select id="filter-sector" class="field__input" [value]="filterSectorId()" (change)="setSectorFilter($any($event.target).value)">
+            <option value="">Todos</option>
+            @for (sector of sectors(); track sector.id) {
+              <option [value]="sector.id">{{ sector.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="filter-status">Status</label>
+        <div class="field__control">
+          <select id="filter-status" class="field__input" [value]="filterStatus()" (change)="setStatusFilter($any($event.target).value)">
+            <option value="all">Todas</option>
+            <option value="ACTIVE">Ativas</option>
+            <option value="INACTIVE">Inativas</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="filter-sort">Ordenar por</label>
+        <div class="field__control filters-row__sort">
+          <select id="filter-sort" class="field__input" [value]="sortBy()" (change)="setSortBy($any($event.target).value)">
+            @for (option of sortOptions; track option.value) {
+              <option [value]="option.value">{{ option.label }}</option>
+            }
+          </select>
+          <button type="button" class="icon-btn" [title]="sortDirection() === 'ASC' ? 'Crescente' : 'Decrescente'" (click)="toggleSortDirection()">
+            <span class="material-icons" aria-hidden="true">{{ sortDirection() === 'ASC' ? 'arrow_upward' : 'arrow_downward' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="field filters-row__search">
+        <label class="field__label" for="filter-search">Buscar por número ou nome</label>
+        <div class="field__control">
+          <input id="filter-search" type="text" class="field__input" placeholder="Ex: 12, Varanda" [value]="searchTerm()" (input)="onSearchInput($event)">
+        </div>
+      </div>
+
+      <button type="button" class="btn btn--ghost btn--sm filters-row__reset" (click)="resetFilters()">
+        <span class="material-icons" aria-hidden="true">filter_alt_off</span>
+        Limpar filtros
+      </button>
+    </div>
+  </div>
+
+  @if (isLoadingList()) {
+    <p class="field__hint">Carregando mesas…</p>
+  } @else if (listError()) {
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      {{ listError() }}
+    </div>
+  } @else {
+    <div class="tables-grid">
+      @if (tables().length === 0) {
+        <p class="field__hint">Nenhuma mesa encontrada.</p>
+      }
+      @for (table of tables(); track table.id) {
+        <div class="card table-item">
+          <div class="table-item__header">
+            <div class="table-item__number">
+              <span class="material-icons" aria-hidden="true">table_bar</span>
+              Mesa {{ table.number }}
+            </div>
+            <span class="badge" [class]="tableStatusBadgeClass(table)">{{ tableStatusLabel(table) }}</span>
+          </div>
+
+          @if (table.name) {
+            <p class="table-item__name">{{ table.name }}</p>
+          }
+
+          <dl class="table-item__meta">
+            <div>
+              <dt>Setor</dt>
+              <dd>{{ table.sectorName }}</dd>
+            </div>
+            <div>
+              <dt>Capacidade</dt>
+              <dd>{{ table.capacity }} pessoa(s)</dd>
+            </div>
+            <div>
+              <dt>QR Code</dt>
+              <dd>{{ table.allowQr ? 'Sim' : 'Não' }}</dd>
+            </div>
+          </dl>
+
+          <div class="table-item__actions">
+            <button type="button" class="icon-btn" title="Visualizar QR Code" (click)="openQrModal(table)">
+              <span class="material-icons" aria-hidden="true">qr_code_2</span>
+            </button>
+            <button type="button" class="icon-btn" title="Baixar PNG" (click)="downloadQrCode(table, 'png')">
+              <span class="material-icons" aria-hidden="true">image</span>
+            </button>
+            <button type="button" class="icon-btn" title="Baixar PDF" (click)="downloadQrCode(table, 'pdf')">
+              <span class="material-icons" aria-hidden="true">picture_as_pdf</span>
+            </button>
+            <button type="button" class="icon-btn" title="Imprimir QR Code" (click)="printQrCode(table)">
+              <span class="material-icons" aria-hidden="true">print</span>
+            </button>
+            @if (canManageTables()) {
+              <button type="button" class="icon-btn" title="Regenerar QR Code" (click)="requestRegenerateQr(table)">
+                <span class="material-icons" aria-hidden="true">autorenew</span>
+              </button>
+              <button type="button" class="icon-btn" title="Editar" (click)="openEditTableModal(table)">
+                <span class="material-icons" aria-hidden="true">edit</span>
+              </button>
+              <button type="button" class="icon-btn" [title]="table.status === 'ACTIVE' ? 'Desativar' : 'Ativar'" (click)="toggleTableStatus(table)">
+                <span class="material-icons" aria-hidden="true">{{ table.status === 'ACTIVE' ? 'toggle_on' : 'toggle_off' }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="card pagination-card">
+      <div class="pagination">
+        <span class="pagination__info">{{ totalElements() }} mesa(s) — {{ pageLabel() }}</span>
+        <div class="pagination__controls">
+          <button type="button" class="btn btn--ghost btn--sm" [disabled]="page() === 0" (click)="previousPage()">
+            <span class="material-icons" aria-hidden="true">chevron_left</span>
+            Anterior
+          </button>
+          <button type="button" class="btn btn--ghost btn--sm" [disabled]="isLast()" (click)="nextPage()">
+            Próxima
+            <span class="material-icons" aria-hidden="true">chevron_right</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+} @else {
+  @if (isLoadingSectors()) {
+    <p class="field__hint">Carregando setores…</p>
+  } @else if (sectorsError()) {
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      {{ sectorsError() }}
+    </div>
+  } @else {
+    <div class="card table-card">
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Setor</th>
+              <th>Ordem</th>
+              <th>Status</th>
+              @if (canManageSectors()) {
+                <th class="data-table__actions-col">Ações</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @if (sectors().length === 0) {
+              <tr>
+                <td [attr.colspan]="canManageSectors() ? 4 : 3" class="data-table__empty">Nenhum setor cadastrado.</td>
+              </tr>
+            }
+            @for (sector of sectors(); track sector.id) {
+              <tr>
+                <td>{{ sector.name }}</td>
+                <td>{{ sector.displayOrder }}</td>
+                <td>
+                  <span class="badge" [class.badge--success]="sector.active" [class.badge--muted]="!sector.active">
+                    {{ sector.active ? 'Ativo' : 'Inativo' }}
+                  </span>
+                </td>
+                @if (canManageSectors()) {
+                  <td class="data-table__actions-col">
+                    <button type="button" class="icon-btn" title="Editar" (click)="openEditSectorModal(sector)">
+                      <span class="material-icons" aria-hidden="true">edit</span>
+                    </button>
+                    <button type="button" class="icon-btn icon-btn--danger" title="Excluir" (click)="requestDeleteSector(sector)">
+                      <span class="material-icons" aria-hidden="true">delete_outline</span>
+                    </button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+}
+
+@if (isTableModalOpen()) {
+  <div class="modal-backdrop" (click)="closeTableModal()">
+    <div class="modal-card card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">{{ tableModalMode() === 'create' ? 'Nova mesa' : 'Editar mesa' }}</h2>
+        <button type="button" class="icon-btn" (click)="closeTableModal()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <form (submit)="$event.preventDefault(); submitTable()" novalidate [formGroup]="tableForm">
+        <div class="field__row">
+          <div class="field">
+            <label class="field__label" for="table-number">Número da mesa</label>
+            <div class="field__control">
+              <input
+                id="table-number"
+                type="number"
+                min="1"
+                class="field__input"
+                [class.field__input--invalid]="tableForm.controls.number.invalid && tableForm.controls.number.touched"
+                formControlName="number"
+                placeholder="Ex: 12"
+              >
+            </div>
+            @if (tableForm.controls.number.invalid && tableForm.controls.number.touched) {
+              <span class="field__error">Informe o número da mesa.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="table-name">Nome/Apelido</label>
+            <div class="field__control">
+              <input id="table-name" type="text" class="field__input" formControlName="name" placeholder="Opcional">
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="table-sector">Setor</label>
+          <div class="field__control field__control--with-action">
+            <select
+              id="table-sector"
+              class="field__input"
+              [class.field__input--invalid]="tableForm.controls.sectorId.invalid && tableForm.controls.sectorId.touched"
+              formControlName="sectorId"
+            >
+              <option value="" disabled>Selecione um setor</option>
+              @for (sector of sectors(); track sector.id) {
+                <option [value]="sector.id">{{ sector.name }}</option>
+              }
+            </select>
+            @if (canManageSectors()) {
+              <button type="button" class="btn btn--ghost btn--sm" (click)="openCreateSectorModal(true)">
+                <span class="material-icons" aria-hidden="true">add</span>
+                Novo
+              </button>
+            }
+          </div>
+          @if (tableForm.controls.sectorId.invalid && tableForm.controls.sectorId.touched) {
+            <span class="field__error">Selecione um setor.</span>
+          }
+        </div>
+
+        <div class="field__row">
+          <div class="field">
+            <label class="field__label" for="table-capacity">Capacidade</label>
+            <div class="field__control">
+              <input
+                id="table-capacity"
+                type="number"
+                min="1"
+                class="field__input"
+                [class.field__input--invalid]="tableForm.controls.capacity.invalid && tableForm.controls.capacity.touched"
+                formControlName="capacity"
+                placeholder="Ex: 4"
+              >
+            </div>
+            @if (tableForm.controls.capacity.invalid && tableForm.controls.capacity.touched) {
+              <span class="field__error">Informe a capacidade da mesa.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="table-status">Status inicial</label>
+            <div class="field__control">
+              <select id="table-status" class="field__input" formControlName="status">
+                <option value="ACTIVE">Ativa</option>
+                <option value="INACTIVE">Inativa</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="field__row">
+          <label class="field__checkbox"><input type="checkbox" formControlName="allowQr"> Permite QR Code</label>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="table-notes">Observações</label>
+          <div class="field__control">
+            <textarea id="table-notes" class="field__input" rows="3" formControlName="notes" placeholder="Opcional"></textarea>
+          </div>
+        </div>
+
+        @if (tableFormError()) {
+          <div class="form-alert form-alert--error" role="alert">
+            <span class="material-icons" aria-hidden="true">error_outline</span>
+            {{ tableFormError() }}
+          </div>
+        }
+
+        <div class="step-actions">
+          <button type="submit" class="btn btn--primary" appRipple [disabled]="isSubmittingTable()">
+            {{ isSubmittingTable() ? 'Salvando…' : 'Salvar' }}
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="closeTableModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+@if (isSectorModalOpen()) {
+  <div class="modal-backdrop" (click)="closeSectorModal()">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">{{ sectorModalMode() === 'create' ? 'Novo setor' : 'Editar setor' }}</h2>
+        <button type="button" class="icon-btn" (click)="closeSectorModal()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <form (submit)="$event.preventDefault(); submitSector()" novalidate [formGroup]="sectorForm">
+        <div class="field">
+          <label class="field__label" for="sector-name">Nome</label>
+          <div class="field__control">
+            <input
+              id="sector-name"
+              type="text"
+              class="field__input"
+              [class.field__input--invalid]="sectorForm.controls.name.invalid && sectorForm.controls.name.touched"
+              formControlName="name"
+              placeholder="Ex: Salão, Varanda"
+            >
+          </div>
+          @if (sectorForm.controls.name.invalid && sectorForm.controls.name.touched) {
+            <span class="field__error">Informe um nome entre 2 e 100 caracteres.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="sector-display-order">Ordem de exibição</label>
+          <div class="field__control">
+            <input id="sector-display-order" type="number" min="0" class="field__input" formControlName="displayOrder">
+          </div>
+        </div>
+
+        <div class="field__row">
+          <label class="field__checkbox"><input type="checkbox" formControlName="active"> Ativo</label>
+        </div>
+
+        @if (sectorFormError()) {
+          <div class="form-alert form-alert--error" role="alert">
+            <span class="material-icons" aria-hidden="true">error_outline</span>
+            {{ sectorFormError() }}
+          </div>
+        }
+
+        <div class="step-actions">
+          <button type="submit" class="btn btn--primary" appRipple [disabled]="isSubmittingSector()">
+            {{ isSubmittingSector() ? 'Salvando…' : 'Salvar' }}
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="closeSectorModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+@if (tableToRegenerateQr(); as table) {
+  <div class="modal-backdrop" (click)="cancelRegenerateQr()">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <h2 class="step-heading">Regenerar QR Code</h2>
+      <p class="field__hint">
+        O QR Code atual da <strong>Mesa {{ table.number }}</strong> deixará de funcionar imediatamente. Você precisará imprimir e substituir o QR Code físico da mesa.
+      </p>
+
+      @if (regenerateQrError()) {
+        <div class="form-alert form-alert--error" role="alert">
+          <span class="material-icons" aria-hidden="true">error_outline</span>
+          {{ regenerateQrError() }}
+        </div>
+      }
+
+      <div class="step-actions">
+        <button type="button" class="btn btn--danger" [disabled]="isRegeneratingQr()" (click)="confirmRegenerateQr()">
+          {{ isRegeneratingQr() ? 'Regenerando…' : 'Regenerar' }}
+        </button>
+        <button type="button" class="btn btn--ghost" (click)="cancelRegenerateQr()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (sectorToDelete(); as sector) {
+  <div class="modal-backdrop" (click)="cancelDeleteSector()">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <h2 class="step-heading">Excluir setor</h2>
+      <p class="field__hint">
+        Tem certeza que deseja excluir <strong>{{ sector.name }}</strong>? Esta ação não pode ser desfeita.
+      </p>
+
+      @if (deleteSectorError()) {
+        <div class="form-alert form-alert--error" role="alert">
+          <span class="material-icons" aria-hidden="true">error_outline</span>
+          {{ deleteSectorError() }}
+        </div>
+      }
+
+      <div class="step-actions">
+        <button type="button" class="btn btn--danger" [disabled]="isDeletingSector()" (click)="confirmDeleteSector()">
+          {{ isDeletingSector() ? 'Excluindo…' : 'Excluir' }}
+        </button>
+        <button type="button" class="btn btn--ghost" (click)="cancelDeleteSector()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (qrModalTable(); as table) {
+  <div class="modal-backdrop" (click)="closeQrModal()">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">QR Code — Mesa {{ table.number }}</h2>
+        <button type="button" class="icon-btn" (click)="closeQrModal()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      @if (isLoadingQr()) {
+        <p class="field__hint">Carregando QR Code…</p>
+      } @else if (qrError()) {
+        <div class="form-alert form-alert--error" role="alert">
+          <span class="material-icons" aria-hidden="true">error_outline</span>
+          {{ qrError() }}
+        </div>
+      } @else {
+        @if (qrImageUrl(); as imageUrl) {
+          <div class="qr-preview">
+            <img [src]="imageUrl" [alt]="'QR Code da Mesa ' + table.number">
+          </div>
+          <p class="field__hint">{{ table.publicUrl }}</p>
+        }
+      }
+
+      <div class="step-actions">
+        <button type="button" class="btn btn--ghost btn--sm" (click)="downloadQrCode(table, 'png')">
+          <span class="material-icons" aria-hidden="true">image</span>
+          Baixar PNG
+        </button>
+        <button type="button" class="btn btn--ghost btn--sm" (click)="downloadQrCode(table, 'pdf')">
+          <span class="material-icons" aria-hidden="true">picture_as_pdf</span>
+          Baixar PDF
+        </button>
+        <button type="button" class="btn btn--ghost btn--sm" (click)="printQrCode(table)">
+          <span class="material-icons" aria-hidden="true">print</span>
+          Imprimir
+        </button>
+      </div>
+    </div>
+  </div>
+}

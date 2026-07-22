@@ -15,7 +15,7 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
   { label: 'Dashboard', icon: 'dashboard', route: '/painel/dashboard' },
   { label: 'Comandas', icon: 'receipt_long', route: '/painel/comandas' },
   { label: 'Mesas', icon: 'table_bar', route: '/painel/mesas' },
-  { label: 'Cardápio', icon: 'restaurant_menu', route: '/painel/cardapio' },
+  { label: 'Cardápio', icon: 'restaurant_menu', route: '/painel/cardapio', roles: ['ADMIN', 'OWNER', 'MANAGER'] },
   { label: 'Pedidos', icon: 'point_of_sale', route: '/painel/pedidos' },
   { label: 'Financeiro', icon: 'payments', route: '/painel/financeiro' },
   { label: 'Funcionários', icon: 'groups', route: '/painel/funcionarios', roles: ['ADMIN', 'OWNER', 'MANAGER'] },

@@ -49,14 +49,13 @@ export const routes: Routes = [
       },
       {
         path: 'mesas',
-        loadComponent: () => import('./features/admin/pages/placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
-        data: { title: 'Mesas' },
+        loadComponent: () => import('./features/admin/pages/tables/tables.component').then((m) => m.TablesComponent),
         title: 'Mesas — Comanda Única'
       },
       {
         path: 'cardapio',
-        loadComponent: () => import('./features/admin/pages/placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
-        data: { title: 'Cardápio' },
+        canActivate: [profileGuard(['ADMIN', 'OWNER', 'MANAGER'])],
+        loadComponent: () => import('./features/admin/pages/menu/menu.component').then((m) => m.MenuComponent),
         title: 'Cardápio — Comanda Única'
       },
       {

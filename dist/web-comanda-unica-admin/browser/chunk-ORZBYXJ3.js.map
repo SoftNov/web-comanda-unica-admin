@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/auth/pages/forgot-password/forgot-password.component.ts", "src/app/features/auth/pages/forgot-password/forgot-password.component.html"],
+  "sourcesContent": ["import { Component } from '@angular/core';\nimport { AuthShellComponent } from '../../components/auth-shell/auth-shell.component';\nimport { PasswordResetFlowComponent } from '../../components/password-reset-flow/password-reset-flow.component';\n\n@Component({\n  selector: 'app-forgot-password',\n  standalone: true,\n  imports: [AuthShellComponent, PasswordResetFlowComponent],\n  templateUrl: './forgot-password.component.html',\n  styleUrl: './forgot-password.component.scss'\n})\nexport class ForgotPasswordComponent {}\n", "<app-auth-shell\n  eyebrow=\"Recuperação de acesso\"\n  title=\"Esqueceu sua senha?\"\n  subtitle=\"Vamos te ajudar a criar uma nova senha em poucos passos.\"\n>\n  <app-password-reset-flow />\n</app-auth-shell>\n"],
+  "mappings": ";;;;;;;;;;;;;;;;;;;;;AAWM,IAAO,0BAAP,MAAO,yBAAuB;;qCAAvB,0BAAuB;EAAA;yEAAvB,0BAAuB,WAAA,CAAA,CAAA,qBAAA,CAAA,GAAA,YAAA,MAAA,UAAA,CAAA,6BAAA,GAAA,OAAA,GAAA,MAAA,GAAA,QAAA,CAAA,CAAA,WAAA,+BAAA,SAAA,uBAAA,YAAA,0DAAA,CAAA,GAAA,UAAA,SAAA,iCAAA,IAAA,KAAA;AAAA,QAAA,KAAA,GAAA;ACXpC,MAAA,yBAAA,GAAA,kBAAA,CAAA;AAKE,MAAA,oBAAA,GAAA,yBAAA;AACF,MAAA,uBAAA;;oBDCY,oBAAoB,0BAA0B,GAAA,QAAA,CAAA,yGAAA,EAAA,CAAA;;;6EAI7C,yBAAuB,EAAA,WAAA,2BAAA,UAAA,kFAAA,YAAA,GAAA,CAAA;AAAA,GAAA;",
+  "names": []
+}
