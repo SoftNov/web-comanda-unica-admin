@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/environments/environment.ts"],
+  "sourcesContent": ["export const environment = {\n  production: false,\n  // Relative path: proxied to http://localhost:8080 by proxy.conf.json (ng serve) to avoid CORS in dev.\n  apiBaseUrl: '/comanda-unica-api'\n};\n"],
+  "mappings": ";AAAO,IAAM,cAAc;EACzB,YAAY;;EAEZ,YAAY;;",
+  "names": []
+}

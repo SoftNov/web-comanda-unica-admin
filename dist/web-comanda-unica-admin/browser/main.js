@@ -1,9 +1,10 @@
 import {
   AuthService
-} from "./chunk-TA4FF7VW.js";
+} from "./chunk-JIG4QTYX.js";
+import "./chunk-LADLI4RN.js";
 import {
   environment
-} from "./chunk-MZ4AGMPU.js";
+} from "./chunk-3BRF5UDA.js";
 import {
   ANIMATION_MODULE_TYPE,
   BrowserModule,
@@ -43,7 +44,7 @@ import {
   ɵɵelementStart,
   ɵɵinject,
   ɵɵtext
-} from "./chunk-4IFGYJZR.js";
+} from "./chunk-ZGOR3PJA.js";
 
 // node_modules/@angular/animations/fesm2022/animations.mjs
 var AnimationMetadataType;
@@ -4560,102 +4561,114 @@ function profileGuard(allowedProfileCodes) {
 var routes = [
   {
     path: "",
-    loadComponent: () => import("./chunk-NIAWCIWX.js").then((m) => m.HomeComponent),
+    loadComponent: () => import("./chunk-6UZUOPYM.js").then((m) => m.HomeComponent),
     title: "Comanda \xDAnica \u2014 Comanda digital sem mensalidade para bares e restaurantes"
   },
   {
     path: "entrar",
-    loadComponent: () => import("./chunk-UOCNXFYK.js").then((m) => m.LoginComponent),
+    loadComponent: () => import("./chunk-BNL6J4KU.js").then((m) => m.LoginComponent),
     title: "Entrar \u2014 Comanda \xDAnica"
   },
   {
     path: "recuperar-senha",
-    loadComponent: () => import("./chunk-ORZBYXJ3.js").then((m) => m.ForgotPasswordComponent),
+    loadComponent: () => import("./chunk-LYTA7J2R.js").then((m) => m.ForgotPasswordComponent),
     title: "Recuperar Senha \u2014 Comanda \xDAnica"
   },
   {
     path: "criar-conta",
-    loadComponent: () => import("./chunk-NGMXP7JS.js").then((m) => m.RegisterComponent),
+    loadComponent: () => import("./chunk-5BE35SD4.js").then((m) => m.RegisterComponent),
     title: "Criar Conta \u2014 Comanda \xDAnica"
   },
   {
     path: "ativar-conta/:token",
-    loadComponent: () => import("./chunk-4NISQQ2A.js").then((m) => m.ActivateAccountComponent),
+    loadComponent: () => import("./chunk-WMWKBTA3.js").then((m) => m.ActivateAccountComponent),
     title: "Ativar Conta \u2014 Comanda \xDAnica"
   },
   {
     path: "painel",
     canActivate: [authGuard],
-    loadComponent: () => import("./chunk-DNA4CLUX.js").then((m) => m.AdminLayoutComponent),
+    loadComponent: () => import("./chunk-NWOWKZKU.js").then((m) => m.AdminLayoutComponent),
     children: [
       { path: "", pathMatch: "full", redirectTo: "dashboard" },
       {
         path: "dashboard",
-        loadComponent: () => import("./chunk-YGNP2QPT.js").then((m) => m.DashboardComponent),
+        loadComponent: () => import("./chunk-4HA3VXLP.js").then((m) => m.DashboardComponent),
         title: "Dashboard \u2014 Comanda \xDAnica"
       },
       {
         path: "comandas",
-        loadComponent: () => import("./chunk-AAOHQ4C6.js").then((m) => m.PlaceholderComponent),
+        loadComponent: () => import("./chunk-WZQ6KWR3.js").then((m) => m.PlaceholderComponent),
         data: { title: "Comandas" },
         title: "Comandas \u2014 Comanda \xDAnica"
       },
       {
         path: "mesas",
-        loadComponent: () => import("./chunk-Z4Q2PLPI.js").then((m) => m.TablesComponent),
+        loadComponent: () => import("./chunk-HFUNK4VH.js").then((m) => m.TablesComponent),
         title: "Mesas \u2014 Comanda \xDAnica"
       },
       {
         path: "cardapio",
         canActivate: [profileGuard(["ADMIN", "OWNER", "MANAGER"])],
-        loadComponent: () => import("./chunk-EN4UC3YK.js").then((m) => m.MenuComponent),
+        loadComponent: () => import("./chunk-XV62JCUO.js").then((m) => m.MenuComponent),
         title: "Card\xE1pio \u2014 Comanda \xDAnica"
       },
       {
         path: "pedidos",
-        loadComponent: () => import("./chunk-AAOHQ4C6.js").then((m) => m.PlaceholderComponent),
+        loadComponent: () => import("./chunk-WZQ6KWR3.js").then((m) => m.PlaceholderComponent),
         data: { title: "Pedidos" },
         title: "Pedidos \u2014 Comanda \xDAnica"
       },
       {
         path: "financeiro",
-        loadComponent: () => import("./chunk-AAOHQ4C6.js").then((m) => m.PlaceholderComponent),
+        loadComponent: () => import("./chunk-WZQ6KWR3.js").then((m) => m.PlaceholderComponent),
         data: { title: "Financeiro" },
         title: "Financeiro \u2014 Comanda \xDAnica"
       },
       {
         path: "funcionarios",
         canActivate: [profileGuard(["ADMIN", "OWNER", "MANAGER"])],
-        loadComponent: () => import("./chunk-BEZ5FPW2.js").then((m) => m.EmployeesComponent),
+        loadComponent: () => import("./chunk-66M2GA4K.js").then((m) => m.EmployeesComponent),
         title: "Funcion\xE1rios \u2014 Comanda \xDAnica"
       },
       {
         path: "configuracoes",
-        loadComponent: () => import("./chunk-AAOHQ4C6.js").then((m) => m.PlaceholderComponent),
+        loadComponent: () => import("./chunk-WZQ6KWR3.js").then((m) => m.PlaceholderComponent),
         data: { title: "Configura\xE7\xF5es" },
         title: "Configura\xE7\xF5es \u2014 Comanda \xDAnica"
       },
       {
         path: "configuracoes/perfil",
-        loadComponent: () => import("./chunk-OOU2TDOZ.js").then((m) => m.ProfileComponent),
+        loadComponent: () => import("./chunk-I356AMGP.js").then((m) => m.ProfileComponent),
         title: "Meu Perfil \u2014 Comanda \xDAnica"
       },
       {
         path: "configuracoes/redefinir-senha",
-        loadComponent: () => import("./chunk-RWJWTDXS.js").then((m) => m.SecurityComponent),
+        loadComponent: () => import("./chunk-W7ETJXDQ.js").then((m) => m.SecurityComponent),
         title: "Redefinir Senha \u2014 Comanda \xDAnica"
+      },
+      {
+        path: "configuracoes/mapa-salao",
+        canActivate: [profileGuard(["ADMIN", "OWNER", "MANAGER"])],
+        loadComponent: () => import("./chunk-HDGOSP5U.js").then((m) => m.FloorPlanListComponent),
+        title: "Mapa do Sal\xE3o \u2014 Comanda \xDAnica"
+      },
+      {
+        path: "configuracoes/mapa-salao/:id",
+        canActivate: [profileGuard(["ADMIN", "OWNER", "MANAGER"])],
+        loadComponent: () => import("./chunk-ID6Q4LBD.js").then((m) => m.FloorPlanEditorComponent),
+        title: "Mapa do Sal\xE3o \u2014 Comanda \xDAnica"
       },
       { path: "**", redirectTo: "dashboard" }
     ]
   },
   {
     path: "termos-de-uso",
-    loadComponent: () => import("./chunk-5JG6C4F4.js").then((m) => m.TermsComponent),
+    loadComponent: () => import("./chunk-YQXH5EKV.js").then((m) => m.TermsComponent),
     title: "Termos de Uso \u2014 Comanda \xDAnica"
   },
   {
     path: "politica-de-privacidade",
-    loadComponent: () => import("./chunk-AFADIOZQ.js").then((m) => m.PrivacyComponent),
+    loadComponent: () => import("./chunk-BWSBOKGP.js").then((m) => m.PrivacyComponent),
     title: "Pol\xEDtica de Privacidade \u2014 Comanda \xDAnica"
   }
 ];

@@ -1,0 +1,324 @@
+:host {
+  display: block;
+}
+
+.page-title {
+  font-size: 1.25rem;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.field__hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+// --- Toolbar --------------------------------------------------------------
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+}
+
+.toolbar__title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toolbar__zoom {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.toolbar__zoom-label {
+  min-width: 48px;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.toolbar__save {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.toolbar__status {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.toolbar__status--error {
+  color: #f87171;
+}
+
+.toolbar__status--success {
+  color: var(--color-success);
+}
+
+// --- Layout do editor -------------------------------------------------------
+.editor {
+  display: grid;
+  grid-template-columns: 220px 1fr 260px;
+  gap: 16px;
+  align-items: start;
+}
+
+.sidebar {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-elevated);
+  padding: 16px;
+  max-height: calc(100vh - 180px);
+  overflow-y: auto;
+}
+
+.sidebar__title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin: 0 0 10px;
+
+  &:not(:first-child) {
+    margin-top: 20px;
+  }
+}
+
+// --- Paleta de elementos ------------------------------------------------
+.palette {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.palette__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+  font-size: 0.75rem;
+  text-align: center;
+  cursor: grab;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+
+  .material-icons {
+    font-size: 22px;
+    color: var(--color-text-muted);
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--color-accent);
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+// --- Lista de mesas disponíveis -------------------------------------------
+.table-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.table-list__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  font-size: 0.8125rem;
+
+  .material-icons {
+    font-size: 18px;
+    color: var(--color-text-muted);
+  }
+}
+
+// --- Canvas -----------------------------------------------------------------
+.canvas-viewport {
+  position: relative;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background:
+    linear-gradient(45deg, rgba(255, 255, 255, 0.04) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.04) 75%),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.04) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.04) 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+  min-height: 320px;
+  max-height: calc(100vh - 180px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.canvas-stage {
+  cursor: default;
+}
+
+.canvas-stage--hidden {
+  visibility: hidden;
+}
+
+.canvas-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+
+  .material-icons {
+    font-size: 20px;
+  }
+}
+
+// --- Painel de propriedades ---------------------------------------------------
+.properties {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.properties__readonly {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.properties__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+}
+
+.field__row {
+  display: flex;
+  gap: 12px;
+
+  .field {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.field__input--color {
+  padding: 4px;
+  height: 42px;
+  cursor: pointer;
+}
+
+// --- Botões pequenos --------------------------------------------------------
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+
+  .material-icons {
+    font-size: 20px;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-text);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+
+    &:hover {
+      background: transparent;
+      color: var(--color-text-muted);
+    }
+  }
+}
+
+.icon-btn--danger:hover {
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+}
+
+// --- Modal de seleção de mesa -------------------------------------------------
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 8, 20, 0.64);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 32px;
+}
+
+.step-heading {
+  margin-top: 0;
+  font-size: 1.0625rem;
+  color: var(--color-text);
+}
+
+.step-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+select.field__input {
+  appearance: none;
+  cursor: pointer;
+}
+
+@media (max-width: 1100px) {
+  .editor {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    max-height: none;
+  }
+}

@@ -1,0 +1,148 @@
+<div class="page-header page-header--row">
+  <div>
+    <h1 class="page-title">Mapa do Salão</h1>
+    <p class="page-subtitle">Cadastre os ambientes do estabelecimento e desenhe o layout de cada um.</p>
+  </div>
+  <button type="button" class="btn btn--primary" appRipple (click)="openCreateModal()">
+    <span class="material-icons" aria-hidden="true">add</span>
+    Novo ambiente
+  </button>
+</div>
+
+@if (isLoading()) {
+  <p class="field__hint">Carregando ambientes…</p>
+} @else if (loadError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ loadError() }}
+  </div>
+} @else if (floorPlans().length === 0) {
+  <div class="card empty-state">
+    <span class="material-icons" aria-hidden="true">map</span>
+    <p>Nenhum ambiente cadastrado ainda.</p>
+    <button type="button" class="btn btn--primary" appRipple (click)="openCreateModal()">
+      <span class="material-icons" aria-hidden="true">add</span>
+      Criar primeiro ambiente
+    </button>
+  </div>
+} @else {
+  <div class="floor-plans-grid">
+    @for (floorPlan of floorPlans(); track floorPlan.id) {
+      <div class="card floor-plan-item">
+        <div class="floor-plan-item__preview" [style.background]="floorPlan.backgroundColor || '#f5f5f5'" (click)="openEditor(floorPlan)">
+          <span class="material-icons" aria-hidden="true">map</span>
+        </div>
+        <div class="floor-plan-item__body">
+          <h3 class="floor-plan-item__name">{{ floorPlan.name }}</h3>
+          <p class="field__hint">{{ floorPlan.width }} × {{ floorPlan.height }} px</p>
+        </div>
+        <div class="floor-plan-item__actions">
+          <button type="button" class="btn btn--ghost btn--sm" (click)="openEditor(floorPlan)">
+            <span class="material-icons" aria-hidden="true">edit_location_alt</span>
+            Abrir editor
+          </button>
+          <button type="button" class="icon-btn" title="Editar dados do ambiente" (click)="openEditModal(floorPlan)">
+            <span class="material-icons" aria-hidden="true">edit</span>
+          </button>
+          <button type="button" class="icon-btn icon-btn--danger" title="Excluir ambiente" (click)="requestDelete(floorPlan)">
+            <span class="material-icons" aria-hidden="true">delete_outline</span>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+@if (isModalOpen()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">{{ modalMode() === 'create' ? 'Novo ambiente' : 'Editar ambiente' }}</h2>
+        <button type="button" class="icon-btn" (click)="closeModal()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <form (submit)="$event.preventDefault(); submit()" novalidate [formGroup]="form">
+        <div class="field">
+          <label class="field__label" for="floor-plan-name">Nome</label>
+          <div class="field__control">
+            <input
+              id="floor-plan-name"
+              type="text"
+              class="field__input"
+              [class.field__input--invalid]="form.controls.name.invalid && form.controls.name.touched"
+              formControlName="name"
+              placeholder="Ex: Salão Principal, Varanda"
+            >
+          </div>
+          @if (form.controls.name.invalid && form.controls.name.touched) {
+            <span class="field__error">Informe um nome entre 2 e 100 caracteres.</span>
+          }
+        </div>
+
+        <div class="field__row">
+          <div class="field">
+            <label class="field__label" for="floor-plan-width">Largura (px)</label>
+            <div class="field__control">
+              <input id="floor-plan-width" type="number" min="100" class="field__input" formControlName="width">
+            </div>
+          </div>
+
+          <div class="field">
+            <label class="field__label" for="floor-plan-height">Altura (px)</label>
+            <div class="field__control">
+              <input id="floor-plan-height" type="number" min="100" class="field__input" formControlName="height">
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="floor-plan-color">Cor de fundo</label>
+          <div class="field__control">
+            <input id="floor-plan-color" type="color" class="field__input field__input--color" formControlName="backgroundColor">
+          </div>
+        </div>
+
+        @if (formError()) {
+          <div class="form-alert form-alert--error" role="alert">
+            <span class="material-icons" aria-hidden="true">error_outline</span>
+            {{ formError() }}
+          </div>
+        }
+
+        <div class="step-actions">
+          <button type="submit" class="btn btn--primary" appRipple [disabled]="isSubmitting()">
+            {{ isSubmitting() ? 'Salvando…' : 'Salvar' }}
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="closeModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+@if (floorPlanToDelete(); as floorPlan) {
+  <div class="modal-backdrop" (click)="cancelDelete()">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <h2 class="step-heading">Excluir ambiente</h2>
+      <p class="field__hint">
+        Tem certeza que deseja excluir <strong>{{ floorPlan.name }}</strong>? Todos os objetos desenhados neste ambiente serão excluídos junto (as mesas em si não são afetadas). Esta ação não pode ser desfeita.
+      </p>
+
+      @if (deleteError()) {
+        <div class="form-alert form-alert--error" role="alert">
+          <span class="material-icons" aria-hidden="true">error_outline</span>
+          {{ deleteError() }}
+        </div>
+      }
+
+      <div class="step-actions">
+        <button type="button" class="btn btn--danger" [disabled]="isDeleting()" (click)="confirmDelete()">
+          {{ isDeleting() ? 'Excluindo…' : 'Excluir' }}
+        </button>
+        <button type="button" class="btn btn--ghost" (click)="cancelDelete()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+}

@@ -92,6 +92,20 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/pages/settings/security/security.component').then((m) => m.SecurityComponent),
         title: 'Redefinir Senha — Comanda Única'
       },
+      {
+        path: 'configuracoes/mapa-salao',
+        canActivate: [profileGuard(['ADMIN', 'OWNER', 'MANAGER'])],
+        loadComponent: () =>
+          import('./features/admin/pages/settings/floor-plan/floor-plan-list.component').then((m) => m.FloorPlanListComponent),
+        title: 'Mapa do Salão — Comanda Única'
+      },
+      {
+        path: 'configuracoes/mapa-salao/:id',
+        canActivate: [profileGuard(['ADMIN', 'OWNER', 'MANAGER'])],
+        loadComponent: () =>
+          import('./features/admin/pages/settings/floor-plan/floor-plan-editor.component').then((m) => m.FloorPlanEditorComponent),
+        title: 'Mapa do Salão — Comanda Única'
+      },
       { path: '**', redirectTo: 'dashboard' }
     ]
   },

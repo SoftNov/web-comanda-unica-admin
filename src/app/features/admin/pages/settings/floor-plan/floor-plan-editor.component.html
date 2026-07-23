@@ -1,0 +1,272 @@
+@if (loadError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ loadError() }}
+  </div>
+} @else {
+  <div class="toolbar">
+    <a class="btn btn--ghost btn--sm" routerLink="/painel/configuracoes/mapa-salao">
+      <span class="material-icons" aria-hidden="true">arrow_back</span>
+      Ambientes
+    </a>
+
+    <div class="toolbar__title">
+      <h1 class="page-title">{{ floorPlan()?.name || 'Carregando…' }}</h1>
+      @if (floorPlan(); as plan) {
+        <span class="field__hint">{{ plan.width }} × {{ plan.height }} px</span>
+      }
+    </div>
+
+    <div class="toolbar__zoom">
+      <button type="button" class="icon-btn" title="Diminuir zoom" [disabled]="isLoading()" (click)="zoomOut()">
+        <span class="material-icons" aria-hidden="true">zoom_out</span>
+      </button>
+      <span class="toolbar__zoom-label">{{ zoomPercent() }}%</span>
+      <button type="button" class="icon-btn" title="Aumentar zoom" [disabled]="isLoading()" (click)="zoomIn()">
+        <span class="material-icons" aria-hidden="true">zoom_in</span>
+      </button>
+      <button type="button" class="icon-btn" title="Restaurar zoom" [disabled]="isLoading()" (click)="resetZoom()">
+        <span class="material-icons" aria-hidden="true">center_focus_strong</span>
+      </button>
+    </div>
+
+    <div class="toolbar__save">
+      @if (saveError()) {
+        <span class="toolbar__status toolbar__status--error">{{ saveError() }}</span>
+      } @else if (saveSuccess()) {
+        <span class="toolbar__status toolbar__status--success">Layout salvo.</span>
+      } @else if (isDirty()) {
+        <span class="toolbar__status">Alterações não salvas</span>
+      }
+      <button type="button" class="btn btn--primary" appRipple [disabled]="isLoading() || isSaving() || !isDirty()" (click)="saveLayout()">
+        <span class="material-icons" aria-hidden="true">save</span>
+        {{ isSaving() ? 'Salvando…' : 'Salvar Layout' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="editor">
+    <aside class="sidebar sidebar--left">
+      <h3 class="sidebar__title">Elementos</h3>
+      <div class="palette">
+        @for (entry of palette; track entry.label) {
+          <button
+            type="button"
+            class="palette__item"
+            draggable="true"
+            (dragstart)="onPaletteDragStart($event, entry)"
+            (click)="addFromPaletteClick(entry)"
+            [title]="'Adicionar ' + entry.label"
+          >
+            <span class="material-icons" aria-hidden="true">{{ entry.icon }}</span>
+            {{ entry.label }}
+          </button>
+        }
+      </div>
+
+      <h3 class="sidebar__title">Mesas disponíveis</h3>
+      @if (unplacedTables().length === 0) {
+        <p class="field__hint">Todas as mesas ativas já estão posicionadas neste ambiente.</p>
+      } @else {
+        <ul class="table-list">
+          @for (table of unplacedTables(); track table.id) {
+            <li class="table-list__item">
+              <span class="material-icons" aria-hidden="true">table_bar</span>
+              <span>
+                Mesa {{ table.number }}
+                @if (table.name) {
+                  <span class="field__hint">— {{ table.name }}</span>
+                }
+              </span>
+            </li>
+          }
+        </ul>
+        <p class="field__hint">Arraste "Mesa Quadrada/Redonda/Retangular" acima até o canvas para escolher e posicionar uma destas mesas.</p>
+      }
+    </aside>
+
+    <div class="canvas-viewport">
+      @if (isLoading()) {
+        <div class="canvas-loading">
+          <span class="material-icons" aria-hidden="true">hourglass_empty</span>
+          Carregando ambiente…
+        </div>
+      }
+      <div
+        #canvasContainer
+        class="canvas-stage"
+        [class.canvas-stage--hidden]="isLoading()"
+        (drop)="onCanvasDrop($event)"
+        (dragover)="onCanvasDragOver($event)"
+      ></div>
+    </div>
+
+    <aside class="sidebar sidebar--right">
+      <h3 class="sidebar__title">Propriedades</h3>
+      @if (selectedItem(); as item) {
+        <div class="properties">
+          @if (item.itemType === 'TABLE') {
+            <div class="field">
+              <span class="field__label">Número</span>
+              <p class="properties__readonly">{{ item.tableNumber ?? '—' }}</p>
+            </div>
+            <div class="field">
+              <span class="field__label">Nome</span>
+              <p class="properties__readonly">{{ item.tableName || '—' }}</p>
+            </div>
+            <div class="field__row">
+              <div class="field">
+                <span class="field__label">Capacidade</span>
+                <p class="properties__readonly">{{ item.tableCapacity ?? '—' }}</p>
+              </div>
+              <div class="field">
+                <span class="field__label">Status</span>
+                <p class="properties__readonly">{{ item.tableStatus === 'ACTIVE' ? 'Ativa' : 'Inativa' }}</p>
+              </div>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="prop-shape">Formato</label>
+              <div class="field__control">
+                <select id="prop-shape" class="field__input" [value]="item.properties['shape']" (change)="onShapeFieldChange($any($event.target).value)">
+                  <option value="SQUARE">Quadrada</option>
+                  <option value="ROUND">Redonda</option>
+                  <option value="RECTANGULAR">Retangular</option>
+                </select>
+              </div>
+            </div>
+          } @else if (item.itemType === 'TEXT') {
+            <div class="field">
+              <label class="field__label" for="prop-label">Texto</label>
+              <div class="field__control">
+                <input id="prop-label" type="text" class="field__input" [value]="item.label" (change)="onLabelFieldChange($any($event.target).value)">
+              </div>
+            </div>
+          } @else if (item.itemType === 'IMAGE') {
+            <div class="field">
+              <label class="field__label" for="prop-image-url">URL da imagem</label>
+              <div class="field__control">
+                <input
+                  id="prop-image-url"
+                  type="text"
+                  class="field__input"
+                  [value]="item.properties['imageUrl']"
+                  placeholder="https://…"
+                  (change)="onImageUrlFieldChange($any($event.target).value)"
+                >
+              </div>
+            </div>
+          } @else {
+            <div class="field">
+              <label class="field__label" for="prop-label">Rótulo</label>
+              <div class="field__control">
+                <input id="prop-label" type="text" class="field__input" [value]="item.label" (change)="onLabelFieldChange($any($event.target).value)">
+              </div>
+            </div>
+          }
+
+          <div class="field__row">
+            <div class="field">
+              <label class="field__label" for="prop-x">Posição X</label>
+              <div class="field__control">
+                <input id="prop-x" type="number" class="field__input" [value]="item.x" (change)="onNumberFieldChange('x', $any($event.target).value)">
+              </div>
+            </div>
+            <div class="field">
+              <label class="field__label" for="prop-y">Posição Y</label>
+              <div class="field__control">
+                <input id="prop-y" type="number" class="field__input" [value]="item.y" (change)="onNumberFieldChange('y', $any($event.target).value)">
+              </div>
+            </div>
+          </div>
+
+          <div class="field__row">
+            <div class="field">
+              <label class="field__label" for="prop-width">Largura</label>
+              <div class="field__control">
+                <input id="prop-width" type="number" min="20" class="field__input" [value]="item.width" (change)="onNumberFieldChange('width', $any($event.target).value)">
+              </div>
+            </div>
+            <div class="field">
+              <label class="field__label" for="prop-height">Altura</label>
+              <div class="field__control">
+                <input id="prop-height" type="number" min="20" class="field__input" [value]="item.height" (change)="onNumberFieldChange('height', $any($event.target).value)">
+              </div>
+            </div>
+          </div>
+
+          <div class="field__row">
+            <div class="field">
+              <label class="field__label" for="prop-rotation">Rotação (graus)</label>
+              <div class="field__control">
+                <input id="prop-rotation" type="number" min="0" max="359" class="field__input" [value]="item.rotation" (change)="onNumberFieldChange('rotation', $any($event.target).value)">
+              </div>
+            </div>
+            <div class="field">
+              <label class="field__label" for="prop-color">Cor</label>
+              <div class="field__control">
+                <input id="prop-color" type="color" class="field__input field__input--color" [value]="item.color || '#94a3b8'" (change)="onColorFieldChange($any($event.target).value)">
+              </div>
+            </div>
+          </div>
+
+          <div class="properties__actions">
+            <button type="button" class="icon-btn" [title]="selectedIsLocked() ? 'Desbloquear posição' : 'Bloquear posição'" (click)="toggleLockSelected()">
+              <span class="material-icons" aria-hidden="true">{{ selectedIsLocked() ? 'lock' : 'lock_open' }}</span>
+            </button>
+            <button type="button" class="icon-btn" title="Trazer para frente" (click)="bringToFront()">
+              <span class="material-icons" aria-hidden="true">flip_to_front</span>
+            </button>
+            <button type="button" class="icon-btn" title="Enviar para trás" (click)="sendToBack()">
+              <span class="material-icons" aria-hidden="true">flip_to_back</span>
+            </button>
+            <button
+              type="button"
+              class="icon-btn"
+              title="Duplicar"
+              [disabled]="item.itemType === 'TABLE'"
+              (click)="duplicateSelected()"
+            >
+              <span class="material-icons" aria-hidden="true">content_copy</span>
+            </button>
+            <button type="button" class="icon-btn icon-btn--danger" title="Excluir" (click)="deleteSelected()">
+              <span class="material-icons" aria-hidden="true">delete_outline</span>
+            </button>
+          </div>
+        </div>
+      } @else {
+        <p class="field__hint">Selecione um objeto no canvas para ver e editar suas propriedades.</p>
+      }
+    </aside>
+  </div>
+}
+
+@if (pendingTableDrop()) {
+  <div class="modal-backdrop" (click)="cancelTableDrop()">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <h2 class="step-heading">Selecionar mesa</h2>
+      <p class="field__hint">Escolha qual mesa cadastrada este objeto vai representar no mapa.</p>
+
+      <div class="field">
+        <label class="field__label" for="pending-table">Mesa</label>
+        <div class="field__control">
+          <select id="pending-table" class="field__input" [value]="pendingTableSelection()" (change)="setPendingTableSelection($any($event.target).value)">
+            <option value="" disabled>Selecione uma mesa</option>
+            @for (table of unplacedTables(); track table.id) {
+              <option [value]="table.id">Mesa {{ table.number }}{{ table.name ? ' — ' + table.name : '' }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (unplacedTables().length === 0) {
+        <p class="field__hint">Não há mesas ativas disponíveis para posicionar.</p>
+      }
+
+      <div class="step-actions">
+        <button type="button" class="btn btn--primary" [disabled]="!pendingTableSelection()" (click)="confirmTableDrop()">Adicionar</button>
+        <button type="button" class="btn btn--ghost" (click)="cancelTableDrop()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+}
