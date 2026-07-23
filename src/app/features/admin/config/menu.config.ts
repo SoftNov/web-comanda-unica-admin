@@ -18,7 +18,12 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
     label: 'Mesas',
     icon: 'table_bar',
     children: [
-      { label: 'Cadastro de Mesas', icon: 'table_restaurant', route: '/painel/mesas' },
+      {
+        label: 'Cadastro de Mesas',
+        icon: 'table_restaurant',
+        route: '/painel/mesas',
+        roles: ['ADMIN', 'OWNER', 'MANAGER']
+      },
       {
         label: 'Mapa do Salão',
         icon: 'map',

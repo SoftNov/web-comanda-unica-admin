@@ -91,7 +91,8 @@ export class AdminLayoutComponent {
   private filterMenuByProfile(items: MenuItem[], profileCode: string | null): MenuItem[] {
     return items
       .filter((item) => !item.roles || (!!profileCode && item.roles.includes(profileCode)))
-      .map((item) => (item.children ? { ...item, children: this.filterMenuByProfile(item.children, profileCode) } : item));
+      .map((item) => (item.children ? { ...item, children: this.filterMenuByProfile(item.children, profileCode) } : item))
+      .filter((item) => !item.children || item.children.length > 0);
   }
 
   private syncProfileImages(): void {

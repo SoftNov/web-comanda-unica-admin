@@ -1,0 +1,38 @@
+<div class="floor-plan-viewer">
+  <div class="floor-plan-viewer__toolbar">
+    <div class="floor-plan-viewer__legend">
+      <span class="floor-plan-viewer__legend-item"><i class="floor-plan-viewer__dot floor-plan-viewer__dot--free"></i>Livre</span>
+      <span class="floor-plan-viewer__legend-item"><i class="floor-plan-viewer__dot floor-plan-viewer__dot--occupied"></i>Ocupada</span>
+      <span class="floor-plan-viewer__legend-item"><i class="floor-plan-viewer__dot floor-plan-viewer__dot--reserved"></i>Reservada</span>
+      <span class="floor-plan-viewer__legend-item"><i class="floor-plan-viewer__dot floor-plan-viewer__dot--cleaning"></i>Limpeza</span>
+    </div>
+
+    <div class="floor-plan-viewer__zoom">
+      <button type="button" class="icon-btn" title="Diminuir zoom" [disabled]="isLoading()" (click)="zoomOut()">
+        <span class="material-icons" aria-hidden="true">zoom_out</span>
+      </button>
+      <span class="floor-plan-viewer__zoom-label">{{ zoomPercent() }}%</span>
+      <button type="button" class="icon-btn" title="Aumentar zoom" [disabled]="isLoading()" (click)="zoomIn()">
+        <span class="material-icons" aria-hidden="true">zoom_in</span>
+      </button>
+      <button type="button" class="icon-btn" title="Restaurar zoom" [disabled]="isLoading()" (click)="resetZoom()">
+        <span class="material-icons" aria-hidden="true">center_focus_strong</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="floor-plan-viewer__viewport">
+    @if (isLoading()) {
+      <div class="floor-plan-viewer__loading">
+        <span class="material-icons" aria-hidden="true">hourglass_empty</span>
+        Carregando mapa…
+      </div>
+    } @else if (loadError()) {
+      <div class="form-alert form-alert--error" role="alert">
+        <span class="material-icons" aria-hidden="true">error_outline</span>
+        {{ loadError() }}
+      </div>
+    }
+    <div #canvasContainer class="floor-plan-viewer__stage" [class.floor-plan-viewer__stage--hidden]="isLoading() || loadError()"></div>
+  </div>
+</div>

@@ -49,6 +49,7 @@ export const routes: Routes = [
       },
       {
         path: 'mesas',
+        canActivate: [profileGuard(['ADMIN', 'OWNER', 'MANAGER'])],
         loadComponent: () => import('./features/admin/pages/tables/tables.component').then((m) => m.TablesComponent),
         title: 'Mesas — Comanda Única'
       },

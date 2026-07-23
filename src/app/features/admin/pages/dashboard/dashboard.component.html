@@ -27,3 +27,31 @@
     <span class="stat-card__value">—</span>
   </div>
 </div>
+
+<div class="card floor-plan-section">
+  <div class="floor-plan-section__header">
+    <h2 class="floor-plan-section__title">Mapa do estabelecimento</h2>
+    @if (floorPlans().length > 1) {
+      <div class="floor-plan-section__tabs">
+        @for (floorPlan of floorPlans(); track floorPlan.id) {
+          <button
+            type="button"
+            class="floor-plan-section__tab"
+            [class.floor-plan-section__tab--active]="floorPlan.id === selectedFloorPlanId()"
+            (click)="selectFloorPlan(floorPlan.id)"
+          >
+            {{ floorPlan.name }}
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (isLoadingFloorPlans()) {
+    <p class="field__hint">Carregando mapa…</p>
+  } @else if (selectedFloorPlanId()) {
+    <app-floor-plan-viewer [floorPlanId]="selectedFloorPlanId()!" />
+  } @else {
+    <p class="field__hint">Nenhum ambiente com mapa cadastrado ainda.</p>
+  }
+</div>

@@ -4587,12 +4587,12 @@ var routes = [
   {
     path: "painel",
     canActivate: [authGuard],
-    loadComponent: () => import("./chunk-NWOWKZKU.js").then((m) => m.AdminLayoutComponent),
+    loadComponent: () => import("./chunk-XG5EXQ7X.js").then((m) => m.AdminLayoutComponent),
     children: [
       { path: "", pathMatch: "full", redirectTo: "dashboard" },
       {
         path: "dashboard",
-        loadComponent: () => import("./chunk-4HA3VXLP.js").then((m) => m.DashboardComponent),
+        loadComponent: () => import("./chunk-E5BBO77M.js").then((m) => m.DashboardComponent),
         title: "Dashboard \u2014 Comanda \xDAnica"
       },
       {
@@ -4603,7 +4603,8 @@ var routes = [
       },
       {
         path: "mesas",
-        loadComponent: () => import("./chunk-HFUNK4VH.js").then((m) => m.TablesComponent),
+        canActivate: [profileGuard(["ADMIN", "OWNER", "MANAGER"])],
+        loadComponent: () => import("./chunk-ESVDNYN2.js").then((m) => m.TablesComponent),
         title: "Mesas \u2014 Comanda \xDAnica"
       },
       {
@@ -4649,13 +4650,13 @@ var routes = [
       {
         path: "configuracoes/mapa-salao",
         canActivate: [profileGuard(["ADMIN", "OWNER", "MANAGER"])],
-        loadComponent: () => import("./chunk-HDGOSP5U.js").then((m) => m.FloorPlanListComponent),
+        loadComponent: () => import("./chunk-I5TOGFPW.js").then((m) => m.FloorPlanListComponent),
         title: "Mapa do Sal\xE3o \u2014 Comanda \xDAnica"
       },
       {
         path: "configuracoes/mapa-salao/:id",
         canActivate: [profileGuard(["ADMIN", "OWNER", "MANAGER"])],
-        loadComponent: () => import("./chunk-ID6Q4LBD.js").then((m) => m.FloorPlanEditorComponent),
+        loadComponent: () => import("./chunk-SYJAQMVU.js").then((m) => m.FloorPlanEditorComponent),
         title: "Mapa do Sal\xE3o \u2014 Comanda \xDAnica"
       },
       { path: "**", redirectTo: "dashboard" }
