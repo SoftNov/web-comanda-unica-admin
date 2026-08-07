@@ -262,21 +262,21 @@ function EmployeesComponent_Conditional_12_Template(rf, ctx) {
 }
 function EmployeesComponent_Conditional_13_Conditional_14_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "span", 31);
+    \u0275\u0275elementStart(0, "span", 30);
     \u0275\u0275text(1, "Informe o nome completo (nome e sobrenome).");
     \u0275\u0275elementEnd();
   }
 }
 function EmployeesComponent_Conditional_13_Conditional_15_Conditional_5_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "span", 31);
+    \u0275\u0275elementStart(0, "span", 30);
     \u0275\u0275text(1, "Informe um CPF v\xE1lido.");
     \u0275\u0275elementEnd();
   }
 }
 function EmployeesComponent_Conditional_13_Conditional_15_Conditional_11_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "span", 31);
+    \u0275\u0275elementStart(0, "span", 30);
     \u0275\u0275text(1, "Informe um e-mail v\xE1lido.");
     \u0275\u0275elementEnd();
   }
@@ -284,25 +284,25 @@ function EmployeesComponent_Conditional_13_Conditional_15_Conditional_11_Templat
 function EmployeesComponent_Conditional_13_Conditional_15_Template(rf, ctx) {
   if (rf & 1) {
     const _r7 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 27)(1, "label", 41);
+    \u0275\u0275elementStart(0, "div", 26)(1, "label", 40);
     \u0275\u0275text(2, "CPF");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(3, "div", 29)(4, "input", 42);
+    \u0275\u0275elementStart(3, "div", 28)(4, "input", 41);
     \u0275\u0275listener("input", function EmployeesComponent_Conditional_13_Conditional_15_Template_input_input_4_listener($event) {
       \u0275\u0275restoreView(_r7);
       const ctx_r0 = \u0275\u0275nextContext(2);
       return \u0275\u0275resetView(ctx_r0.onCpfInput($event));
     });
     \u0275\u0275elementEnd()();
-    \u0275\u0275template(5, EmployeesComponent_Conditional_13_Conditional_15_Conditional_5_Template, 2, 0, "span", 31);
+    \u0275\u0275template(5, EmployeesComponent_Conditional_13_Conditional_15_Conditional_5_Template, 2, 0, "span", 30);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(6, "div", 27)(7, "label", 43);
+    \u0275\u0275elementStart(6, "div", 26)(7, "label", 42);
     \u0275\u0275text(8, "E-mail");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(9, "div", 29);
-    \u0275\u0275element(10, "input", 44);
+    \u0275\u0275elementStart(9, "div", 28);
+    \u0275\u0275element(10, "input", 43);
     \u0275\u0275elementEnd();
-    \u0275\u0275template(11, EmployeesComponent_Conditional_13_Conditional_15_Conditional_11_Template, 2, 0, "span", 31);
+    \u0275\u0275template(11, EmployeesComponent_Conditional_13_Conditional_15_Conditional_11_Template, 2, 0, "span", 30);
     \u0275\u0275elementEnd();
   }
   if (rf & 2) {
@@ -319,27 +319,27 @@ function EmployeesComponent_Conditional_13_Conditional_15_Template(rf, ctx) {
 }
 function EmployeesComponent_Conditional_13_Conditional_21_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "span", 31);
+    \u0275\u0275elementStart(0, "span", 30);
     \u0275\u0275text(1, "Informe um telefone v\xE1lido.");
     \u0275\u0275elementEnd();
   }
 }
 function EmployeesComponent_Conditional_13_Conditional_22_Conditional_5_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "span", 31);
+    \u0275\u0275elementStart(0, "span", 30);
     \u0275\u0275text(1, "A senha deve ter ao menos 6 caracteres, com letras e n\xFAmeros.");
     \u0275\u0275elementEnd();
   }
 }
 function EmployeesComponent_Conditional_13_Conditional_22_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "div", 27)(1, "label", 45);
+    \u0275\u0275elementStart(0, "div", 26)(1, "label", 44);
     \u0275\u0275text(2, "Senha inicial");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(3, "div", 29);
-    \u0275\u0275element(4, "input", 46);
+    \u0275\u0275elementStart(3, "div", 28);
+    \u0275\u0275element(4, "input", 45);
     \u0275\u0275elementEnd();
-    \u0275\u0275template(5, EmployeesComponent_Conditional_13_Conditional_22_Conditional_5_Template, 2, 0, "span", 31);
+    \u0275\u0275template(5, EmployeesComponent_Conditional_13_Conditional_22_Conditional_5_Template, 2, 0, "span", 30);
     \u0275\u0275elementEnd();
   }
   if (rf & 2) {
@@ -352,7 +352,7 @@ function EmployeesComponent_Conditional_13_Conditional_22_Template(rf, ctx) {
 }
 function EmployeesComponent_Conditional_13_For_31_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "option", 37);
+    \u0275\u0275elementStart(0, "option", 36);
     \u0275\u0275text(1);
     \u0275\u0275elementEnd();
   }
@@ -372,7 +372,7 @@ function EmployeesComponent_Conditional_13_Conditional_32_Template(rf, ctx) {
 }
 function EmployeesComponent_Conditional_13_Conditional_33_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "span", 31);
+    \u0275\u0275elementStart(0, "span", 30);
     \u0275\u0275text(1, "Selecione um perfil de acesso.");
     \u0275\u0275elementEnd();
   }
@@ -394,21 +394,15 @@ function EmployeesComponent_Conditional_13_Conditional_34_Template(rf, ctx) {
 function EmployeesComponent_Conditional_13_Template(rf, ctx) {
   if (rf & 1) {
     const _r6 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 21);
-    \u0275\u0275listener("click", function EmployeesComponent_Conditional_13_Template_div_click_0_listener() {
-      \u0275\u0275restoreView(_r6);
-      const ctx_r0 = \u0275\u0275nextContext();
-      return \u0275\u0275resetView(ctx_r0.closeModal());
-    });
-    \u0275\u0275elementStart(1, "div", 22);
+    \u0275\u0275elementStart(0, "div", 8)(1, "div", 21);
     \u0275\u0275listener("click", function EmployeesComponent_Conditional_13_Template_div_click_1_listener($event) {
       \u0275\u0275restoreView(_r6);
       return \u0275\u0275resetView($event.stopPropagation());
     });
-    \u0275\u0275elementStart(2, "div", 23)(3, "h2", 24);
+    \u0275\u0275elementStart(2, "div", 22)(3, "h2", 23);
     \u0275\u0275text(4);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(5, "button", 25);
+    \u0275\u0275elementStart(5, "button", 24);
     \u0275\u0275listener("click", function EmployeesComponent_Conditional_13_Template_button_click_5_listener() {
       \u0275\u0275restoreView(_r6);
       const ctx_r0 = \u0275\u0275nextContext();
@@ -417,50 +411,50 @@ function EmployeesComponent_Conditional_13_Template(rf, ctx) {
     \u0275\u0275elementStart(6, "span", 4);
     \u0275\u0275text(7, "close");
     \u0275\u0275elementEnd()()();
-    \u0275\u0275elementStart(8, "form", 26);
+    \u0275\u0275elementStart(8, "form", 25);
     \u0275\u0275listener("submit", function EmployeesComponent_Conditional_13_Template_form_submit_8_listener($event) {
       \u0275\u0275restoreView(_r6);
       const ctx_r0 = \u0275\u0275nextContext();
       $event.preventDefault();
       return \u0275\u0275resetView(ctx_r0.submitEmployee());
     });
-    \u0275\u0275elementStart(9, "div", 27)(10, "label", 28);
+    \u0275\u0275elementStart(9, "div", 26)(10, "label", 27);
     \u0275\u0275text(11, "Nome completo");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(12, "div", 29);
-    \u0275\u0275element(13, "input", 30);
+    \u0275\u0275elementStart(12, "div", 28);
+    \u0275\u0275element(13, "input", 29);
     \u0275\u0275elementEnd();
-    \u0275\u0275template(14, EmployeesComponent_Conditional_13_Conditional_14_Template, 2, 0, "span", 31);
+    \u0275\u0275template(14, EmployeesComponent_Conditional_13_Conditional_14_Template, 2, 0, "span", 30);
     \u0275\u0275elementEnd();
     \u0275\u0275template(15, EmployeesComponent_Conditional_13_Conditional_15_Template, 12, 6);
-    \u0275\u0275elementStart(16, "div", 27)(17, "label", 32);
+    \u0275\u0275elementStart(16, "div", 26)(17, "label", 31);
     \u0275\u0275text(18, "Telefone");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(19, "div", 29)(20, "input", 33);
+    \u0275\u0275elementStart(19, "div", 28)(20, "input", 32);
     \u0275\u0275listener("input", function EmployeesComponent_Conditional_13_Template_input_input_20_listener($event) {
       \u0275\u0275restoreView(_r6);
       const ctx_r0 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r0.onPhoneInput($event));
     });
     \u0275\u0275elementEnd()();
-    \u0275\u0275template(21, EmployeesComponent_Conditional_13_Conditional_21_Template, 2, 0, "span", 31);
+    \u0275\u0275template(21, EmployeesComponent_Conditional_13_Conditional_21_Template, 2, 0, "span", 30);
     \u0275\u0275elementEnd();
-    \u0275\u0275template(22, EmployeesComponent_Conditional_13_Conditional_22_Template, 6, 3, "div", 27);
-    \u0275\u0275elementStart(23, "div", 27)(24, "label", 34);
+    \u0275\u0275template(22, EmployeesComponent_Conditional_13_Conditional_22_Template, 6, 3, "div", 26);
+    \u0275\u0275elementStart(23, "div", 26)(24, "label", 33);
     \u0275\u0275text(25, "Perfil de acesso");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(26, "div", 29)(27, "select", 35)(28, "option", 36);
+    \u0275\u0275elementStart(26, "div", 28)(27, "select", 34)(28, "option", 35);
     \u0275\u0275text(29, "Selecione um perfil");
     \u0275\u0275elementEnd();
-    \u0275\u0275repeaterCreate(30, EmployeesComponent_Conditional_13_For_31_Template, 2, 2, "option", 37, _forTrack1);
+    \u0275\u0275repeaterCreate(30, EmployeesComponent_Conditional_13_For_31_Template, 2, 2, "option", 36, _forTrack1);
     \u0275\u0275elementEnd()();
-    \u0275\u0275template(32, EmployeesComponent_Conditional_13_Conditional_32_Template, 2, 0, "span", 5)(33, EmployeesComponent_Conditional_13_Conditional_33_Template, 2, 0, "span", 31);
+    \u0275\u0275template(32, EmployeesComponent_Conditional_13_Conditional_32_Template, 2, 0, "span", 5)(33, EmployeesComponent_Conditional_13_Conditional_33_Template, 2, 0, "span", 30);
     \u0275\u0275elementEnd();
     \u0275\u0275template(34, EmployeesComponent_Conditional_13_Conditional_34_Template, 4, 1, "div", 6);
-    \u0275\u0275elementStart(35, "div", 38)(36, "button", 39);
+    \u0275\u0275elementStart(35, "div", 37)(36, "button", 38);
     \u0275\u0275text(37);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(38, "button", 40);
+    \u0275\u0275elementStart(38, "button", 39);
     \u0275\u0275listener("click", function EmployeesComponent_Conditional_13_Template_button_click_38_listener() {
       \u0275\u0275restoreView(_r6);
       const ctx_r0 = \u0275\u0275nextContext();
@@ -520,18 +514,12 @@ function EmployeesComponent_Conditional_14_Conditional_9_Template(rf, ctx) {
 function EmployeesComponent_Conditional_14_Template(rf, ctx) {
   if (rf & 1) {
     const _r9 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 21);
-    \u0275\u0275listener("click", function EmployeesComponent_Conditional_14_Template_div_click_0_listener() {
-      \u0275\u0275restoreView(_r9);
-      const ctx_r0 = \u0275\u0275nextContext();
-      return \u0275\u0275resetView(ctx_r0.cancelDeactivate());
-    });
-    \u0275\u0275elementStart(1, "div", 47);
+    \u0275\u0275elementStart(0, "div", 8)(1, "div", 46);
     \u0275\u0275listener("click", function EmployeesComponent_Conditional_14_Template_div_click_1_listener($event) {
       \u0275\u0275restoreView(_r9);
       return \u0275\u0275resetView($event.stopPropagation());
     });
-    \u0275\u0275elementStart(2, "h2", 24);
+    \u0275\u0275elementStart(2, "h2", 23);
     \u0275\u0275text(3, "Desativar funcion\xE1rio");
     \u0275\u0275elementEnd();
     \u0275\u0275elementStart(4, "p", 5);
@@ -542,7 +530,7 @@ function EmployeesComponent_Conditional_14_Template(rf, ctx) {
     \u0275\u0275text(8, "? O acesso ao sistema ser\xE1 bloqueado imediatamente. ");
     \u0275\u0275elementEnd();
     \u0275\u0275template(9, EmployeesComponent_Conditional_14_Conditional_9_Template, 4, 1, "div", 6);
-    \u0275\u0275elementStart(10, "div", 38)(11, "button", 48);
+    \u0275\u0275elementStart(10, "div", 37)(11, "button", 47);
     \u0275\u0275listener("click", function EmployeesComponent_Conditional_14_Template_button_click_11_listener() {
       \u0275\u0275restoreView(_r9);
       const ctx_r0 = \u0275\u0275nextContext();
@@ -550,7 +538,7 @@ function EmployeesComponent_Conditional_14_Template(rf, ctx) {
     });
     \u0275\u0275text(12);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(13, "button", 40);
+    \u0275\u0275elementStart(13, "button", 39);
     \u0275\u0275listener("click", function EmployeesComponent_Conditional_14_Template_button_click_13_listener() {
       \u0275\u0275restoreView(_r9);
       const ctx_r0 = \u0275\u0275nextContext();
@@ -815,7 +803,7 @@ var EmployeesComponent = class _EmployeesComponent {
   static \u0275fac = function EmployeesComponent_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _EmployeesComponent)();
   };
-  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _EmployeesComponent, selectors: [["app-admin-employees"]], standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 15, vars: 4, consts: [[1, "page-header", "page-header--row"], [1, "page-title"], [1, "page-subtitle"], ["type", "button", "appRipple", "", 1, "btn", "btn--primary", 3, "click"], ["aria-hidden", "true", 1, "material-icons"], [1, "field__hint"], ["role", "alert", 1, "form-alert", "form-alert--error"], [1, "card", "table-card"], [1, "modal-backdrop"], [1, "table-wrapper"], [1, "data-table"], [1, "data-table__actions-col"], [1, "pagination"], [1, "pagination__info"], [1, "pagination__controls"], ["type", "button", 1, "btn", "btn--ghost", "btn--sm", 3, "click", "disabled"], ["colspan", "6", 1, "data-table__empty"], [1, "badge"], ["type", "button", "title", "Editar", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Desativar", 1, "icon-btn", "icon-btn--danger"], ["type", "button", "title", "Desativar", 1, "icon-btn", "icon-btn--danger", 3, "click"], [1, "modal-backdrop", 3, "click"], [1, "modal-card", "card", 3, "click"], [1, "modal-card__header"], [1, "step-heading"], ["type", "button", "aria-label", "Fechar", 1, "icon-btn", 3, "click"], ["novalidate", "", 3, "submit", "formGroup"], [1, "field"], ["for", "employee-full-name", 1, "field__label"], [1, "field__control"], ["id", "employee-full-name", "type", "text", "formControlName", "fullName", "placeholder", "Nome e sobrenome", "autocomplete", "name", 1, "field__input"], [1, "field__error"], ["for", "employee-phone", 1, "field__label"], ["id", "employee-phone", "type", "tel", "inputmode", "numeric", "formControlName", "phone", "placeholder", "(00) 00000-0000", "maxlength", "15", "autocomplete", "tel", 1, "field__input", 3, "input"], ["for", "employee-profile", 1, "field__label"], ["id", "employee-profile", "formControlName", "profileId", 1, "field__input"], ["value", "", "disabled", ""], [3, "value"], [1, "step-actions"], ["type", "submit", "appRipple", "", 1, "btn", "btn--primary", 3, "disabled"], ["type", "button", 1, "btn", "btn--ghost", 3, "click"], ["for", "employee-cpf", 1, "field__label"], ["id", "employee-cpf", "type", "text", "inputmode", "numeric", "formControlName", "cpf", "placeholder", "000.000.000-00", "maxlength", "14", 1, "field__input", 3, "input"], ["for", "employee-email", 1, "field__label"], ["id", "employee-email", "type", "email", "formControlName", "email", "placeholder", "email@exemplo.com", "autocomplete", "email", 1, "field__input"], ["for", "employee-password", 1, "field__label"], ["id", "employee-password", "type", "password", "formControlName", "password", "placeholder", "M\xEDnimo 6 caracteres", "autocomplete", "new-password", 1, "field__input"], [1, "modal-card", "modal-card--sm", "card", 3, "click"], ["type", "button", 1, "btn", "btn--danger", 3, "click", "disabled"]], template: function EmployeesComponent_Template(rf, ctx) {
+  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _EmployeesComponent, selectors: [["app-admin-employees"]], standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 15, vars: 4, consts: [[1, "page-header", "page-header--row"], [1, "page-title"], [1, "page-subtitle"], ["type", "button", "appRipple", "", 1, "btn", "btn--primary", 3, "click"], ["aria-hidden", "true", 1, "material-icons"], [1, "field__hint"], ["role", "alert", 1, "form-alert", "form-alert--error"], [1, "card", "table-card"], [1, "modal-backdrop"], [1, "table-wrapper"], [1, "data-table"], [1, "data-table__actions-col"], [1, "pagination"], [1, "pagination__info"], [1, "pagination__controls"], ["type", "button", 1, "btn", "btn--ghost", "btn--sm", 3, "click", "disabled"], ["colspan", "6", 1, "data-table__empty"], [1, "badge"], ["type", "button", "title", "Editar", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Desativar", 1, "icon-btn", "icon-btn--danger"], ["type", "button", "title", "Desativar", 1, "icon-btn", "icon-btn--danger", 3, "click"], [1, "modal-card", "card", 3, "click"], [1, "modal-card__header"], [1, "step-heading"], ["type", "button", "aria-label", "Fechar", 1, "icon-btn", 3, "click"], ["novalidate", "", 3, "submit", "formGroup"], [1, "field"], ["for", "employee-full-name", 1, "field__label"], [1, "field__control"], ["id", "employee-full-name", "type", "text", "formControlName", "fullName", "placeholder", "Nome e sobrenome", "autocomplete", "name", 1, "field__input"], [1, "field__error"], ["for", "employee-phone", 1, "field__label"], ["id", "employee-phone", "type", "tel", "inputmode", "numeric", "formControlName", "phone", "placeholder", "(00) 00000-0000", "maxlength", "15", "autocomplete", "tel", 1, "field__input", 3, "input"], ["for", "employee-profile", 1, "field__label"], ["id", "employee-profile", "formControlName", "profileId", 1, "field__input"], ["value", "", "disabled", ""], [3, "value"], [1, "step-actions"], ["type", "submit", "appRipple", "", 1, "btn", "btn--primary", 3, "disabled"], ["type", "button", 1, "btn", "btn--ghost", 3, "click"], ["for", "employee-cpf", 1, "field__label"], ["id", "employee-cpf", "type", "text", "inputmode", "numeric", "formControlName", "cpf", "placeholder", "000.000.000-00", "maxlength", "14", 1, "field__input", 3, "input"], ["for", "employee-email", 1, "field__label"], ["id", "employee-email", "type", "email", "formControlName", "email", "placeholder", "email@exemplo.com", "autocomplete", "email", 1, "field__input"], ["for", "employee-password", 1, "field__label"], ["id", "employee-password", "type", "password", "formControlName", "password", "placeholder", "M\xEDnimo 6 caracteres", "autocomplete", "new-password", 1, "field__input"], [1, "modal-card", "modal-card--sm", "card", 3, "click"], ["type", "button", 1, "btn", "btn--danger", 3, "click", "disabled"]], template: function EmployeesComponent_Template(rf, ctx) {
     if (rf & 1) {
       \u0275\u0275elementStart(0, "div", 0)(1, "div")(2, "h1", 1);
       \u0275\u0275text(3, "Funcion\xE1rios");
@@ -854,4 +842,4 @@ var EmployeesComponent = class _EmployeesComponent {
 export {
   EmployeesComponent
 };
-//# sourceMappingURL=chunk-66M2GA4K.js.map
+//# sourceMappingURL=chunk-KP5K5ZM3.js.map

@@ -86,7 +86,7 @@
 }
 
 @if (isModalOpen()) {
-  <div class="modal-backdrop" (click)="closeModal()">
+  <div class="modal-backdrop">
     <div class="modal-card card" (click)="$event.stopPropagation()">
       <div class="modal-card__header">
         <h2 class="step-heading">{{ modalMode() === 'create' ? 'Novo funcionário' : 'Editar funcionário' }}</h2>
@@ -237,7 +237,7 @@
 }
 
 @if (employeeToDeactivate(); as employee) {
-  <div class="modal-backdrop" (click)="cancelDeactivate()">
+  <div class="modal-backdrop">
     <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
       <h2 class="step-heading">Desativar funcionário</h2>
       <p class="field__hint">

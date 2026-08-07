@@ -10,7 +10,7 @@
       <span class="material-icons" aria-hidden="true">add</span>
       Novo produto
     </button>
-  } @else {
+  } @else if (activeTab() === 'categorias') {
     <button type="button" class="btn btn--primary" appRipple (click)="openCreateCategoryModal()">
       <span class="material-icons" aria-hidden="true">add</span>
       Nova categoria
@@ -24,6 +24,9 @@
   </button>
   <button type="button" class="tabs__item" [class.tabs__item--active]="activeTab() === 'categorias'" (click)="setActiveTab('categorias')">
     Categorias
+  </button>
+  <button type="button" class="tabs__item" [class.tabs__item--active]="activeTab() === 'tema'" (click)="setActiveTab('tema')">
+    Tema
   </button>
 </div>
 
@@ -188,7 +191,7 @@
       </div>
     </div>
   }
-} @else {
+} @else if (activeTab() === 'categorias') {
   @if (isLoadingCategories()) {
     <p class="field__hint">Carregando categorias…</p>
   } @else if (categoriesError()) {
@@ -244,10 +247,116 @@
       </div>
     </div>
   }
+} @else {
+  @if (isLoadingTheme()) {
+    <p class="field__hint">Carregando tema…</p>
+  } @else if (themeError()) {
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      {{ themeError() }}
+    </div>
+  } @else {
+    <form (submit)="$event.preventDefault(); submitTheme()" novalidate [formGroup]="themeForm">
+      <div class="card theme-card">
+        <h3 class="form-section-title">Capa do cardápio</h3>
+
+        <div class="image-upload">
+          <div class="image-upload__preview image-upload__preview--cover">
+            @if (coverPreviewUrl()) {
+              <img [src]="coverPreviewUrl()" alt="">
+            } @else {
+              <span class="material-icons" aria-hidden="true">image</span>
+            }
+          </div>
+          <div class="image-upload__actions">
+            <label class="btn btn--ghost btn--sm" for="theme-cover-input">
+              {{ isUploadingCover() ? 'Enviando…' : 'Escolher capa' }}
+            </label>
+            <input
+              id="theme-cover-input"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              hidden
+              [disabled]="isUploadingCover()"
+              (change)="onCoverFileSelected($event)"
+            >
+            <span class="field__hint">JPG, PNG ou WEBP, até 5MB.</span>
+            @if (coverError()) {
+              <span class="field__error">{{ coverError() }}</span>
+            }
+          </div>
+        </div>
+
+        <h3 class="form-section-title">Cores</h3>
+
+        <div class="field__row">
+          <div class="field">
+            <label class="field__label" for="theme-primary-color">Cor primária</label>
+            <div class="field__control">
+              <input id="theme-primary-color" type="color" class="field__input field__input--color" formControlName="primaryColor">
+            </div>
+            @if (themeForm.controls.primaryColor.invalid && themeForm.controls.primaryColor.touched) {
+              <span class="field__error">Informe uma cor válida.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label class="field__checkbox" for="theme-use-secondary-color">
+              <input id="theme-use-secondary-color" type="checkbox" formControlName="useSecondaryColor"> Usar cor secundária
+            </label>
+            <div class="field__control">
+              <input
+                id="theme-secondary-color"
+                type="color"
+                class="field__input field__input--color"
+                [class.field__input--disabled]="!themeForm.controls.useSecondaryColor.value"
+                formControlName="secondaryColor"
+              >
+            </div>
+          </div>
+        </div>
+
+        <h3 class="form-section-title">Fonte</h3>
+
+        <div class="field">
+          <label class="field__label" for="theme-font-family">Fonte da página do cardápio</label>
+          <div class="field__control">
+            <select id="theme-font-family" class="field__input" formControlName="fontFamily">
+              @for (font of fontOptions; track font.value) {
+                <option [value]="font.value">{{ font.label }}</option>
+              }
+            </select>
+          </div>
+          @if (themeForm.controls.fontFamily.invalid && themeForm.controls.fontFamily.touched) {
+            <span class="field__error">Selecione uma fonte.</span>
+          }
+        </div>
+
+        @if (themeSuccess()) {
+          <div class="form-alert form-alert--success" role="status">
+            <span class="material-icons" aria-hidden="true">check_circle</span>
+            Tema atualizado com sucesso.
+          </div>
+        }
+        @if (themeFormError()) {
+          <div class="form-alert form-alert--error" role="alert">
+            <span class="material-icons" aria-hidden="true">error_outline</span>
+            {{ themeFormError() }}
+          </div>
+        }
+
+        <div class="step-actions">
+          <button type="submit" class="btn btn--primary" appRipple [disabled]="isSubmittingTheme()">
+            {{ isSubmittingTheme() ? 'Salvando…' : 'Salvar' }}
+          </button>
+        </div>
+      </div>
+    </form>
+  }
 }
 
 @if (isItemModalOpen()) {
-  <div class="modal-backdrop" (click)="closeItemModal()">
+  <div class="modal-backdrop">
     <div class="modal-card card" (click)="$event.stopPropagation()">
       <div class="modal-card__header">
         <h2 class="step-heading">{{ itemModalMode() === 'create' ? 'Novo produto' : 'Editar produto' }}</h2>
@@ -449,6 +558,30 @@
               <span class="field__error">{{ imageError() }}</span>
             }
           </div>
+        } @else if (itemModalMode() === 'create') {
+          <h3 class="form-section-title">Imagem</h3>
+
+          @if (pendingImagePreviewUrl(); as previewUrl) {
+            <div class="gallery">
+              <div class="gallery__item">
+                <img [src]="previewUrl" alt="Pré-visualização da imagem do produto">
+                <button type="button" class="icon-btn icon-btn--danger gallery__remove" title="Remover imagem" (click)="removePendingImage()">
+                  <span class="material-icons" aria-hidden="true">close</span>
+                </button>
+              </div>
+            </div>
+          } @else {
+            <div class="field">
+              <label class="field__label" for="item-image-upload">Adicionar imagem</label>
+              <div class="field__control">
+                <input id="item-image-upload" type="file" class="field__input" accept="image/png,image/jpeg,image/webp" (change)="onImageFileSelected($event)">
+              </div>
+              <span class="field__hint">A imagem será enviada assim que o produto for salvo.</span>
+            </div>
+          }
+          @if (imageError()) {
+            <span class="field__error">{{ imageError() }}</span>
+          }
         }
 
         @if (itemFormError()) {
@@ -470,7 +603,7 @@
 }
 
 @if (isCategoryModalOpen()) {
-  <div class="modal-backdrop" (click)="closeCategoryModal()">
+  <div class="modal-backdrop">
     <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
       <div class="modal-card__header">
         <h2 class="step-heading">{{ categoryModalMode() === 'create' ? 'Nova categoria' : 'Editar categoria' }}</h2>
@@ -590,7 +723,7 @@
 }
 
 @if (itemToDelete(); as item) {
-  <div class="modal-backdrop" (click)="cancelDeleteItem()">
+  <div class="modal-backdrop">
     <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
       <h2 class="step-heading">Excluir produto</h2>
       <p class="field__hint">
@@ -615,7 +748,7 @@
 }
 
 @if (categoryToDelete(); as category) {
-  <div class="modal-backdrop" (click)="cancelDeleteCategory()">
+  <div class="modal-backdrop">
     <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
       <h2 class="step-heading">Excluir categoria</h2>
       <p class="field__hint">

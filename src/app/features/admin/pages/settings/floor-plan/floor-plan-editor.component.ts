@@ -16,8 +16,9 @@ import {
   FloorPlanItemsService
 } from '../../../../../shared/services/floor-plan-items.service';
 import { RestaurantTableResponse, TableStatus, TablesService } from '../../../../../shared/services/tables.service';
+import { buildFloorPlanTableVisual, FloorPlanTableShape } from '../../../../../shared/utils/floor-plan-table-visual';
 
-type TableShape = 'SQUARE' | 'ROUND' | 'RECTANGULAR';
+type TableShape = FloorPlanTableShape;
 
 interface PaletteEntry {
   itemType: FloorPlanItemType;
@@ -116,13 +117,17 @@ export class FloorPlanEditorComponent implements AfterViewInit, OnDestroy {
 
   readonly items = signal<EditorItem[]>([]);
   readonly availableTables = signal<RestaurantTableResponse[]>([]);
+  // Mesas já posicionadas em OUTROS mapas (não o que está sendo editado) — carregado uma vez no
+  // load e mantido estável durante a edição, para não ofertar no seletor mesas de outro ambiente.
+  readonly tablesPlacedElsewhere = signal<Set<string>>(new Set());
   readonly selectedClientId = signal<string | null>(null);
   readonly selectedItem = computed(() => this.items().find((item) => item.clientId === this.selectedClientId()) ?? null);
   readonly selectedIsLocked = computed(() => !!this.selectedItem()?.properties['locked']);
 
   readonly unplacedTables = computed(() => {
     const usedIds = new Set(this.items().map((item) => item.tableId).filter((id): id is string => !!id));
-    return this.availableTables().filter((table) => !usedIds.has(table.id));
+    const elsewhere = this.tablesPlacedElsewhere();
+    return this.availableTables().filter((table) => !usedIds.has(table.id) && !elsewhere.has(table.id));
   });
 
   readonly zoom = signal(1);
@@ -180,12 +185,17 @@ export class FloorPlanEditorComponent implements AfterViewInit, OnDestroy {
     forkJoin({
       floorPlan: this.floorPlansService.get(floorPlanId),
       items: this.floorPlanItemsService.list(floorPlanId),
-      tables: this.tablesService.list({ status: 'ACTIVE', page: 0, size: 200, sortBy: 'number', sortDirection: 'ASC' })
+      tables: this.tablesService.list({ status: 'ACTIVE', page: 0, size: 200, sortBy: 'number', sortDirection: 'ASC' }),
+      placedTableIds: this.floorPlanItemsService.listPlacedTableIds()
     }).subscribe({
-      next: ({ floorPlan, items, tables }) => {
+      next: ({ floorPlan, items, tables, placedTableIds }) => {
         this.floorPlan.set(floorPlan);
         this.availableTables.set(tables.content);
         this.items.set(items.map((item) => this.toEditorItem(item, tables.content)));
+
+        const currentFloorPlanTableIds = new Set(items.map((item) => item.tableId).filter((id): id is string => !!id));
+        this.tablesPlacedElsewhere.set(new Set(placedTableIds.filter((id) => !currentFloorPlanTableIds.has(id))));
+
         this.isLoading.set(false);
         this.tryInitStage();
       },
@@ -303,7 +313,11 @@ export class FloorPlanEditorComponent implements AfterViewInit, OnDestroy {
     });
     group.setAttr('clientId', item.clientId);
 
-    group.add(this.buildShape(item));
+    if (item.itemType === 'TABLE') {
+      this.buildTableVisual(item, item.width, item.height).forEach((node) => group.add(node));
+    } else {
+      group.add(this.buildShape(item));
+    }
 
     const labelText = this.labelFor(item);
     if (item.itemType !== 'TEXT' && labelText) {
@@ -379,19 +393,24 @@ export class FloorPlanEditorComponent implements AfterViewInit, OnDestroy {
       return placeholder;
     }
 
-    let cornerRadius = 4;
-    if (item.itemType === 'TABLE' && item.properties['shape'] === 'ROUND') {
-      cornerRadius = Math.min(item.width, item.height) / 2;
-    }
-
     return new Konva.Rect({
       width: item.width,
       height: item.height,
       fill: item.color || DEFAULT_COLORS[item.itemType] || '#94a3b8',
       stroke: 'rgba(0,0,0,0.25)',
       strokeWidth: 1,
-      cornerRadius,
+      cornerRadius: 4,
       dash: item.itemType === 'DOOR' ? [6, 4] : undefined
+    });
+  }
+
+  private buildTableVisual(item: EditorItem, width: number, height: number): (Konva.Group | Konva.Shape)[] {
+    return buildFloorPlanTableVisual({
+      shape: (item.properties['shape'] as TableShape) || 'SQUARE',
+      width,
+      height,
+      capacity: item.tableCapacity ?? 0,
+      color: item.color || DEFAULT_COLORS.TABLE || '#c7d2fe'
     });
   }
 
@@ -415,13 +434,23 @@ export class FloorPlanEditorComponent implements AfterViewInit, OnDestroy {
   }
 
   private resizeShapeChildren(group: Konva.Group, width: number, height: number, item: EditorItem): void {
+    if (item.itemType === 'TABLE') {
+      group.getChildren((node) => node.name() === 'table-visual').forEach((node) => node.destroy());
+      this.buildTableVisual(item, width, height).forEach((node) => group.add(node));
+      const label = group.findOne('Text');
+      if (label instanceof Konva.Text) {
+        label.width(width);
+        label.height(height);
+        label.moveToTop();
+      }
+      this.layer?.batchDraw();
+      return;
+    }
+
     group.getChildren().forEach((child) => {
       if (child instanceof Konva.Rect || child instanceof Konva.Image) {
         child.width(width);
         child.height(height);
-        if (child instanceof Konva.Rect && item.itemType === 'TABLE' && item.properties['shape'] === 'ROUND') {
-          child.cornerRadius(Math.min(width, height) / 2);
-        }
       } else if (child instanceof Konva.Text) {
         child.width(width);
         child.height(height);

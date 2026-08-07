@@ -1,7 +1,8 @@
 import {
   FloorPlanItemsService,
+  buildFloorPlanTableVisual,
   require_lib
-} from "./chunk-YEJZDAJL.js";
+} from "./chunk-NUPKAWWX.js";
 import {
   TablesService
 } from "./chunk-KAJWRVGE.js";
@@ -175,6 +176,7 @@ var FloorPlanViewerComponent = class _FloorPlanViewerComponent {
       itemType: response.itemType,
       tableNumber: table?.number ?? response.tableNumber,
       tableName: table?.name,
+      tableCapacity: table?.capacity,
       operationalStatus: table?.operationalStatus,
       x: response.x,
       y: response.y,
@@ -236,7 +238,11 @@ var FloorPlanViewerComponent = class _FloorPlanViewerComponent {
       rotation: item.rotation,
       listening: false
     });
-    group.add(this.buildShape(item));
+    if (item.itemType === "TABLE") {
+      this.buildTableVisual(item).forEach((node) => group.add(node));
+    } else {
+      group.add(this.buildShape(item));
+    }
     const labelText = this.labelFor(item);
     if (item.itemType !== "TEXT" && labelText) {
       group.add(new import_konva.default.Text({
@@ -286,18 +292,23 @@ var FloorPlanViewerComponent = class _FloorPlanViewerComponent {
       }
       return rect;
     }
-    let cornerRadius = 4;
-    if (item.itemType === "TABLE" && item.properties["shape"] === "ROUND") {
-      cornerRadius = Math.min(item.width, item.height) / 2;
-    }
     return new import_konva.default.Rect({
       width: item.width,
       height: item.height,
-      fill: item.itemType === "TABLE" ? this.tableColor(item) : item.color || DEFAULT_COLORS[item.itemType] || "#94a3b8",
+      fill: item.color || DEFAULT_COLORS[item.itemType] || "#94a3b8",
       stroke: "rgba(0,0,0,0.25)",
       strokeWidth: 1,
-      cornerRadius,
+      cornerRadius: 4,
       dash: item.itemType === "DOOR" ? [6, 4] : void 0
+    });
+  }
+  buildTableVisual(item) {
+    return buildFloorPlanTableVisual({
+      shape: item.properties["shape"] || "SQUARE",
+      width: item.width,
+      height: item.height,
+      capacity: item.tableCapacity ?? 0,
+      color: this.tableColor(item)
     });
   }
   tableColor(item) {
@@ -400,7 +411,7 @@ ${item.tableName}` : `Mesa ${item.tableNumber ?? "?"}`;
   }, styles: ["\n\n[_nghost-%COMP%] {\n  display: block;\n}\n.floor-plan-viewer__toolbar[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  flex-wrap: wrap;\n  gap: 12px;\n  margin-bottom: 12px;\n}\n.floor-plan-viewer__legend[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  flex-wrap: wrap;\n  gap: 14px;\n  font-size: 0.8125rem;\n  color: var(--color-text-muted);\n}\n.floor-plan-viewer__legend-item[_ngcontent-%COMP%] {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n}\n.floor-plan-viewer__dot[_ngcontent-%COMP%] {\n  width: 10px;\n  height: 10px;\n  border-radius: 50%;\n  display: inline-block;\n}\n.floor-plan-viewer__dot--free[_ngcontent-%COMP%] {\n  background: #22c55e;\n}\n.floor-plan-viewer__dot--occupied[_ngcontent-%COMP%] {\n  background: #ef4444;\n}\n.floor-plan-viewer__dot--reserved[_ngcontent-%COMP%] {\n  background: #f59e0b;\n}\n.floor-plan-viewer__dot--cleaning[_ngcontent-%COMP%] {\n  background: #94a3b8;\n}\n.floor-plan-viewer__zoom[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n}\n.floor-plan-viewer__zoom-label[_ngcontent-%COMP%] {\n  min-width: 48px;\n  text-align: center;\n  font-size: 0.8125rem;\n  color: var(--color-text-muted);\n}\n.floor-plan-viewer__viewport[_ngcontent-%COMP%] {\n  position: relative;\n  border: 1px solid var(--color-border);\n  border-radius: var(--radius-sm);\n  overflow: hidden;\n  background:\n    linear-gradient(\n      45deg,\n      rgba(255, 255, 255, 0.04) 25%,\n      transparent 25%,\n      transparent 75%,\n      rgba(255, 255, 255, 0.04) 75%),\n    linear-gradient(\n      45deg,\n      rgba(255, 255, 255, 0.04) 25%,\n      transparent 25%,\n      transparent 75%,\n      rgba(255, 255, 255, 0.04) 75%);\n  background-size: 20px 20px;\n  background-position: 0 0, 10px 10px;\n  min-height: 320px;\n  max-height: 60vh;\n  display: flex;\n  align-items: flex-start;\n  justify-content: flex-start;\n}\n.floor-plan-viewer__stage[_ngcontent-%COMP%] {\n  cursor: grab;\n}\n.floor-plan-viewer__stage[_ngcontent-%COMP%]:active {\n  cursor: grabbing;\n}\n.floor-plan-viewer__stage--hidden[_ngcontent-%COMP%] {\n  visibility: hidden;\n}\n.floor-plan-viewer__loading[_ngcontent-%COMP%] {\n  position: absolute;\n  inset: 0;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 8px;\n  color: var(--color-text-muted);\n  font-size: 0.875rem;\n}\n.floor-plan-viewer__loading[_ngcontent-%COMP%]   .material-icons[_ngcontent-%COMP%] {\n  font-size: 20px;\n}\n.icon-btn[_ngcontent-%COMP%] {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 34px;\n  height: 34px;\n  border-radius: var(--radius-sm);\n  border: 1px solid transparent;\n  background: transparent;\n  color: var(--color-text-muted);\n  cursor: pointer;\n  transition: background var(--transition-fast), color var(--transition-fast);\n}\n.icon-btn[_ngcontent-%COMP%]   .material-icons[_ngcontent-%COMP%] {\n  font-size: 20px;\n}\n.icon-btn[_ngcontent-%COMP%]:hover {\n  background: rgba(255, 255, 255, 0.06);\n  color: var(--color-text);\n}\n.icon-btn[_ngcontent-%COMP%]:disabled {\n  opacity: 0.4;\n  cursor: not-allowed;\n}\n.icon-btn[_ngcontent-%COMP%]:disabled:hover {\n  background: transparent;\n  color: var(--color-text-muted);\n}\n/*# sourceMappingURL=floor-plan-viewer.component.css.map */"] });
 };
 (() => {
-  (typeof ngDevMode === "undefined" || ngDevMode) && \u0275setClassDebugInfo(FloorPlanViewerComponent, { className: "FloorPlanViewerComponent", filePath: "src\\app\\shared\\components\\floor-plan-viewer\\floor-plan-viewer.component.ts", lineNumber: 54 });
+  (typeof ngDevMode === "undefined" || ngDevMode) && \u0275setClassDebugInfo(FloorPlanViewerComponent, { className: "FloorPlanViewerComponent", filePath: "src\\app\\shared\\components\\floor-plan-viewer\\floor-plan-viewer.component.ts", lineNumber: 56 });
 })();
 
 // src/app/features/admin/pages/dashboard/dashboard.component.ts
@@ -562,4 +573,4 @@ var DashboardComponent = class _DashboardComponent {
 export {
   DashboardComponent
 };
-//# sourceMappingURL=chunk-E5BBO77M.js.map
+//# sourceMappingURL=chunk-3QOGLBSM.js.map

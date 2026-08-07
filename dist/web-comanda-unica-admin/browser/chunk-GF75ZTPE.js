@@ -164,7 +164,7 @@ function FloorPlanListComponent_Conditional_13_Template(rf, ctx) {
 }
 function FloorPlanListComponent_Conditional_14_Conditional_14_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "span", 28);
+    \u0275\u0275elementStart(0, "span", 27);
     \u0275\u0275text(1, "Informe um nome entre 2 e 100 caracteres.");
     \u0275\u0275elementEnd();
   }
@@ -186,21 +186,15 @@ function FloorPlanListComponent_Conditional_14_Conditional_31_Template(rf, ctx) 
 function FloorPlanListComponent_Conditional_14_Template(rf, ctx) {
   if (rf & 1) {
     const _r5 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 18);
-    \u0275\u0275listener("click", function FloorPlanListComponent_Conditional_14_Template_div_click_0_listener() {
-      \u0275\u0275restoreView(_r5);
-      const ctx_r0 = \u0275\u0275nextContext();
-      return \u0275\u0275resetView(ctx_r0.closeModal());
-    });
-    \u0275\u0275elementStart(1, "div", 19);
+    \u0275\u0275elementStart(0, "div", 9)(1, "div", 18);
     \u0275\u0275listener("click", function FloorPlanListComponent_Conditional_14_Template_div_click_1_listener($event) {
       \u0275\u0275restoreView(_r5);
       return \u0275\u0275resetView($event.stopPropagation());
     });
-    \u0275\u0275elementStart(2, "div", 20)(3, "h2", 21);
+    \u0275\u0275elementStart(2, "div", 19)(3, "h2", 20);
     \u0275\u0275text(4);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(5, "button", 22);
+    \u0275\u0275elementStart(5, "button", 21);
     \u0275\u0275listener("click", function FloorPlanListComponent_Conditional_14_Template_button_click_5_listener() {
       \u0275\u0275restoreView(_r5);
       const ctx_r0 = \u0275\u0275nextContext();
@@ -209,44 +203,44 @@ function FloorPlanListComponent_Conditional_14_Template(rf, ctx) {
     \u0275\u0275elementStart(6, "span", 4);
     \u0275\u0275text(7, "close");
     \u0275\u0275elementEnd()()();
-    \u0275\u0275elementStart(8, "form", 23);
+    \u0275\u0275elementStart(8, "form", 22);
     \u0275\u0275listener("submit", function FloorPlanListComponent_Conditional_14_Template_form_submit_8_listener($event) {
       \u0275\u0275restoreView(_r5);
       const ctx_r0 = \u0275\u0275nextContext();
       $event.preventDefault();
       return \u0275\u0275resetView(ctx_r0.submit());
     });
-    \u0275\u0275elementStart(9, "div", 24)(10, "label", 25);
+    \u0275\u0275elementStart(9, "div", 23)(10, "label", 24);
     \u0275\u0275text(11, "Nome");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(12, "div", 26);
-    \u0275\u0275element(13, "input", 27);
+    \u0275\u0275elementStart(12, "div", 25);
+    \u0275\u0275element(13, "input", 26);
     \u0275\u0275elementEnd();
-    \u0275\u0275template(14, FloorPlanListComponent_Conditional_14_Conditional_14_Template, 2, 0, "span", 28);
+    \u0275\u0275template(14, FloorPlanListComponent_Conditional_14_Conditional_14_Template, 2, 0, "span", 27);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(15, "div", 29)(16, "div", 24)(17, "label", 30);
+    \u0275\u0275elementStart(15, "div", 28)(16, "div", 23)(17, "label", 29);
     \u0275\u0275text(18, "Largura (px)");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(19, "div", 26);
-    \u0275\u0275element(20, "input", 31);
+    \u0275\u0275elementStart(19, "div", 25);
+    \u0275\u0275element(20, "input", 30);
     \u0275\u0275elementEnd()();
-    \u0275\u0275elementStart(21, "div", 24)(22, "label", 32);
+    \u0275\u0275elementStart(21, "div", 23)(22, "label", 31);
     \u0275\u0275text(23, "Altura (px)");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(24, "div", 26);
-    \u0275\u0275element(25, "input", 33);
+    \u0275\u0275elementStart(24, "div", 25);
+    \u0275\u0275element(25, "input", 32);
     \u0275\u0275elementEnd()()();
-    \u0275\u0275elementStart(26, "div", 24)(27, "label", 34);
+    \u0275\u0275elementStart(26, "div", 23)(27, "label", 33);
     \u0275\u0275text(28, "Cor de fundo");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(29, "div", 26);
-    \u0275\u0275element(30, "input", 35);
+    \u0275\u0275elementStart(29, "div", 25);
+    \u0275\u0275element(30, "input", 34);
     \u0275\u0275elementEnd()();
     \u0275\u0275template(31, FloorPlanListComponent_Conditional_14_Conditional_31_Template, 4, 1, "div", 6);
-    \u0275\u0275elementStart(32, "div", 36)(33, "button", 37);
+    \u0275\u0275elementStart(32, "div", 35)(33, "button", 36);
     \u0275\u0275text(34);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(35, "button", 38);
+    \u0275\u0275elementStart(35, "button", 37);
     \u0275\u0275listener("click", function FloorPlanListComponent_Conditional_14_Template_button_click_35_listener() {
       \u0275\u0275restoreView(_r5);
       const ctx_r0 = \u0275\u0275nextContext();
@@ -290,18 +284,12 @@ function FloorPlanListComponent_Conditional_15_Conditional_9_Template(rf, ctx) {
 function FloorPlanListComponent_Conditional_15_Template(rf, ctx) {
   if (rf & 1) {
     const _r6 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 18);
-    \u0275\u0275listener("click", function FloorPlanListComponent_Conditional_15_Template_div_click_0_listener() {
-      \u0275\u0275restoreView(_r6);
-      const ctx_r0 = \u0275\u0275nextContext();
-      return \u0275\u0275resetView(ctx_r0.cancelDelete());
-    });
-    \u0275\u0275elementStart(1, "div", 19);
+    \u0275\u0275elementStart(0, "div", 9)(1, "div", 18);
     \u0275\u0275listener("click", function FloorPlanListComponent_Conditional_15_Template_div_click_1_listener($event) {
       \u0275\u0275restoreView(_r6);
       return \u0275\u0275resetView($event.stopPropagation());
     });
-    \u0275\u0275elementStart(2, "h2", 21);
+    \u0275\u0275elementStart(2, "h2", 20);
     \u0275\u0275text(3, "Excluir ambiente");
     \u0275\u0275elementEnd();
     \u0275\u0275elementStart(4, "p", 5);
@@ -312,7 +300,7 @@ function FloorPlanListComponent_Conditional_15_Template(rf, ctx) {
     \u0275\u0275text(8, "? Todos os objetos desenhados neste ambiente ser\xE3o exclu\xEDdos junto (as mesas em si n\xE3o s\xE3o afetadas). Esta a\xE7\xE3o n\xE3o pode ser desfeita. ");
     \u0275\u0275elementEnd();
     \u0275\u0275template(9, FloorPlanListComponent_Conditional_15_Conditional_9_Template, 4, 1, "div", 6);
-    \u0275\u0275elementStart(10, "div", 36)(11, "button", 39);
+    \u0275\u0275elementStart(10, "div", 35)(11, "button", 38);
     \u0275\u0275listener("click", function FloorPlanListComponent_Conditional_15_Template_button_click_11_listener() {
       \u0275\u0275restoreView(_r6);
       const ctx_r0 = \u0275\u0275nextContext();
@@ -320,7 +308,7 @@ function FloorPlanListComponent_Conditional_15_Template(rf, ctx) {
     });
     \u0275\u0275text(12);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(13, "button", 38);
+    \u0275\u0275elementStart(13, "button", 37);
     \u0275\u0275listener("click", function FloorPlanListComponent_Conditional_15_Template_button_click_13_listener() {
       \u0275\u0275restoreView(_r6);
       const ctx_r0 = \u0275\u0275nextContext();
@@ -503,7 +491,7 @@ var FloorPlanListComponent = class _FloorPlanListComponent {
   static \u0275fac = function FloorPlanListComponent_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _FloorPlanListComponent)();
   };
-  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _FloorPlanListComponent, selectors: [["app-admin-floor-plan-list"]], standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 16, vars: 3, consts: [[1, "page-header", "page-header--row"], [1, "page-title"], [1, "page-subtitle"], ["type", "button", "appRipple", "", 1, "btn", "btn--primary", 3, "click"], ["aria-hidden", "true", 1, "material-icons"], [1, "field__hint"], ["role", "alert", 1, "form-alert", "form-alert--error"], [1, "card", "empty-state"], [1, "floor-plans-grid"], [1, "modal-backdrop"], [1, "card", "floor-plan-item"], [1, "floor-plan-item__preview", 3, "click"], [1, "floor-plan-item__body"], [1, "floor-plan-item__name"], [1, "floor-plan-item__actions"], ["type", "button", 1, "btn", "btn--ghost", "btn--sm", 3, "click"], ["type", "button", "title", "Editar dados do ambiente", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Excluir ambiente", 1, "icon-btn", "icon-btn--danger", 3, "click"], [1, "modal-backdrop", 3, "click"], [1, "modal-card", "modal-card--sm", "card", 3, "click"], [1, "modal-card__header"], [1, "step-heading"], ["type", "button", "aria-label", "Fechar", 1, "icon-btn", 3, "click"], ["novalidate", "", 3, "submit", "formGroup"], [1, "field"], ["for", "floor-plan-name", 1, "field__label"], [1, "field__control"], ["id", "floor-plan-name", "type", "text", "formControlName", "name", "placeholder", "Ex: Sal\xE3o Principal, Varanda", 1, "field__input"], [1, "field__error"], [1, "field__row"], ["for", "floor-plan-width", 1, "field__label"], ["id", "floor-plan-width", "type", "number", "min", "100", "formControlName", "width", 1, "field__input"], ["for", "floor-plan-height", 1, "field__label"], ["id", "floor-plan-height", "type", "number", "min", "100", "formControlName", "height", 1, "field__input"], ["for", "floor-plan-color", 1, "field__label"], ["id", "floor-plan-color", "type", "color", "formControlName", "backgroundColor", 1, "field__input", "field__input--color"], [1, "step-actions"], ["type", "submit", "appRipple", "", 1, "btn", "btn--primary", 3, "disabled"], ["type", "button", 1, "btn", "btn--ghost", 3, "click"], ["type", "button", 1, "btn", "btn--danger", 3, "click", "disabled"]], template: function FloorPlanListComponent_Template(rf, ctx) {
+  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _FloorPlanListComponent, selectors: [["app-admin-floor-plan-list"]], standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 16, vars: 3, consts: [[1, "page-header", "page-header--row"], [1, "page-title"], [1, "page-subtitle"], ["type", "button", "appRipple", "", 1, "btn", "btn--primary", 3, "click"], ["aria-hidden", "true", 1, "material-icons"], [1, "field__hint"], ["role", "alert", 1, "form-alert", "form-alert--error"], [1, "card", "empty-state"], [1, "floor-plans-grid"], [1, "modal-backdrop"], [1, "card", "floor-plan-item"], [1, "floor-plan-item__preview", 3, "click"], [1, "floor-plan-item__body"], [1, "floor-plan-item__name"], [1, "floor-plan-item__actions"], ["type", "button", 1, "btn", "btn--ghost", "btn--sm", 3, "click"], ["type", "button", "title", "Editar dados do ambiente", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Excluir ambiente", 1, "icon-btn", "icon-btn--danger", 3, "click"], [1, "modal-card", "modal-card--sm", "card", 3, "click"], [1, "modal-card__header"], [1, "step-heading"], ["type", "button", "aria-label", "Fechar", 1, "icon-btn", 3, "click"], ["novalidate", "", 3, "submit", "formGroup"], [1, "field"], ["for", "floor-plan-name", 1, "field__label"], [1, "field__control"], ["id", "floor-plan-name", "type", "text", "formControlName", "name", "placeholder", "Ex: Sal\xE3o Principal, Varanda", 1, "field__input"], [1, "field__error"], [1, "field__row"], ["for", "floor-plan-width", 1, "field__label"], ["id", "floor-plan-width", "type", "number", "min", "100", "formControlName", "width", 1, "field__input"], ["for", "floor-plan-height", 1, "field__label"], ["id", "floor-plan-height", "type", "number", "min", "100", "formControlName", "height", 1, "field__input"], ["for", "floor-plan-color", 1, "field__label"], ["id", "floor-plan-color", "type", "color", "formControlName", "backgroundColor", 1, "field__input", "field__input--color"], [1, "step-actions"], ["type", "submit", "appRipple", "", 1, "btn", "btn--primary", 3, "disabled"], ["type", "button", 1, "btn", "btn--ghost", 3, "click"], ["type", "button", 1, "btn", "btn--danger", 3, "click", "disabled"]], template: function FloorPlanListComponent_Template(rf, ctx) {
     if (rf & 1) {
       \u0275\u0275elementStart(0, "div", 0)(1, "div")(2, "h1", 1);
       \u0275\u0275text(3, "Mapa do Sal\xE3o");
@@ -539,4 +527,4 @@ var FloorPlanListComponent = class _FloorPlanListComponent {
 export {
   FloorPlanListComponent
 };
-//# sourceMappingURL=chunk-I5TOGFPW.js.map
+//# sourceMappingURL=chunk-GF75ZTPE.js.map

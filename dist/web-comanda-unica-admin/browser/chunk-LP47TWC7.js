@@ -623,7 +623,7 @@ function TablesComponent_Conditional_14_Template(rf, ctx) {
 }
 function TablesComponent_Conditional_15_Conditional_15_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "span", 66);
+    \u0275\u0275elementStart(0, "span", 65);
     \u0275\u0275text(1, "Informe o n\xFAmero da mesa.");
     \u0275\u0275elementEnd();
   }
@@ -644,7 +644,7 @@ function TablesComponent_Conditional_15_For_29_Template(rf, ctx) {
 function TablesComponent_Conditional_15_Conditional_30_Template(rf, ctx) {
   if (rf & 1) {
     const _r15 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "button", 85);
+    \u0275\u0275elementStart(0, "button", 84);
     \u0275\u0275listener("click", function TablesComponent_Conditional_15_Conditional_30_Template_button_click_0_listener() {
       \u0275\u0275restoreView(_r15);
       const ctx_r1 = \u0275\u0275nextContext(2);
@@ -659,14 +659,14 @@ function TablesComponent_Conditional_15_Conditional_30_Template(rf, ctx) {
 }
 function TablesComponent_Conditional_15_Conditional_31_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "span", 66);
+    \u0275\u0275elementStart(0, "span", 65);
     \u0275\u0275text(1, "Selecione um setor.");
     \u0275\u0275elementEnd();
   }
 }
 function TablesComponent_Conditional_15_Conditional_38_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "span", 66);
+    \u0275\u0275elementStart(0, "span", 65);
     \u0275\u0275text(1, "Informe a capacidade da mesa.");
     \u0275\u0275elementEnd();
   }
@@ -688,21 +688,15 @@ function TablesComponent_Conditional_15_Conditional_57_Template(rf, ctx) {
 function TablesComponent_Conditional_15_Template(rf, ctx) {
   if (rf & 1) {
     const _r13 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 57);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Template_div_click_0_listener() {
-      \u0275\u0275restoreView(_r13);
-      const ctx_r1 = \u0275\u0275nextContext();
-      return \u0275\u0275resetView(ctx_r1.closeTableModal());
-    });
-    \u0275\u0275elementStart(1, "div", 58);
+    \u0275\u0275elementStart(0, "div", 5)(1, "div", 57);
     \u0275\u0275listener("click", function TablesComponent_Conditional_15_Template_div_click_1_listener($event) {
       \u0275\u0275restoreView(_r13);
       return \u0275\u0275resetView($event.stopPropagation());
     });
-    \u0275\u0275elementStart(2, "div", 59)(3, "h2", 60);
+    \u0275\u0275elementStart(2, "div", 58)(3, "h2", 59);
     \u0275\u0275text(4);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(5, "button", 61);
+    \u0275\u0275elementStart(5, "button", 60);
     \u0275\u0275listener("click", function TablesComponent_Conditional_15_Template_button_click_5_listener() {
       \u0275\u0275restoreView(_r13);
       const ctx_r1 = \u0275\u0275nextContext();
@@ -711,71 +705,71 @@ function TablesComponent_Conditional_15_Template(rf, ctx) {
     \u0275\u0275elementStart(6, "span", 8);
     \u0275\u0275text(7, "close");
     \u0275\u0275elementEnd()()();
-    \u0275\u0275elementStart(8, "form", 62);
+    \u0275\u0275elementStart(8, "form", 61);
     \u0275\u0275listener("submit", function TablesComponent_Conditional_15_Template_form_submit_8_listener($event) {
       \u0275\u0275restoreView(_r13);
       const ctx_r1 = \u0275\u0275nextContext();
       $event.preventDefault();
       return \u0275\u0275resetView(ctx_r1.submitTable());
     });
-    \u0275\u0275elementStart(9, "div", 63)(10, "div", 11)(11, "label", 64);
+    \u0275\u0275elementStart(9, "div", 62)(10, "div", 11)(11, "label", 63);
     \u0275\u0275text(12, "N\xFAmero da mesa");
     \u0275\u0275elementEnd();
     \u0275\u0275elementStart(13, "div", 13);
-    \u0275\u0275element(14, "input", 65);
+    \u0275\u0275element(14, "input", 64);
     \u0275\u0275elementEnd();
-    \u0275\u0275template(15, TablesComponent_Conditional_15_Conditional_15_Template, 2, 0, "span", 66);
+    \u0275\u0275template(15, TablesComponent_Conditional_15_Conditional_15_Template, 2, 0, "span", 65);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(16, "div", 11)(17, "label", 67);
+    \u0275\u0275elementStart(16, "div", 11)(17, "label", 66);
     \u0275\u0275text(18, "Nome/Apelido");
     \u0275\u0275elementEnd();
     \u0275\u0275elementStart(19, "div", 13);
-    \u0275\u0275element(20, "input", 68);
+    \u0275\u0275element(20, "input", 67);
     \u0275\u0275elementEnd()()();
-    \u0275\u0275elementStart(21, "div", 11)(22, "label", 69);
+    \u0275\u0275elementStart(21, "div", 11)(22, "label", 68);
     \u0275\u0275text(23, "Setor");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(24, "div", 70)(25, "select", 71)(26, "option", 72);
+    \u0275\u0275elementStart(24, "div", 69)(25, "select", 70)(26, "option", 71);
     \u0275\u0275text(27, "Selecione um setor");
     \u0275\u0275elementEnd();
     \u0275\u0275repeaterCreate(28, TablesComponent_Conditional_15_For_29_Template, 2, 2, "option", 16, _forTrack0);
     \u0275\u0275elementEnd();
-    \u0275\u0275template(30, TablesComponent_Conditional_15_Conditional_30_Template, 4, 0, "button", 73);
+    \u0275\u0275template(30, TablesComponent_Conditional_15_Conditional_30_Template, 4, 0, "button", 72);
     \u0275\u0275elementEnd();
-    \u0275\u0275template(31, TablesComponent_Conditional_15_Conditional_31_Template, 2, 0, "span", 66);
+    \u0275\u0275template(31, TablesComponent_Conditional_15_Conditional_31_Template, 2, 0, "span", 65);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(32, "div", 63)(33, "div", 11)(34, "label", 74);
+    \u0275\u0275elementStart(32, "div", 62)(33, "div", 11)(34, "label", 73);
     \u0275\u0275text(35, "Capacidade");
     \u0275\u0275elementEnd();
     \u0275\u0275elementStart(36, "div", 13);
-    \u0275\u0275element(37, "input", 75);
+    \u0275\u0275element(37, "input", 74);
     \u0275\u0275elementEnd();
-    \u0275\u0275template(38, TablesComponent_Conditional_15_Conditional_38_Template, 2, 0, "span", 66);
+    \u0275\u0275template(38, TablesComponent_Conditional_15_Conditional_38_Template, 2, 0, "span", 65);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(39, "div", 11)(40, "label", 76);
+    \u0275\u0275elementStart(39, "div", 11)(40, "label", 75);
     \u0275\u0275text(41, "Status inicial");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(42, "div", 13)(43, "select", 77)(44, "option", 20);
+    \u0275\u0275elementStart(42, "div", 13)(43, "select", 76)(44, "option", 20);
     \u0275\u0275text(45, "Ativa");
     \u0275\u0275elementEnd();
     \u0275\u0275elementStart(46, "option", 21);
     \u0275\u0275text(47, "Inativa");
     \u0275\u0275elementEnd()()()()();
-    \u0275\u0275elementStart(48, "div", 63)(49, "label", 78);
-    \u0275\u0275element(50, "input", 79);
+    \u0275\u0275elementStart(48, "div", 62)(49, "label", 77);
+    \u0275\u0275element(50, "input", 78);
     \u0275\u0275text(51, " Permite QR Code");
     \u0275\u0275elementEnd()();
-    \u0275\u0275elementStart(52, "div", 11)(53, "label", 80);
+    \u0275\u0275elementStart(52, "div", 11)(53, "label", 79);
     \u0275\u0275text(54, "Observa\xE7\xF5es");
     \u0275\u0275elementEnd();
     \u0275\u0275elementStart(55, "div", 13);
-    \u0275\u0275element(56, "textarea", 81);
+    \u0275\u0275element(56, "textarea", 80);
     \u0275\u0275elementEnd()();
     \u0275\u0275template(57, TablesComponent_Conditional_15_Conditional_57_Template, 4, 1, "div", 31);
-    \u0275\u0275elementStart(58, "div", 82)(59, "button", 83);
+    \u0275\u0275elementStart(58, "div", 81)(59, "button", 82);
     \u0275\u0275text(60);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(61, "button", 84);
+    \u0275\u0275elementStart(61, "button", 83);
     \u0275\u0275listener("click", function TablesComponent_Conditional_15_Template_button_click_61_listener() {
       \u0275\u0275restoreView(_r13);
       const ctx_r1 = \u0275\u0275nextContext();
@@ -816,7 +810,7 @@ function TablesComponent_Conditional_15_Template(rf, ctx) {
 }
 function TablesComponent_Conditional_16_Conditional_14_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "span", 66);
+    \u0275\u0275elementStart(0, "span", 65);
     \u0275\u0275text(1, "Informe um nome entre 2 e 100 caracteres.");
     \u0275\u0275elementEnd();
   }
@@ -838,21 +832,15 @@ function TablesComponent_Conditional_16_Conditional_24_Template(rf, ctx) {
 function TablesComponent_Conditional_16_Template(rf, ctx) {
   if (rf & 1) {
     const _r16 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 57);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_16_Template_div_click_0_listener() {
-      \u0275\u0275restoreView(_r16);
-      const ctx_r1 = \u0275\u0275nextContext();
-      return \u0275\u0275resetView(ctx_r1.closeSectorModal());
-    });
-    \u0275\u0275elementStart(1, "div", 86);
+    \u0275\u0275elementStart(0, "div", 5)(1, "div", 85);
     \u0275\u0275listener("click", function TablesComponent_Conditional_16_Template_div_click_1_listener($event) {
       \u0275\u0275restoreView(_r16);
       return \u0275\u0275resetView($event.stopPropagation());
     });
-    \u0275\u0275elementStart(2, "div", 59)(3, "h2", 60);
+    \u0275\u0275elementStart(2, "div", 58)(3, "h2", 59);
     \u0275\u0275text(4);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(5, "button", 61);
+    \u0275\u0275elementStart(5, "button", 60);
     \u0275\u0275listener("click", function TablesComponent_Conditional_16_Template_button_click_5_listener() {
       \u0275\u0275restoreView(_r16);
       const ctx_r1 = \u0275\u0275nextContext();
@@ -861,36 +849,36 @@ function TablesComponent_Conditional_16_Template(rf, ctx) {
     \u0275\u0275elementStart(6, "span", 8);
     \u0275\u0275text(7, "close");
     \u0275\u0275elementEnd()()();
-    \u0275\u0275elementStart(8, "form", 62);
+    \u0275\u0275elementStart(8, "form", 61);
     \u0275\u0275listener("submit", function TablesComponent_Conditional_16_Template_form_submit_8_listener($event) {
       \u0275\u0275restoreView(_r16);
       const ctx_r1 = \u0275\u0275nextContext();
       $event.preventDefault();
       return \u0275\u0275resetView(ctx_r1.submitSector());
     });
-    \u0275\u0275elementStart(9, "div", 11)(10, "label", 87);
+    \u0275\u0275elementStart(9, "div", 11)(10, "label", 86);
     \u0275\u0275text(11, "Nome");
     \u0275\u0275elementEnd();
     \u0275\u0275elementStart(12, "div", 13);
-    \u0275\u0275element(13, "input", 88);
+    \u0275\u0275element(13, "input", 87);
     \u0275\u0275elementEnd();
-    \u0275\u0275template(14, TablesComponent_Conditional_16_Conditional_14_Template, 2, 0, "span", 66);
+    \u0275\u0275template(14, TablesComponent_Conditional_16_Conditional_14_Template, 2, 0, "span", 65);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(15, "div", 11)(16, "label", 89);
+    \u0275\u0275elementStart(15, "div", 11)(16, "label", 88);
     \u0275\u0275text(17, "Ordem de exibi\xE7\xE3o");
     \u0275\u0275elementEnd();
     \u0275\u0275elementStart(18, "div", 13);
-    \u0275\u0275element(19, "input", 90);
+    \u0275\u0275element(19, "input", 89);
     \u0275\u0275elementEnd()();
-    \u0275\u0275elementStart(20, "div", 63)(21, "label", 78);
-    \u0275\u0275element(22, "input", 91);
+    \u0275\u0275elementStart(20, "div", 62)(21, "label", 77);
+    \u0275\u0275element(22, "input", 90);
     \u0275\u0275text(23, " Ativo");
     \u0275\u0275elementEnd()();
     \u0275\u0275template(24, TablesComponent_Conditional_16_Conditional_24_Template, 4, 1, "div", 31);
-    \u0275\u0275elementStart(25, "div", 82)(26, "button", 83);
+    \u0275\u0275elementStart(25, "div", 81)(26, "button", 82);
     \u0275\u0275text(27);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(28, "button", 84);
+    \u0275\u0275elementStart(28, "button", 83);
     \u0275\u0275listener("click", function TablesComponent_Conditional_16_Template_button_click_28_listener() {
       \u0275\u0275restoreView(_r16);
       const ctx_r1 = \u0275\u0275nextContext();
@@ -934,18 +922,12 @@ function TablesComponent_Conditional_17_Conditional_9_Template(rf, ctx) {
 function TablesComponent_Conditional_17_Template(rf, ctx) {
   if (rf & 1) {
     const _r17 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 57);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_17_Template_div_click_0_listener() {
-      \u0275\u0275restoreView(_r17);
-      const ctx_r1 = \u0275\u0275nextContext();
-      return \u0275\u0275resetView(ctx_r1.cancelRegenerateQr());
-    });
-    \u0275\u0275elementStart(1, "div", 86);
+    \u0275\u0275elementStart(0, "div", 5)(1, "div", 85);
     \u0275\u0275listener("click", function TablesComponent_Conditional_17_Template_div_click_1_listener($event) {
       \u0275\u0275restoreView(_r17);
       return \u0275\u0275resetView($event.stopPropagation());
     });
-    \u0275\u0275elementStart(2, "h2", 60);
+    \u0275\u0275elementStart(2, "h2", 59);
     \u0275\u0275text(3, "Regenerar QR Code");
     \u0275\u0275elementEnd();
     \u0275\u0275elementStart(4, "p", 30);
@@ -956,7 +938,7 @@ function TablesComponent_Conditional_17_Template(rf, ctx) {
     \u0275\u0275text(8, " deixar\xE1 de funcionar imediatamente. Voc\xEA precisar\xE1 imprimir e substituir o QR Code f\xEDsico da mesa. ");
     \u0275\u0275elementEnd();
     \u0275\u0275template(9, TablesComponent_Conditional_17_Conditional_9_Template, 4, 1, "div", 31);
-    \u0275\u0275elementStart(10, "div", 82)(11, "button", 92);
+    \u0275\u0275elementStart(10, "div", 81)(11, "button", 91);
     \u0275\u0275listener("click", function TablesComponent_Conditional_17_Template_button_click_11_listener() {
       \u0275\u0275restoreView(_r17);
       const ctx_r1 = \u0275\u0275nextContext();
@@ -964,7 +946,7 @@ function TablesComponent_Conditional_17_Template(rf, ctx) {
     });
     \u0275\u0275text(12);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(13, "button", 84);
+    \u0275\u0275elementStart(13, "button", 83);
     \u0275\u0275listener("click", function TablesComponent_Conditional_17_Template_button_click_13_listener() {
       \u0275\u0275restoreView(_r17);
       const ctx_r1 = \u0275\u0275nextContext();
@@ -1002,18 +984,12 @@ function TablesComponent_Conditional_18_Conditional_9_Template(rf, ctx) {
 function TablesComponent_Conditional_18_Template(rf, ctx) {
   if (rf & 1) {
     const _r18 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 57);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_18_Template_div_click_0_listener() {
-      \u0275\u0275restoreView(_r18);
-      const ctx_r1 = \u0275\u0275nextContext();
-      return \u0275\u0275resetView(ctx_r1.cancelDeleteSector());
-    });
-    \u0275\u0275elementStart(1, "div", 86);
+    \u0275\u0275elementStart(0, "div", 5)(1, "div", 85);
     \u0275\u0275listener("click", function TablesComponent_Conditional_18_Template_div_click_1_listener($event) {
       \u0275\u0275restoreView(_r18);
       return \u0275\u0275resetView($event.stopPropagation());
     });
-    \u0275\u0275elementStart(2, "h2", 60);
+    \u0275\u0275elementStart(2, "h2", 59);
     \u0275\u0275text(3, "Excluir setor");
     \u0275\u0275elementEnd();
     \u0275\u0275elementStart(4, "p", 30);
@@ -1024,7 +1000,7 @@ function TablesComponent_Conditional_18_Template(rf, ctx) {
     \u0275\u0275text(8, "? Esta a\xE7\xE3o n\xE3o pode ser desfeita. ");
     \u0275\u0275elementEnd();
     \u0275\u0275template(9, TablesComponent_Conditional_18_Conditional_9_Template, 4, 1, "div", 31);
-    \u0275\u0275elementStart(10, "div", 82)(11, "button", 92);
+    \u0275\u0275elementStart(10, "div", 81)(11, "button", 91);
     \u0275\u0275listener("click", function TablesComponent_Conditional_18_Template_button_click_11_listener() {
       \u0275\u0275restoreView(_r18);
       const ctx_r1 = \u0275\u0275nextContext();
@@ -1032,7 +1008,7 @@ function TablesComponent_Conditional_18_Template(rf, ctx) {
     });
     \u0275\u0275text(12);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(13, "button", 84);
+    \u0275\u0275elementStart(13, "button", 83);
     \u0275\u0275listener("click", function TablesComponent_Conditional_18_Template_button_click_13_listener() {
       \u0275\u0275restoreView(_r18);
       const ctx_r1 = \u0275\u0275nextContext();
@@ -1076,8 +1052,8 @@ function TablesComponent_Conditional_19_Conditional_9_Template(rf, ctx) {
 }
 function TablesComponent_Conditional_19_Conditional_10_Conditional_0_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "div", 93);
-    \u0275\u0275element(1, "img", 94);
+    \u0275\u0275elementStart(0, "div", 92);
+    \u0275\u0275element(1, "img", 93);
     \u0275\u0275elementEnd();
     \u0275\u0275elementStart(2, "p", 30);
     \u0275\u0275text(3);
@@ -1104,21 +1080,15 @@ function TablesComponent_Conditional_19_Conditional_10_Template(rf, ctx) {
 function TablesComponent_Conditional_19_Template(rf, ctx) {
   if (rf & 1) {
     const _r19 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 57);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_19_Template_div_click_0_listener() {
-      \u0275\u0275restoreView(_r19);
-      const ctx_r1 = \u0275\u0275nextContext();
-      return \u0275\u0275resetView(ctx_r1.closeQrModal());
-    });
-    \u0275\u0275elementStart(1, "div", 86);
+    \u0275\u0275elementStart(0, "div", 5)(1, "div", 85);
     \u0275\u0275listener("click", function TablesComponent_Conditional_19_Template_div_click_1_listener($event) {
       \u0275\u0275restoreView(_r19);
       return \u0275\u0275resetView($event.stopPropagation());
     });
-    \u0275\u0275elementStart(2, "div", 59)(3, "h2", 60);
+    \u0275\u0275elementStart(2, "div", 58)(3, "h2", 59);
     \u0275\u0275text(4);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(5, "button", 61);
+    \u0275\u0275elementStart(5, "button", 60);
     \u0275\u0275listener("click", function TablesComponent_Conditional_19_Template_button_click_5_listener() {
       \u0275\u0275restoreView(_r19);
       const ctx_r1 = \u0275\u0275nextContext();
@@ -1128,7 +1098,7 @@ function TablesComponent_Conditional_19_Template(rf, ctx) {
     \u0275\u0275text(7, "close");
     \u0275\u0275elementEnd()()();
     \u0275\u0275template(8, TablesComponent_Conditional_19_Conditional_8_Template, 2, 0, "p", 30)(9, TablesComponent_Conditional_19_Conditional_9_Template, 4, 1, "div", 31)(10, TablesComponent_Conditional_19_Conditional_10_Template, 1, 1);
-    \u0275\u0275elementStart(11, "div", 82)(12, "button", 85);
+    \u0275\u0275elementStart(11, "div", 81)(12, "button", 84);
     \u0275\u0275listener("click", function TablesComponent_Conditional_19_Template_button_click_12_listener() {
       const table_r20 = \u0275\u0275restoreView(_r19);
       const ctx_r1 = \u0275\u0275nextContext();
@@ -1139,7 +1109,7 @@ function TablesComponent_Conditional_19_Template(rf, ctx) {
     \u0275\u0275elementEnd();
     \u0275\u0275text(15, " Baixar PNG ");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(16, "button", 85);
+    \u0275\u0275elementStart(16, "button", 84);
     \u0275\u0275listener("click", function TablesComponent_Conditional_19_Template_button_click_16_listener() {
       const table_r20 = \u0275\u0275restoreView(_r19);
       const ctx_r1 = \u0275\u0275nextContext();
@@ -1150,7 +1120,7 @@ function TablesComponent_Conditional_19_Template(rf, ctx) {
     \u0275\u0275elementEnd();
     \u0275\u0275text(19, " Baixar PDF ");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(20, "button", 85);
+    \u0275\u0275elementStart(20, "button", 84);
     \u0275\u0275listener("click", function TablesComponent_Conditional_19_Template_button_click_20_listener() {
       const table_r20 = \u0275\u0275restoreView(_r19);
       const ctx_r1 = \u0275\u0275nextContext();
@@ -1706,7 +1676,7 @@ var TablesComponent = class _TablesComponent {
   static \u0275fac = function TablesComponent_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _TablesComponent)();
   };
-  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _TablesComponent, selectors: [["app-admin-tables"]], standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 20, vars: 12, consts: [[1, "page-header", "page-header--row"], [1, "page-title"], [1, "page-subtitle"], [1, "tabs"], ["type", "button", 1, "tabs__item", 3, "click"], [1, "modal-backdrop"], ["type", "button", "appRipple", "", 1, "btn", "btn--primary"], ["type", "button", "appRipple", "", 1, "btn", "btn--primary", 3, "click"], ["aria-hidden", "true", 1, "material-icons"], [1, "card", "filters-card"], [1, "filters-row"], [1, "field"], ["for", "filter-sector", 1, "field__label"], [1, "field__control"], ["id", "filter-sector", 1, "field__input", 3, "change", "value"], ["value", ""], [3, "value"], ["for", "filter-status", 1, "field__label"], ["id", "filter-status", 1, "field__input", 3, "change", "value"], ["value", "all"], ["value", "ACTIVE"], ["value", "INACTIVE"], ["for", "filter-sort", 1, "field__label"], [1, "field__control", "filters-row__sort"], ["id", "filter-sort", 1, "field__input", 3, "change", "value"], ["type", "button", 1, "icon-btn", 3, "click", "title"], [1, "field", "filters-row__search"], ["for", "filter-search", 1, "field__label"], ["id", "filter-search", "type", "text", "placeholder", "Ex: 12, Varanda", 1, "field__input", 3, "input", "value"], ["type", "button", 1, "btn", "btn--ghost", "btn--sm", "filters-row__reset", 3, "click"], [1, "field__hint"], ["role", "alert", 1, "form-alert", "form-alert--error"], [1, "tables-grid"], [1, "card", "table-item"], [1, "card", "pagination-card"], [1, "pagination"], [1, "pagination__info"], [1, "pagination__controls"], ["type", "button", 1, "btn", "btn--ghost", "btn--sm", 3, "click", "disabled"], [1, "table-item__header"], [1, "table-item__number"], [1, "badge"], [1, "table-item__name"], [1, "table-item__meta"], [1, "table-item__actions"], ["type", "button", "title", "Visualizar QR Code", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Baixar PNG", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Baixar PDF", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Imprimir QR Code", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Regenerar QR Code", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Editar", 1, "icon-btn", 3, "click"], [1, "card", "table-card"], [1, "table-wrapper"], [1, "data-table"], [1, "data-table__actions-col"], [1, "data-table__empty"], ["type", "button", "title", "Excluir", 1, "icon-btn", "icon-btn--danger", 3, "click"], [1, "modal-backdrop", 3, "click"], [1, "modal-card", "card", 3, "click"], [1, "modal-card__header"], [1, "step-heading"], ["type", "button", "aria-label", "Fechar", 1, "icon-btn", 3, "click"], ["novalidate", "", 3, "submit", "formGroup"], [1, "field__row"], ["for", "table-number", 1, "field__label"], ["id", "table-number", "type", "number", "min", "1", "formControlName", "number", "placeholder", "Ex: 12", 1, "field__input"], [1, "field__error"], ["for", "table-name", 1, "field__label"], ["id", "table-name", "type", "text", "formControlName", "name", "placeholder", "Opcional", 1, "field__input"], ["for", "table-sector", 1, "field__label"], [1, "field__control", "field__control--with-action"], ["id", "table-sector", "formControlName", "sectorId", 1, "field__input"], ["value", "", "disabled", ""], ["type", "button", 1, "btn", "btn--ghost", "btn--sm"], ["for", "table-capacity", 1, "field__label"], ["id", "table-capacity", "type", "number", "min", "1", "formControlName", "capacity", "placeholder", "Ex: 4", 1, "field__input"], ["for", "table-status", 1, "field__label"], ["id", "table-status", "formControlName", "status", 1, "field__input"], [1, "field__checkbox"], ["type", "checkbox", "formControlName", "allowQr"], ["for", "table-notes", 1, "field__label"], ["id", "table-notes", "rows", "3", "formControlName", "notes", "placeholder", "Opcional", 1, "field__input"], [1, "step-actions"], ["type", "submit", "appRipple", "", 1, "btn", "btn--primary", 3, "disabled"], ["type", "button", 1, "btn", "btn--ghost", 3, "click"], ["type", "button", 1, "btn", "btn--ghost", "btn--sm", 3, "click"], [1, "modal-card", "modal-card--sm", "card", 3, "click"], ["for", "sector-name", 1, "field__label"], ["id", "sector-name", "type", "text", "formControlName", "name", "placeholder", "Ex: Sal\xE3o, Varanda", 1, "field__input"], ["for", "sector-display-order", 1, "field__label"], ["id", "sector-display-order", "type", "number", "min", "0", "formControlName", "displayOrder", 1, "field__input"], ["type", "checkbox", "formControlName", "active"], ["type", "button", 1, "btn", "btn--danger", 3, "click", "disabled"], [1, "qr-preview"], [3, "src", "alt"]], template: function TablesComponent_Template(rf, ctx) {
+  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _TablesComponent, selectors: [["app-admin-tables"]], standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 20, vars: 12, consts: [[1, "page-header", "page-header--row"], [1, "page-title"], [1, "page-subtitle"], [1, "tabs"], ["type", "button", 1, "tabs__item", 3, "click"], [1, "modal-backdrop"], ["type", "button", "appRipple", "", 1, "btn", "btn--primary"], ["type", "button", "appRipple", "", 1, "btn", "btn--primary", 3, "click"], ["aria-hidden", "true", 1, "material-icons"], [1, "card", "filters-card"], [1, "filters-row"], [1, "field"], ["for", "filter-sector", 1, "field__label"], [1, "field__control"], ["id", "filter-sector", 1, "field__input", 3, "change", "value"], ["value", ""], [3, "value"], ["for", "filter-status", 1, "field__label"], ["id", "filter-status", 1, "field__input", 3, "change", "value"], ["value", "all"], ["value", "ACTIVE"], ["value", "INACTIVE"], ["for", "filter-sort", 1, "field__label"], [1, "field__control", "filters-row__sort"], ["id", "filter-sort", 1, "field__input", 3, "change", "value"], ["type", "button", 1, "icon-btn", 3, "click", "title"], [1, "field", "filters-row__search"], ["for", "filter-search", 1, "field__label"], ["id", "filter-search", "type", "text", "placeholder", "Ex: 12, Varanda", 1, "field__input", 3, "input", "value"], ["type", "button", 1, "btn", "btn--ghost", "btn--sm", "filters-row__reset", 3, "click"], [1, "field__hint"], ["role", "alert", 1, "form-alert", "form-alert--error"], [1, "tables-grid"], [1, "card", "table-item"], [1, "card", "pagination-card"], [1, "pagination"], [1, "pagination__info"], [1, "pagination__controls"], ["type", "button", 1, "btn", "btn--ghost", "btn--sm", 3, "click", "disabled"], [1, "table-item__header"], [1, "table-item__number"], [1, "badge"], [1, "table-item__name"], [1, "table-item__meta"], [1, "table-item__actions"], ["type", "button", "title", "Visualizar QR Code", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Baixar PNG", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Baixar PDF", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Imprimir QR Code", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Regenerar QR Code", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Editar", 1, "icon-btn", 3, "click"], [1, "card", "table-card"], [1, "table-wrapper"], [1, "data-table"], [1, "data-table__actions-col"], [1, "data-table__empty"], ["type", "button", "title", "Excluir", 1, "icon-btn", "icon-btn--danger", 3, "click"], [1, "modal-card", "card", 3, "click"], [1, "modal-card__header"], [1, "step-heading"], ["type", "button", "aria-label", "Fechar", 1, "icon-btn", 3, "click"], ["novalidate", "", 3, "submit", "formGroup"], [1, "field__row"], ["for", "table-number", 1, "field__label"], ["id", "table-number", "type", "number", "min", "1", "formControlName", "number", "placeholder", "Ex: 12", 1, "field__input"], [1, "field__error"], ["for", "table-name", 1, "field__label"], ["id", "table-name", "type", "text", "formControlName", "name", "placeholder", "Opcional", 1, "field__input"], ["for", "table-sector", 1, "field__label"], [1, "field__control", "field__control--with-action"], ["id", "table-sector", "formControlName", "sectorId", 1, "field__input"], ["value", "", "disabled", ""], ["type", "button", 1, "btn", "btn--ghost", "btn--sm"], ["for", "table-capacity", 1, "field__label"], ["id", "table-capacity", "type", "number", "min", "1", "formControlName", "capacity", "placeholder", "Ex: 4", 1, "field__input"], ["for", "table-status", 1, "field__label"], ["id", "table-status", "formControlName", "status", 1, "field__input"], [1, "field__checkbox"], ["type", "checkbox", "formControlName", "allowQr"], ["for", "table-notes", 1, "field__label"], ["id", "table-notes", "rows", "3", "formControlName", "notes", "placeholder", "Opcional", 1, "field__input"], [1, "step-actions"], ["type", "submit", "appRipple", "", 1, "btn", "btn--primary", 3, "disabled"], ["type", "button", 1, "btn", "btn--ghost", 3, "click"], ["type", "button", 1, "btn", "btn--ghost", "btn--sm", 3, "click"], [1, "modal-card", "modal-card--sm", "card", 3, "click"], ["for", "sector-name", 1, "field__label"], ["id", "sector-name", "type", "text", "formControlName", "name", "placeholder", "Ex: Sal\xE3o, Varanda", 1, "field__input"], ["for", "sector-display-order", 1, "field__label"], ["id", "sector-display-order", "type", "number", "min", "0", "formControlName", "displayOrder", 1, "field__input"], ["type", "checkbox", "formControlName", "active"], ["type", "button", 1, "btn", "btn--danger", 3, "click", "disabled"], [1, "qr-preview"], [3, "src", "alt"]], template: function TablesComponent_Template(rf, ctx) {
     if (rf & 1) {
       \u0275\u0275elementStart(0, "div", 0)(1, "div")(2, "h1", 1);
       \u0275\u0275text(3, "Mesas");
@@ -1764,4 +1734,4 @@ var TablesComponent = class _TablesComponent {
 export {
   TablesComponent
 };
-//# sourceMappingURL=chunk-ESVDNYN2.js.map
+//# sourceMappingURL=chunk-LP47TWC7.js.map

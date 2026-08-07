@@ -4,11 +4,13 @@ import { forkJoin } from 'rxjs';
 import { FloorPlanItemResponse, FloorPlanItemType, FloorPlanItemsService } from '../../services/floor-plan-items.service';
 import { FloorPlanResponse, FloorPlansService } from '../../services/floor-plans.service';
 import { RestaurantTableResponse, TableOperationalStatus, TablesService } from '../../services/tables.service';
+import { buildFloorPlanTableVisual, FloorPlanTableShape } from '../../utils/floor-plan-table-visual';
 
 interface ViewerItem {
   itemType: FloorPlanItemType;
   tableNumber?: number;
   tableName?: string;
+  tableCapacity?: number;
   operationalStatus?: TableOperationalStatus;
   x: number;
   y: number;
@@ -150,6 +152,7 @@ export class FloorPlanViewerComponent implements AfterViewInit, OnChanges, OnDes
       itemType: response.itemType,
       tableNumber: table?.number ?? response.tableNumber,
       tableName: table?.name,
+      tableCapacity: table?.capacity,
       operationalStatus: table?.operationalStatus,
       x: response.x,
       y: response.y,
@@ -221,7 +224,11 @@ export class FloorPlanViewerComponent implements AfterViewInit, OnChanges, OnDes
       listening: false
     });
 
-    group.add(this.buildShape(item));
+    if (item.itemType === 'TABLE') {
+      this.buildTableVisual(item).forEach((node) => group.add(node));
+    } else {
+      group.add(this.buildShape(item));
+    }
 
     const labelText = this.labelFor(item);
     if (item.itemType !== 'TEXT' && labelText) {
@@ -278,19 +285,24 @@ export class FloorPlanViewerComponent implements AfterViewInit, OnChanges, OnDes
       return rect;
     }
 
-    let cornerRadius = 4;
-    if (item.itemType === 'TABLE' && item.properties['shape'] === 'ROUND') {
-      cornerRadius = Math.min(item.width, item.height) / 2;
-    }
-
     return new Konva.Rect({
       width: item.width,
       height: item.height,
-      fill: item.itemType === 'TABLE' ? this.tableColor(item) : item.color || DEFAULT_COLORS[item.itemType] || '#94a3b8',
+      fill: item.color || DEFAULT_COLORS[item.itemType] || '#94a3b8',
       stroke: 'rgba(0,0,0,0.25)',
       strokeWidth: 1,
-      cornerRadius,
+      cornerRadius: 4,
       dash: item.itemType === 'DOOR' ? [6, 4] : undefined
+    });
+  }
+
+  private buildTableVisual(item: ViewerItem): (Konva.Group | Konva.Shape)[] {
+    return buildFloorPlanTableVisual({
+      shape: (item.properties['shape'] as FloorPlanTableShape) || 'SQUARE',
+      width: item.width,
+      height: item.height,
+      capacity: item.tableCapacity ?? 0,
+      color: this.tableColor(item)
     });
   }
 

@@ -4592,7 +4592,7 @@ var routes = [
       { path: "", pathMatch: "full", redirectTo: "dashboard" },
       {
         path: "dashboard",
-        loadComponent: () => import("./chunk-E5BBO77M.js").then((m) => m.DashboardComponent),
+        loadComponent: () => import("./chunk-3QOGLBSM.js").then((m) => m.DashboardComponent),
         title: "Dashboard \u2014 Comanda \xDAnica"
       },
       {
@@ -4604,13 +4604,13 @@ var routes = [
       {
         path: "mesas",
         canActivate: [profileGuard(["ADMIN", "OWNER", "MANAGER"])],
-        loadComponent: () => import("./chunk-ESVDNYN2.js").then((m) => m.TablesComponent),
+        loadComponent: () => import("./chunk-LP47TWC7.js").then((m) => m.TablesComponent),
         title: "Mesas \u2014 Comanda \xDAnica"
       },
       {
         path: "cardapio",
         canActivate: [profileGuard(["ADMIN", "OWNER", "MANAGER"])],
-        loadComponent: () => import("./chunk-XV62JCUO.js").then((m) => m.MenuComponent),
+        loadComponent: () => import("./chunk-BVPAJY3V.js").then((m) => m.MenuComponent),
         title: "Card\xE1pio \u2014 Comanda \xDAnica"
       },
       {
@@ -4628,7 +4628,7 @@ var routes = [
       {
         path: "funcionarios",
         canActivate: [profileGuard(["ADMIN", "OWNER", "MANAGER"])],
-        loadComponent: () => import("./chunk-66M2GA4K.js").then((m) => m.EmployeesComponent),
+        loadComponent: () => import("./chunk-KP5K5ZM3.js").then((m) => m.EmployeesComponent),
         title: "Funcion\xE1rios \u2014 Comanda \xDAnica"
       },
       {
@@ -4650,13 +4650,13 @@ var routes = [
       {
         path: "configuracoes/mapa-salao",
         canActivate: [profileGuard(["ADMIN", "OWNER", "MANAGER"])],
-        loadComponent: () => import("./chunk-I5TOGFPW.js").then((m) => m.FloorPlanListComponent),
+        loadComponent: () => import("./chunk-GF75ZTPE.js").then((m) => m.FloorPlanListComponent),
         title: "Mapa do Sal\xE3o \u2014 Comanda \xDAnica"
       },
       {
         path: "configuracoes/mapa-salao/:id",
         canActivate: [profileGuard(["ADMIN", "OWNER", "MANAGER"])],
-        loadComponent: () => import("./chunk-SYJAQMVU.js").then((m) => m.FloorPlanEditorComponent),
+        loadComponent: () => import("./chunk-UXBUUC5W.js").then((m) => m.FloorPlanEditorComponent),
         title: "Mapa do Sal\xE3o \u2014 Comanda \xDAnica"
       },
       { path: "**", redirectTo: "dashboard" }

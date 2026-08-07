@@ -228,7 +228,7 @@
 }
 
 @if (isTableModalOpen()) {
-  <div class="modal-backdrop" (click)="closeTableModal()">
+  <div class="modal-backdrop">
     <div class="modal-card card" (click)="$event.stopPropagation()">
       <div class="modal-card__header">
         <h2 class="step-heading">{{ tableModalMode() === 'create' ? 'Nova mesa' : 'Editar mesa' }}</h2>
@@ -351,7 +351,7 @@
 }
 
 @if (isSectorModalOpen()) {
-  <div class="modal-backdrop" (click)="closeSectorModal()">
+  <div class="modal-backdrop">
     <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
       <div class="modal-card__header">
         <h2 class="step-heading">{{ sectorModalMode() === 'create' ? 'Novo setor' : 'Editar setor' }}</h2>
@@ -408,7 +408,7 @@
 }
 
 @if (tableToRegenerateQr(); as table) {
-  <div class="modal-backdrop" (click)="cancelRegenerateQr()">
+  <div class="modal-backdrop">
     <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
       <h2 class="step-heading">Regenerar QR Code</h2>
       <p class="field__hint">
@@ -433,7 +433,7 @@
 }
 
 @if (sectorToDelete(); as sector) {
-  <div class="modal-backdrop" (click)="cancelDeleteSector()">
+  <div class="modal-backdrop">
     <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
       <h2 class="step-heading">Excluir setor</h2>
       <p class="field__hint">
@@ -458,7 +458,7 @@
 }
 
 @if (qrModalTable(); as table) {
-  <div class="modal-backdrop" (click)="closeQrModal()">
+  <div class="modal-backdrop">
     <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
       <div class="modal-card__header">
         <h2 class="step-heading">QR Code — Mesa {{ table.number }}</h2>

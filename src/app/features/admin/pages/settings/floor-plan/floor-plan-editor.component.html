@@ -242,7 +242,7 @@
 }
 
 @if (pendingTableDrop()) {
-  <div class="modal-backdrop" (click)="cancelTableDrop()">
+  <div class="modal-backdrop">
     <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
       <h2 class="step-heading">Selecionar mesa</h2>
       <p class="field__hint">Escolha qual mesa cadastrada este objeto vai representar no mapa.</p>

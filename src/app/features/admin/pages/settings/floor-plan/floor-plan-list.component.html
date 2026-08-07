@@ -54,7 +54,7 @@
 }
 
 @if (isModalOpen()) {
-  <div class="modal-backdrop" (click)="closeModal()">
+  <div class="modal-backdrop">
     <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
       <div class="modal-card__header">
         <h2 class="step-heading">{{ modalMode() === 'create' ? 'Novo ambiente' : 'Editar ambiente' }}</h2>
@@ -123,7 +123,7 @@
 }
 
 @if (floorPlanToDelete(); as floorPlan) {
-  <div class="modal-backdrop" (click)="cancelDelete()">
+  <div class="modal-backdrop">
     <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
       <h2 class="step-heading">Excluir ambiente</h2>
       <p class="field__hint">

@@ -7,6 +7,7 @@ import {
   __objRest,
   __spreadProps,
   __spreadValues,
+  __toESM,
   inject,
   ɵɵdefineInjectable
 } from "./chunk-ZGOR3PJA.js";
@@ -66,8 +67,8 @@ var require_Global = __commonJS({
       },
       releaseCanvasOnDestroy: true,
       document: exports.glob.document,
-      _injectGlobal(Konva) {
-        exports.glob.Konva = Konva;
+      _injectGlobal(Konva2) {
+        exports.glob.Konva = Konva2;
       }
     };
     var _registerNode = (NodeClass) => {
@@ -10646,14 +10647,124 @@ var FloorPlanItemsService = class _FloorPlanItemsService {
   syncLayout(floorPlanId, items) {
     return this.http.put(`${this.baseUrl}/${floorPlanId}/layout`, { items });
   }
+  listPlacedTableIds() {
+    return this.http.get(`${this.baseUrl}/items/placed-table-ids`);
+  }
   static \u0275fac = function FloorPlanItemsService_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _FloorPlanItemsService)();
   };
   static \u0275prov = /* @__PURE__ */ \u0275\u0275defineInjectable({ token: _FloorPlanItemsService, factory: _FloorPlanItemsService.\u0275fac, providedIn: "root" });
 };
 
+// src/app/shared/utils/floor-plan-table-visual.ts
+var import_konva = __toESM(require_lib());
+var CHAIR_SEAT_COLOR = "#e7e5e4";
+var CHAIR_BACKREST_COLOR = "#d6d3d1";
+var CHAIR_STROKE = "rgba(87,83,78,0.45)";
+var MAX_CHAIRS = 24;
+function distributeChairsRound(width, height, count, offset) {
+  if (count <= 0) {
+    return [];
+  }
+  const rx = width / 2 + offset;
+  const ry = height / 2 + offset;
+  const cx = width / 2;
+  const cy = height / 2;
+  const points = [];
+  for (let i = 0; i < count; i++) {
+    const angle = i / count * Math.PI * 2 - Math.PI / 2;
+    points.push({
+      x: cx + rx * Math.cos(angle),
+      y: cy + ry * Math.sin(angle),
+      rotation: angle * 180 / Math.PI + 90
+    });
+  }
+  return points;
+}
+function distributeChairsRect(width, height, count, offset) {
+  if (count <= 0) {
+    return [];
+  }
+  const perimeter = 2 * (width + height);
+  const points = [];
+  for (let i = 0; i < count; i++) {
+    const d = (i + 0.5) / count * perimeter;
+    if (d < width) {
+      points.push({ x: d, y: -offset, rotation: 0 });
+    } else if (d < width + height) {
+      points.push({ x: width + offset, y: d - width, rotation: 90 });
+    } else if (d < 2 * width + height) {
+      points.push({ x: width - (d - width - height), y: height + offset, rotation: 180 });
+    } else {
+      points.push({ x: -offset, y: height - (d - 2 * width - height), rotation: 270 });
+    }
+  }
+  return points;
+}
+function buildChairNode(size) {
+  const chair = new import_konva.default.Group({ name: "table-visual", listening: false });
+  chair.add(new import_konva.default.Rect({
+    x: -size / 2,
+    y: -size / 2,
+    width: size,
+    height: size,
+    cornerRadius: size * 0.28,
+    fill: CHAIR_SEAT_COLOR,
+    stroke: CHAIR_STROKE,
+    strokeWidth: 1
+  }), new import_konva.default.Rect({
+    x: -size / 2,
+    y: -size / 2 - size * 0.16,
+    width: size,
+    height: size * 0.22,
+    cornerRadius: size * 0.12,
+    fill: CHAIR_BACKREST_COLOR,
+    stroke: CHAIR_STROKE,
+    strokeWidth: 1
+  }));
+  return chair;
+}
+function buildTableBody(shape, width, height, color) {
+  if (shape === "ROUND") {
+    return new import_konva.default.Ellipse({
+      x: width / 2,
+      y: height / 2,
+      radiusX: width / 2,
+      radiusY: height / 2,
+      fill: color,
+      stroke: "rgba(0,0,0,0.25)",
+      strokeWidth: 1,
+      name: "table-visual"
+    });
+  }
+  return new import_konva.default.Rect({
+    width,
+    height,
+    fill: color,
+    stroke: "rgba(0,0,0,0.25)",
+    strokeWidth: 1,
+    cornerRadius: shape === "RECTANGULAR" ? 10 : 8,
+    name: "table-visual"
+  });
+}
+function buildFloorPlanTableVisual(options) {
+  const { shape, width, height, color } = options;
+  const capacity = Math.min(options.capacity > 0 ? options.capacity : 4, MAX_CHAIRS);
+  const chairSize = Math.max(10, Math.min(20, Math.min(width, height) * 0.24));
+  const offset = chairSize * 0.55;
+  const points = shape === "ROUND" ? distributeChairsRound(width, height, capacity, offset) : distributeChairsRect(width, height, capacity, offset);
+  const chairs = points.map((point) => {
+    const chair = buildChairNode(chairSize);
+    chair.position({ x: point.x, y: point.y });
+    chair.rotation(point.rotation);
+    return chair;
+  });
+  return [buildTableBody(shape, width, height, color), ...chairs];
+}
+
 export {
   require_lib,
-  FloorPlanItemsService
+  FloorPlanItemsService,
+  buildFloorPlanTableVisual
 };
-//# sourceMappingURL=chunk-YEJZDAJL.js.map
+//# sourceMappingURL=chunk-NUPKAWWX.js.map

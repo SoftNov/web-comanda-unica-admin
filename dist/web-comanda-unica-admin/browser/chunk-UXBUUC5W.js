@@ -3,8 +3,9 @@ import {
 } from "./chunk-G7AZFESP.js";
 import {
   FloorPlanItemsService,
+  buildFloorPlanTableVisual,
   require_lib
-} from "./chunk-YEJZDAJL.js";
+} from "./chunk-NUPKAWWX.js";
 import {
   TablesService
 } from "./chunk-KAJWRVGE.js";
@@ -583,7 +584,7 @@ function FloorPlanEditorComponent_Conditional_1_Template(rf, ctx) {
 }
 function FloorPlanEditorComponent_Conditional_2_For_14_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "option", 70);
+    \u0275\u0275elementStart(0, "option", 69);
     \u0275\u0275text(1);
     \u0275\u0275elementEnd();
   }
@@ -604,39 +605,33 @@ function FloorPlanEditorComponent_Conditional_2_Conditional_15_Template(rf, ctx)
 function FloorPlanEditorComponent_Conditional_2_Template(rf, ctx) {
   if (rf & 1) {
     const _r13 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 64);
-    \u0275\u0275listener("click", function FloorPlanEditorComponent_Conditional_2_Template_div_click_0_listener() {
-      \u0275\u0275restoreView(_r13);
-      const ctx_r0 = \u0275\u0275nextContext();
-      return \u0275\u0275resetView(ctx_r0.cancelTableDrop());
-    });
-    \u0275\u0275elementStart(1, "div", 65);
+    \u0275\u0275elementStart(0, "div", 2)(1, "div", 64);
     \u0275\u0275listener("click", function FloorPlanEditorComponent_Conditional_2_Template_div_click_1_listener($event) {
       \u0275\u0275restoreView(_r13);
       return \u0275\u0275resetView($event.stopPropagation());
     });
-    \u0275\u0275elementStart(2, "h2", 66);
+    \u0275\u0275elementStart(2, "h2", 65);
     \u0275\u0275text(3, "Selecionar mesa");
     \u0275\u0275elementEnd();
     \u0275\u0275elementStart(4, "p", 8);
     \u0275\u0275text(5, "Escolha qual mesa cadastrada este objeto vai representar no mapa.");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(6, "div", 32)(7, "label", 67);
+    \u0275\u0275elementStart(6, "div", 32)(7, "label", 66);
     \u0275\u0275text(8, "Mesa");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(9, "div", 35)(10, "select", 68);
+    \u0275\u0275elementStart(9, "div", 35)(10, "select", 67);
     \u0275\u0275listener("change", function FloorPlanEditorComponent_Conditional_2_Template_select_change_10_listener($event) {
       \u0275\u0275restoreView(_r13);
       const ctx_r0 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r0.setPendingTableSelection($event.target.value));
     });
-    \u0275\u0275elementStart(11, "option", 69);
+    \u0275\u0275elementStart(11, "option", 68);
     \u0275\u0275text(12, "Selecione uma mesa");
     \u0275\u0275elementEnd();
-    \u0275\u0275repeaterCreate(13, FloorPlanEditorComponent_Conditional_2_For_14_Template, 2, 3, "option", 70, _forTrack1);
+    \u0275\u0275repeaterCreate(13, FloorPlanEditorComponent_Conditional_2_For_14_Template, 2, 3, "option", 69, _forTrack1);
     \u0275\u0275elementEnd()()();
     \u0275\u0275template(15, FloorPlanEditorComponent_Conditional_2_Conditional_15_Template, 2, 0, "p", 8);
-    \u0275\u0275elementStart(16, "div", 71)(17, "button", 72);
+    \u0275\u0275elementStart(16, "div", 70)(17, "button", 71);
     \u0275\u0275listener("click", function FloorPlanEditorComponent_Conditional_2_Template_button_click_17_listener() {
       \u0275\u0275restoreView(_r13);
       const ctx_r0 = \u0275\u0275nextContext();
@@ -644,7 +639,7 @@ function FloorPlanEditorComponent_Conditional_2_Template(rf, ctx) {
     });
     \u0275\u0275text(18, "Adicionar");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(19, "button", 73);
+    \u0275\u0275elementStart(19, "button", 72);
     \u0275\u0275listener("click", function FloorPlanEditorComponent_Conditional_2_Template_button_click_19_listener() {
       \u0275\u0275restoreView(_r13);
       const ctx_r0 = \u0275\u0275nextContext();
@@ -704,12 +699,16 @@ var FloorPlanEditorComponent = class _FloorPlanEditorComponent {
   loadError = signal(null);
   items = signal([]);
   availableTables = signal([]);
+  // Mesas já posicionadas em OUTROS mapas (não o que está sendo editado) — carregado uma vez no
+  // load e mantido estável durante a edição, para não ofertar no seletor mesas de outro ambiente.
+  tablesPlacedElsewhere = signal(/* @__PURE__ */ new Set());
   selectedClientId = signal(null);
   selectedItem = computed(() => this.items().find((item) => item.clientId === this.selectedClientId()) ?? null);
   selectedIsLocked = computed(() => !!this.selectedItem()?.properties["locked"]);
   unplacedTables = computed(() => {
     const usedIds = new Set(this.items().map((item) => item.tableId).filter((id) => !!id));
-    return this.availableTables().filter((table) => !usedIds.has(table.id));
+    const elsewhere = this.tablesPlacedElsewhere();
+    return this.availableTables().filter((table) => !usedIds.has(table.id) && !elsewhere.has(table.id));
   });
   zoom = signal(1);
   zoomPercent = computed(() => Math.round(this.zoom() * 100));
@@ -757,12 +756,15 @@ var FloorPlanEditorComponent = class _FloorPlanEditorComponent {
     forkJoin({
       floorPlan: this.floorPlansService.get(floorPlanId),
       items: this.floorPlanItemsService.list(floorPlanId),
-      tables: this.tablesService.list({ status: "ACTIVE", page: 0, size: 200, sortBy: "number", sortDirection: "ASC" })
+      tables: this.tablesService.list({ status: "ACTIVE", page: 0, size: 200, sortBy: "number", sortDirection: "ASC" }),
+      placedTableIds: this.floorPlanItemsService.listPlacedTableIds()
     }).subscribe({
-      next: ({ floorPlan, items, tables }) => {
+      next: ({ floorPlan, items, tables, placedTableIds }) => {
         this.floorPlan.set(floorPlan);
         this.availableTables.set(tables.content);
         this.items.set(items.map((item) => this.toEditorItem(item, tables.content)));
+        const currentFloorPlanTableIds = new Set(items.map((item) => item.tableId).filter((id) => !!id));
+        this.tablesPlacedElsewhere.set(new Set(placedTableIds.filter((id) => !currentFloorPlanTableIds.has(id))));
         this.isLoading.set(false);
         this.tryInitStage();
       },
@@ -869,7 +871,11 @@ var FloorPlanEditorComponent = class _FloorPlanEditorComponent {
       name: "editor-item"
     });
     group.setAttr("clientId", item.clientId);
-    group.add(this.buildShape(item));
+    if (item.itemType === "TABLE") {
+      this.buildTableVisual(item, item.width, item.height).forEach((node) => group.add(node));
+    } else {
+      group.add(this.buildShape(item));
+    }
     const labelText = this.labelFor(item);
     if (item.itemType !== "TEXT" && labelText) {
       group.add(new import_konva.default.Text({
@@ -937,18 +943,23 @@ var FloorPlanEditorComponent = class _FloorPlanEditorComponent {
       }
       return placeholder;
     }
-    let cornerRadius = 4;
-    if (item.itemType === "TABLE" && item.properties["shape"] === "ROUND") {
-      cornerRadius = Math.min(item.width, item.height) / 2;
-    }
     return new import_konva.default.Rect({
       width: item.width,
       height: item.height,
       fill: item.color || DEFAULT_COLORS[item.itemType] || "#94a3b8",
       stroke: "rgba(0,0,0,0.25)",
       strokeWidth: 1,
-      cornerRadius,
+      cornerRadius: 4,
       dash: item.itemType === "DOOR" ? [6, 4] : void 0
+    });
+  }
+  buildTableVisual(item, width, height) {
+    return buildFloorPlanTableVisual({
+      shape: item.properties["shape"] || "SQUARE",
+      width,
+      height,
+      capacity: item.tableCapacity ?? 0,
+      color: item.color || DEFAULT_COLORS.TABLE || "#c7d2fe"
     });
   }
   labelFor(item) {
@@ -970,13 +981,22 @@ ${item.tableName}` : `Mesa ${item.tableNumber ?? "?"}`;
     return luminance > 0.6 ? "#111827" : "#ffffff";
   }
   resizeShapeChildren(group, width, height, item) {
+    if (item.itemType === "TABLE") {
+      group.getChildren((node) => node.name() === "table-visual").forEach((node) => node.destroy());
+      this.buildTableVisual(item, width, height).forEach((node) => group.add(node));
+      const label = group.findOne("Text");
+      if (label instanceof import_konva.default.Text) {
+        label.width(width);
+        label.height(height);
+        label.moveToTop();
+      }
+      this.layer?.batchDraw();
+      return;
+    }
     group.getChildren().forEach((child) => {
       if (child instanceof import_konva.default.Rect || child instanceof import_konva.default.Image) {
         child.width(width);
         child.height(height);
-        if (child instanceof import_konva.default.Rect && item.itemType === "TABLE" && item.properties["shape"] === "ROUND") {
-          child.cornerRadius(Math.min(width, height) / 2);
-        }
       } else if (child instanceof import_konva.default.Text) {
         child.width(width);
         child.height(height);
@@ -1384,7 +1404,7 @@ ${item.tableName}` : `Mesa ${item.tableNumber ?? "?"}`;
         return ctx.onBeforeUnload($event);
       }, false, \u0275\u0275resolveWindow);
     }
-  }, standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 3, vars: 2, consts: [["canvasContainer", ""], ["role", "alert", 1, "form-alert", "form-alert--error"], [1, "modal-backdrop"], ["aria-hidden", "true", 1, "material-icons"], [1, "toolbar"], ["routerLink", "/painel/configuracoes/mapa-salao", 1, "btn", "btn--ghost", "btn--sm"], [1, "toolbar__title"], [1, "page-title"], [1, "field__hint"], [1, "toolbar__zoom"], ["type", "button", "title", "Diminuir zoom", 1, "icon-btn", 3, "click", "disabled"], [1, "toolbar__zoom-label"], ["type", "button", "title", "Aumentar zoom", 1, "icon-btn", 3, "click", "disabled"], ["type", "button", "title", "Restaurar zoom", 1, "icon-btn", 3, "click", "disabled"], [1, "toolbar__save"], [1, "toolbar__status", "toolbar__status--error"], [1, "toolbar__status", "toolbar__status--success"], [1, "toolbar__status"], ["type", "button", "appRipple", "", 1, "btn", "btn--primary", 3, "click", "disabled"], [1, "editor"], [1, "sidebar", "sidebar--left"], [1, "sidebar__title"], [1, "palette"], ["type", "button", "draggable", "true", 1, "palette__item", 3, "title"], [1, "canvas-viewport"], [1, "canvas-loading"], [1, "canvas-stage", 3, "drop", "dragover"], [1, "sidebar", "sidebar--right"], [1, "properties"], ["type", "button", "draggable", "true", 1, "palette__item", 3, "dragstart", "click", "title"], [1, "table-list"], [1, "table-list__item"], [1, "field"], [1, "field__row"], ["for", "prop-x", 1, "field__label"], [1, "field__control"], ["id", "prop-x", "type", "number", 1, "field__input", 3, "change", "value"], ["for", "prop-y", 1, "field__label"], ["id", "prop-y", "type", "number", 1, "field__input", 3, "change", "value"], ["for", "prop-width", 1, "field__label"], ["id", "prop-width", "type", "number", "min", "20", 1, "field__input", 3, "change", "value"], ["for", "prop-height", 1, "field__label"], ["id", "prop-height", "type", "number", "min", "20", 1, "field__input", 3, "change", "value"], ["for", "prop-rotation", 1, "field__label"], ["id", "prop-rotation", "type", "number", "min", "0", "max", "359", 1, "field__input", 3, "change", "value"], ["for", "prop-color", 1, "field__label"], ["id", "prop-color", "type", "color", 1, "field__input", "field__input--color", 3, "change", "value"], [1, "properties__actions"], ["type", "button", 1, "icon-btn", 3, "click", "title"], ["type", "button", "title", "Trazer para frente", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Enviar para tr\xE1s", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Duplicar", 1, "icon-btn", 3, "click", "disabled"], ["type", "button", "title", "Excluir", 1, "icon-btn", "icon-btn--danger", 3, "click"], [1, "field__label"], [1, "properties__readonly"], ["for", "prop-shape", 1, "field__label"], ["id", "prop-shape", 1, "field__input", 3, "change", "value"], ["value", "SQUARE"], ["value", "ROUND"], ["value", "RECTANGULAR"], ["for", "prop-label", 1, "field__label"], ["id", "prop-label", "type", "text", 1, "field__input", 3, "change", "value"], ["for", "prop-image-url", 1, "field__label"], ["id", "prop-image-url", "type", "text", "placeholder", "https://\u2026", 1, "field__input", 3, "change", "value"], [1, "modal-backdrop", 3, "click"], [1, "modal-card", "modal-card--sm", "card", 3, "click"], [1, "step-heading"], ["for", "pending-table", 1, "field__label"], ["id", "pending-table", 1, "field__input", 3, "change", "value"], ["value", "", "disabled", ""], [3, "value"], [1, "step-actions"], ["type", "button", 1, "btn", "btn--primary", 3, "click", "disabled"], ["type", "button", 1, "btn", "btn--ghost", 3, "click"]], template: function FloorPlanEditorComponent_Template(rf, ctx) {
+  }, standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 3, vars: 2, consts: [["canvasContainer", ""], ["role", "alert", 1, "form-alert", "form-alert--error"], [1, "modal-backdrop"], ["aria-hidden", "true", 1, "material-icons"], [1, "toolbar"], ["routerLink", "/painel/configuracoes/mapa-salao", 1, "btn", "btn--ghost", "btn--sm"], [1, "toolbar__title"], [1, "page-title"], [1, "field__hint"], [1, "toolbar__zoom"], ["type", "button", "title", "Diminuir zoom", 1, "icon-btn", 3, "click", "disabled"], [1, "toolbar__zoom-label"], ["type", "button", "title", "Aumentar zoom", 1, "icon-btn", 3, "click", "disabled"], ["type", "button", "title", "Restaurar zoom", 1, "icon-btn", 3, "click", "disabled"], [1, "toolbar__save"], [1, "toolbar__status", "toolbar__status--error"], [1, "toolbar__status", "toolbar__status--success"], [1, "toolbar__status"], ["type", "button", "appRipple", "", 1, "btn", "btn--primary", 3, "click", "disabled"], [1, "editor"], [1, "sidebar", "sidebar--left"], [1, "sidebar__title"], [1, "palette"], ["type", "button", "draggable", "true", 1, "palette__item", 3, "title"], [1, "canvas-viewport"], [1, "canvas-loading"], [1, "canvas-stage", 3, "drop", "dragover"], [1, "sidebar", "sidebar--right"], [1, "properties"], ["type", "button", "draggable", "true", 1, "palette__item", 3, "dragstart", "click", "title"], [1, "table-list"], [1, "table-list__item"], [1, "field"], [1, "field__row"], ["for", "prop-x", 1, "field__label"], [1, "field__control"], ["id", "prop-x", "type", "number", 1, "field__input", 3, "change", "value"], ["for", "prop-y", 1, "field__label"], ["id", "prop-y", "type", "number", 1, "field__input", 3, "change", "value"], ["for", "prop-width", 1, "field__label"], ["id", "prop-width", "type", "number", "min", "20", 1, "field__input", 3, "change", "value"], ["for", "prop-height", 1, "field__label"], ["id", "prop-height", "type", "number", "min", "20", 1, "field__input", 3, "change", "value"], ["for", "prop-rotation", 1, "field__label"], ["id", "prop-rotation", "type", "number", "min", "0", "max", "359", 1, "field__input", 3, "change", "value"], ["for", "prop-color", 1, "field__label"], ["id", "prop-color", "type", "color", 1, "field__input", "field__input--color", 3, "change", "value"], [1, "properties__actions"], ["type", "button", 1, "icon-btn", 3, "click", "title"], ["type", "button", "title", "Trazer para frente", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Enviar para tr\xE1s", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Duplicar", 1, "icon-btn", 3, "click", "disabled"], ["type", "button", "title", "Excluir", 1, "icon-btn", "icon-btn--danger", 3, "click"], [1, "field__label"], [1, "properties__readonly"], ["for", "prop-shape", 1, "field__label"], ["id", "prop-shape", 1, "field__input", 3, "change", "value"], ["value", "SQUARE"], ["value", "ROUND"], ["value", "RECTANGULAR"], ["for", "prop-label", 1, "field__label"], ["id", "prop-label", "type", "text", 1, "field__input", 3, "change", "value"], ["for", "prop-image-url", 1, "field__label"], ["id", "prop-image-url", "type", "text", "placeholder", "https://\u2026", 1, "field__input", 3, "change", "value"], [1, "modal-card", "modal-card--sm", "card", 3, "click"], [1, "step-heading"], ["for", "pending-table", 1, "field__label"], ["id", "pending-table", 1, "field__input", 3, "change", "value"], ["value", "", "disabled", ""], [3, "value"], [1, "step-actions"], ["type", "button", 1, "btn", "btn--primary", 3, "click", "disabled"], ["type", "button", 1, "btn", "btn--ghost", 3, "click"]], template: function FloorPlanEditorComponent_Template(rf, ctx) {
     if (rf & 1) {
       \u0275\u0275template(0, FloorPlanEditorComponent_Conditional_0_Template, 4, 1, "div", 1)(1, FloorPlanEditorComponent_Conditional_1_Template, 49, 14)(2, FloorPlanEditorComponent_Conditional_2_Template, 21, 3, "div", 2);
     }
@@ -1396,9 +1416,9 @@ ${item.tableName}` : `Mesa ${item.tableNumber ?? "?"}`;
   }, dependencies: [RouterLink, RippleDirective], styles: ["\n\n[_nghost-%COMP%] {\n  display: block;\n}\n.page-title[_ngcontent-%COMP%] {\n  font-size: 1.25rem;\n  color: var(--color-text);\n  margin: 0;\n}\n.field__hint[_ngcontent-%COMP%] {\n  font-size: 0.8125rem;\n  color: var(--color-text-muted);\n}\n.toolbar[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  gap: 20px;\n  flex-wrap: wrap;\n  padding: 12px 16px;\n  margin-bottom: 12px;\n  border-radius: var(--radius-sm);\n  border: 1px solid var(--color-border);\n  background: var(--color-bg-elevated);\n}\n.toolbar__title[_ngcontent-%COMP%] {\n  display: flex;\n  flex-direction: column;\n  gap: 2px;\n}\n.toolbar__zoom[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n}\n.toolbar__zoom-label[_ngcontent-%COMP%] {\n  min-width: 48px;\n  text-align: center;\n  font-size: 0.8125rem;\n  color: var(--color-text-muted);\n}\n.toolbar__save[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  gap: 12px;\n  margin-left: auto;\n}\n.toolbar__status[_ngcontent-%COMP%] {\n  font-size: 0.8125rem;\n  color: var(--color-text-muted);\n}\n.toolbar__status--error[_ngcontent-%COMP%] {\n  color: #f87171;\n}\n.toolbar__status--success[_ngcontent-%COMP%] {\n  color: var(--color-success);\n}\n.editor[_ngcontent-%COMP%] {\n  display: grid;\n  grid-template-columns: 220px 1fr 260px;\n  gap: 16px;\n  align-items: start;\n}\n.sidebar[_ngcontent-%COMP%] {\n  border: 1px solid var(--color-border);\n  border-radius: var(--radius-sm);\n  background: var(--color-bg-elevated);\n  padding: 16px;\n  max-height: calc(100vh - 180px);\n  overflow-y: auto;\n}\n.sidebar__title[_ngcontent-%COMP%] {\n  font-size: 0.8125rem;\n  font-weight: 600;\n  text-transform: uppercase;\n  letter-spacing: 0.04em;\n  color: var(--color-text-muted);\n  margin: 0 0 10px;\n}\n.sidebar__title[_ngcontent-%COMP%]:not(:first-child) {\n  margin-top: 20px;\n}\n.palette[_ngcontent-%COMP%] {\n  display: grid;\n  grid-template-columns: repeat(2, 1fr);\n  gap: 8px;\n}\n.palette__item[_ngcontent-%COMP%] {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  gap: 4px;\n  padding: 10px 6px;\n  border-radius: var(--radius-sm);\n  border: 1px solid var(--color-border);\n  background: transparent;\n  color: var(--color-text);\n  font-size: 0.75rem;\n  text-align: center;\n  cursor: grab;\n  transition: background var(--transition-fast), border-color var(--transition-fast);\n}\n.palette__item[_ngcontent-%COMP%]   .material-icons[_ngcontent-%COMP%] {\n  font-size: 22px;\n  color: var(--color-text-muted);\n}\n.palette__item[_ngcontent-%COMP%]:hover {\n  background: rgba(255, 255, 255, 0.06);\n  border-color: var(--color-accent);\n}\n.palette__item[_ngcontent-%COMP%]:active {\n  cursor: grabbing;\n}\n.table-list[_ngcontent-%COMP%] {\n  list-style: none;\n  margin: 0;\n  padding: 0;\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n}\n.table-list__item[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  padding: 8px 10px;\n  border-radius: var(--radius-sm);\n  border: 1px solid var(--color-border);\n  font-size: 0.8125rem;\n}\n.table-list__item[_ngcontent-%COMP%]   .material-icons[_ngcontent-%COMP%] {\n  font-size: 18px;\n  color: var(--color-text-muted);\n}\n.canvas-viewport[_ngcontent-%COMP%] {\n  position: relative;\n  border: 1px solid var(--color-border);\n  border-radius: var(--radius-sm);\n  overflow: hidden;\n  background:\n    linear-gradient(\n      45deg,\n      rgba(255, 255, 255, 0.04) 25%,\n      transparent 25%,\n      transparent 75%,\n      rgba(255, 255, 255, 0.04) 75%),\n    linear-gradient(\n      45deg,\n      rgba(255, 255, 255, 0.04) 25%,\n      transparent 25%,\n      transparent 75%,\n      rgba(255, 255, 255, 0.04) 75%);\n  background-size: 20px 20px;\n  background-position: 0 0, 10px 10px;\n  min-height: 320px;\n  max-height: calc(100vh - 180px);\n  display: flex;\n  align-items: flex-start;\n  justify-content: flex-start;\n}\n.canvas-stage[_ngcontent-%COMP%] {\n  cursor: default;\n}\n.canvas-stage--hidden[_ngcontent-%COMP%] {\n  visibility: hidden;\n}\n.canvas-loading[_ngcontent-%COMP%] {\n  position: absolute;\n  inset: 0;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 8px;\n  color: var(--color-text-muted);\n  font-size: 0.875rem;\n}\n.canvas-loading[_ngcontent-%COMP%]   .material-icons[_ngcontent-%COMP%] {\n  font-size: 20px;\n}\n.properties[_ngcontent-%COMP%] {\n  display: flex;\n  flex-direction: column;\n  gap: 14px;\n}\n.properties__readonly[_ngcontent-%COMP%] {\n  margin: 0;\n  padding: 10px 12px;\n  border-radius: var(--radius-sm);\n  background: rgba(255, 255, 255, 0.03);\n  color: var(--color-text-muted);\n  font-size: 0.875rem;\n}\n.properties__actions[_ngcontent-%COMP%] {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  padding-top: 8px;\n  border-top: 1px solid var(--color-border);\n}\n.field__row[_ngcontent-%COMP%] {\n  display: flex;\n  gap: 12px;\n}\n.field__row[_ngcontent-%COMP%]   .field[_ngcontent-%COMP%] {\n  flex: 1;\n  min-width: 0;\n}\n.field__input--color[_ngcontent-%COMP%] {\n  padding: 4px;\n  height: 42px;\n  cursor: pointer;\n}\n.icon-btn[_ngcontent-%COMP%] {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 34px;\n  height: 34px;\n  border-radius: var(--radius-sm);\n  border: 1px solid transparent;\n  background: transparent;\n  color: var(--color-text-muted);\n  cursor: pointer;\n  transition: background var(--transition-fast), color var(--transition-fast);\n}\n.icon-btn[_ngcontent-%COMP%]   .material-icons[_ngcontent-%COMP%] {\n  font-size: 20px;\n}\n.icon-btn[_ngcontent-%COMP%]:hover {\n  background: rgba(255, 255, 255, 0.06);\n  color: var(--color-text);\n}\n.icon-btn[_ngcontent-%COMP%]:disabled {\n  opacity: 0.4;\n  cursor: not-allowed;\n}\n.icon-btn[_ngcontent-%COMP%]:disabled:hover {\n  background: transparent;\n  color: var(--color-text-muted);\n}\n.icon-btn--danger[_ngcontent-%COMP%]:hover {\n  background: rgba(248, 113, 113, 0.12);\n  color: #f87171;\n}\n.modal-backdrop[_ngcontent-%COMP%] {\n  position: fixed;\n  inset: 0;\n  background: rgba(4, 8, 20, 0.64);\n  backdrop-filter: blur(2px);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 20px;\n  z-index: 100;\n}\n.modal-card[_ngcontent-%COMP%] {\n  width: 100%;\n  max-width: 420px;\n  padding: 32px;\n}\n.step-heading[_ngcontent-%COMP%] {\n  margin-top: 0;\n  font-size: 1.0625rem;\n  color: var(--color-text);\n}\n.step-actions[_ngcontent-%COMP%] {\n  display: flex;\n  gap: 12px;\n  margin-top: 24px;\n}\nselect.field__input[_ngcontent-%COMP%] {\n  appearance: none;\n  cursor: pointer;\n}\n@media (max-width: 1100px) {\n  .editor[_ngcontent-%COMP%] {\n    grid-template-columns: 1fr;\n  }\n  .sidebar[_ngcontent-%COMP%] {\n    max-height: none;\n  }\n}\n/*# sourceMappingURL=floor-plan-editor.component.css.map */"] });
 };
 (() => {
-  (typeof ngDevMode === "undefined" || ngDevMode) && \u0275setClassDebugInfo(FloorPlanEditorComponent, { className: "FloorPlanEditorComponent", filePath: "src\\app\\features\\admin\\pages\\settings\\floor-plan\\floor-plan-editor.component.ts", lineNumber: 103 });
+  (typeof ngDevMode === "undefined" || ngDevMode) && \u0275setClassDebugInfo(FloorPlanEditorComponent, { className: "FloorPlanEditorComponent", filePath: "src\\app\\features\\admin\\pages\\settings\\floor-plan\\floor-plan-editor.component.ts", lineNumber: 104 });
 })();
 export {
   FloorPlanEditorComponent
 };
-//# sourceMappingURL=chunk-SYJAQMVU.js.map
+//# sourceMappingURL=chunk-UXBUUC5W.js.map

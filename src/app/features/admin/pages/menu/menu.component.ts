@@ -16,6 +16,11 @@ import {
   MenuCategoryResponse,
   UpdateMenuCategoryRequest
 } from '../../../../shared/services/menu-categories.service';
+import {
+  MenuThemeResponse,
+  MenuThemeService,
+  UpdateMenuThemeRequest
+} from '../../../../shared/services/menu-theme.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { formatCurrencyInput, parseCurrencyInput } from '../../../../shared/utils/br-format.util';
 import { AuthService } from '../../../auth/services/auth.service';
@@ -23,10 +28,29 @@ import { AuthService } from '../../../auth/services/auth.service';
 const PAGE_SIZE = 10;
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'];
+const HEX_COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/;
 
 type ModalMode = 'create' | 'edit';
-type TabId = 'produtos' | 'categorias';
+type TabId = 'produtos' | 'categorias' | 'tema';
 type TriBoolFilter = 'all' | 'true' | 'false';
+
+interface FontOption {
+  value: string;
+  label: string;
+}
+
+const FONT_OPTIONS: FontOption[] = [
+  { value: 'Inter', label: 'Inter' },
+  { value: 'Roboto', label: 'Roboto' },
+  { value: 'Poppins', label: 'Poppins' },
+  { value: 'Montserrat', label: 'Montserrat' },
+  { value: 'Lato', label: 'Lato' },
+  { value: 'Open Sans', label: 'Open Sans' },
+  { value: 'Nunito', label: 'Nunito' },
+  { value: 'Playfair Display', label: 'Playfair Display' },
+  { value: 'Merriweather', label: 'Merriweather' },
+  { value: 'Oswald', label: 'Oswald' }
+];
 
 interface SortOption {
   value: string;
@@ -108,11 +132,13 @@ export class MenuComponent {
   private readonly fb = new FormBuilder();
   private readonly menuItemsService = inject(MenuItemsService);
   private readonly menuCategoriesService = inject(MenuCategoriesService);
+  private readonly menuThemeService = inject(MenuThemeService);
   private readonly authService = inject(AuthService);
 
   readonly selectedCompany = this.authService.selectedCompany;
   readonly sortOptions = SORT_OPTIONS;
   readonly kitchenSectorOptions = KITCHEN_SECTOR_OPTIONS;
+  readonly fontOptions = FONT_OPTIONS;
 
   readonly activeTab = signal<TabId>('produtos');
 
@@ -149,6 +175,8 @@ export class MenuComponent {
 
   readonly isUploadingImage = signal(false);
   readonly imageError = signal<string | null>(null);
+  readonly pendingImageFile = signal<File | null>(null);
+  readonly pendingImagePreviewUrl = signal<string | null>(null);
 
   readonly itemForm = this.fb.nonNullable.group({
     categoryId: ['', Validators.required],
@@ -206,6 +234,24 @@ export class MenuComponent {
     return term ? CATEGORY_ICON_OPTIONS.filter((icon) => icon.includes(term)) : CATEGORY_ICON_OPTIONS;
   });
 
+  // --- Tema ---------------------------------------------------------------
+  readonly isLoadingTheme = signal(true);
+  readonly themeError = signal<string | null>(null);
+  readonly isSubmittingTheme = signal(false);
+  readonly themeSuccess = signal(false);
+  readonly themeFormError = signal<string | null>(null);
+
+  readonly coverPreviewUrl = signal<string | null>(null);
+  readonly isUploadingCover = signal(false);
+  readonly coverError = signal<string | null>(null);
+
+  readonly themeForm = this.fb.nonNullable.group({
+    primaryColor: ['#FF5500', [Validators.required, Validators.pattern(HEX_COLOR_PATTERN)]],
+    useSecondaryColor: [false],
+    secondaryColor: ['#000000', [Validators.pattern(HEX_COLOR_PATTERN)]],
+    fontFamily: ['Inter', [Validators.required, Validators.maxLength(60)]]
+  });
+
   private readonly currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
   constructor() {
@@ -216,6 +262,7 @@ export class MenuComponent {
 
     this.loadCategories();
     this.loadItems(0);
+    this.loadTheme();
   }
 
   // --- Abas -------------------------------------------------------------
@@ -340,6 +387,7 @@ export class MenuComponent {
     this.editingItem.set(null);
     this.itemFormError.set(null);
     this.imageError.set(null);
+    this.clearPendingImage();
     this.itemForm.reset({
       categoryId: '',
       name: '',
@@ -371,6 +419,7 @@ export class MenuComponent {
     this.editingItem.set(item);
     this.itemFormError.set(null);
     this.imageError.set(null);
+    this.clearPendingImage();
     this.itemForm.reset({
       categoryId: item.categoryId,
       name: item.name,
@@ -399,6 +448,7 @@ export class MenuComponent {
 
   closeItemModal(): void {
     this.isItemModalOpen.set(false);
+    this.clearPendingImage();
   }
 
   submitItem(): void {
@@ -413,10 +463,35 @@ export class MenuComponent {
 
     if (this.itemModalMode() === 'create') {
       this.menuItemsService.create(this.buildItemPayload() as CreateMenuItemRequest).subscribe({
-        next: () => {
-          this.isSubmittingItem.set(false);
-          this.isItemModalOpen.set(false);
-          this.loadItems(0);
+        next: (created) => {
+          const pendingFile = this.pendingImageFile();
+          this.clearPendingImage();
+
+          if (!pendingFile) {
+            this.isSubmittingItem.set(false);
+            this.isItemModalOpen.set(false);
+            this.loadItems(0);
+            return;
+          }
+
+          this.itemModalMode.set('edit');
+          this.editingItem.set(created);
+          this.isUploadingImage.set(true);
+
+          this.menuItemsService.addImage(created.id, pendingFile).subscribe({
+            next: () => {
+              this.isSubmittingItem.set(false);
+              this.isUploadingImage.set(false);
+              this.isItemModalOpen.set(false);
+              this.loadItems(0);
+            },
+            error: (error: HttpErrorResponse) => {
+              this.isSubmittingItem.set(false);
+              this.isUploadingImage.set(false);
+              this.imageError.set(this.resolveErrorMessage(error, 'item'));
+              this.loadItems(0);
+            }
+          });
         },
         error: (error: HttpErrorResponse) => {
           this.isSubmittingItem.set(false);
@@ -514,11 +589,6 @@ export class MenuComponent {
       return;
     }
 
-    const item = this.editingItem();
-    if (!item) {
-      return;
-    }
-
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       this.imageError.set('Envie uma imagem nos formatos JPG, PNG ou WEBP.');
       return;
@@ -527,8 +597,20 @@ export class MenuComponent {
       this.imageError.set('O arquivo enviado excede o tamanho máximo permitido de 5MB.');
       return;
     }
-
     this.imageError.set(null);
+
+    if (this.itemModalMode() === 'create') {
+      this.clearPendingImage();
+      this.pendingImageFile.set(file);
+      this.pendingImagePreviewUrl.set(URL.createObjectURL(file));
+      return;
+    }
+
+    const item = this.editingItem();
+    if (!item) {
+      return;
+    }
+
     this.isUploadingImage.set(true);
 
     this.menuItemsService.addImage(item.id, file).subscribe({
@@ -541,6 +623,19 @@ export class MenuComponent {
         this.imageError.set(this.resolveErrorMessage(error, 'item'));
       }
     });
+  }
+
+  removePendingImage(): void {
+    this.clearPendingImage();
+  }
+
+  private clearPendingImage(): void {
+    const currentPreviewUrl = this.pendingImagePreviewUrl();
+    if (currentPreviewUrl) {
+      URL.revokeObjectURL(currentPreviewUrl);
+    }
+    this.pendingImageFile.set(null);
+    this.pendingImagePreviewUrl.set(null);
   }
 
   removeImage(imageId: string): void {
@@ -769,6 +864,122 @@ export class MenuComponent {
         this.deleteCategoryError.set(this.resolveErrorMessage(error, 'category'));
       }
     });
+  }
+
+  // --- Tema -----------------------------------------------------------------
+  loadTheme(): void {
+    this.isLoadingTheme.set(true);
+    this.themeError.set(null);
+
+    this.menuThemeService.get().subscribe({
+      next: (response) => {
+        this.isLoadingTheme.set(false);
+        this.applyThemeResponse(response);
+      },
+      error: () => {
+        this.isLoadingTheme.set(false);
+        this.themeError.set('Não foi possível carregar o tema do cardápio.');
+      }
+    });
+  }
+
+  submitTheme(): void {
+    if (this.themeForm.invalid) {
+      this.themeForm.markAllAsTouched();
+      this.themeFormError.set('Verifique os campos destacados antes de salvar.');
+      return;
+    }
+
+    this.themeFormError.set(null);
+    this.themeSuccess.set(false);
+    this.isSubmittingTheme.set(true);
+
+    this.menuThemeService.update(this.buildThemePayload()).subscribe({
+      next: (response) => {
+        this.isSubmittingTheme.set(false);
+        this.themeSuccess.set(true);
+        this.applyThemeResponse(response);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isSubmittingTheme.set(false);
+        this.themeFormError.set(this.resolveThemeErrorMessage(error));
+      }
+    });
+  }
+
+  onCoverFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      this.coverError.set('Envie uma imagem nos formatos JPG, PNG ou WEBP.');
+      return;
+    }
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      this.coverError.set('O arquivo enviado excede o tamanho máximo permitido de 5MB.');
+      return;
+    }
+    this.coverError.set(null);
+
+    const previousPreview = this.coverPreviewUrl();
+    const objectUrl = URL.createObjectURL(file);
+    this.coverPreviewUrl.set(objectUrl);
+    this.isUploadingCover.set(true);
+
+    this.menuThemeService.updateCover(file).subscribe({
+      next: (response) => {
+        this.isUploadingCover.set(false);
+        URL.revokeObjectURL(objectUrl);
+        this.applyThemeResponse(response);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isUploadingCover.set(false);
+        URL.revokeObjectURL(objectUrl);
+        this.coverPreviewUrl.set(previousPreview);
+        this.coverError.set(this.resolveThemeErrorMessage(error));
+      }
+    });
+  }
+
+  private applyThemeResponse(response: MenuThemeResponse): void {
+    this.themeForm.reset({
+      primaryColor: response.primaryColor || '#FF5500',
+      useSecondaryColor: !!response.secondaryColor,
+      secondaryColor: response.secondaryColor || '#000000',
+      fontFamily: response.fontFamily || 'Inter'
+    });
+    this.coverPreviewUrl.set(response.coverImageUrl ?? null);
+  }
+
+  private buildThemePayload(): UpdateMenuThemeRequest {
+    const value = this.themeForm.getRawValue();
+    return {
+      primaryColor: value.primaryColor,
+      secondaryColor: value.useSecondaryColor ? value.secondaryColor : undefined,
+      fontFamily: value.fontFamily.trim()
+    };
+  }
+
+  private resolveThemeErrorMessage(error: HttpErrorResponse): string {
+    const body = error.error as ApiErrorResponse | undefined;
+    if (body?.mensagem) {
+      return body.mensagem;
+    }
+    if (body?.titulo) {
+      return body.titulo;
+    }
+    if (error.status === 403) {
+      return 'Você não tem permissão para alterar o tema do cardápio.';
+    }
+    if (error.status === 422) {
+      return 'Verifique os dados informados e tente novamente.';
+    }
+    return 'Não foi possível concluir a operação. Tente novamente em instantes.';
   }
 
   // --- Erros ---------------------------------------------------------------

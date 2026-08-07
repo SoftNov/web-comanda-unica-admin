@@ -73,4 +73,8 @@ export class FloorPlanItemsService {
   syncLayout(floorPlanId: string, items: FloorPlanItemSyncPayload[]): Observable<FloorPlanItemResponse[]> {
     return this.http.put<FloorPlanItemResponse[]>(`${this.baseUrl}/${floorPlanId}/layout`, { items });
   }
+
+  listPlacedTableIds(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl}/items/placed-table-ids`);
+  }
 }
