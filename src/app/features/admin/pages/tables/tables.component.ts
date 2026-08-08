@@ -89,6 +89,9 @@ export class TablesComponent {
   readonly isRegeneratingQr = signal(false);
   readonly regenerateQrError = signal<string | null>(null);
 
+  readonly markingCleanedTableId = signal<string | null>(null);
+  readonly markCleanedError = signal<string | null>(null);
+
   // --- Mesas: modal de QR Code -----------------------------------------------
   readonly qrModalTable = signal<RestaurantTableResponse | null>(null);
   readonly qrImageUrl = signal<string | null>(null);
@@ -343,6 +346,23 @@ export class TablesComponent {
     request$.subscribe({
       next: (updated) => this.replaceTable(updated),
       error: () => this.listError.set('Não foi possível atualizar o status da mesa.')
+    });
+  }
+
+  // --- Mesas: concluir limpeza ------------------------------------------------------
+  markCleaned(table: RestaurantTableResponse): void {
+    this.markCleanedError.set(null);
+    this.markingCleanedTableId.set(table.id);
+
+    this.tablesService.markCleaned(table.id).subscribe({
+      next: (updated) => {
+        this.markingCleanedTableId.set(null);
+        this.replaceTable(updated);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.markingCleanedTableId.set(null);
+        this.markCleanedError.set(this.resolveErrorMessage(error, 'table'));
+      }
     });
   }
 

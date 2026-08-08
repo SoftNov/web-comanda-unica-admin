@@ -25,6 +25,7 @@ export interface RestaurantTableResponse {
   capacity: number;
   status: TableStatus;
   operationalStatus: TableOperationalStatus;
+  cleaningSince?: string;
   allowQr: boolean;
   publicToken: string;
   publicUrl: string;
@@ -106,6 +107,10 @@ export class TablesService {
 
   enable(id: string): Observable<RestaurantTableResponse> {
     return this.http.patch<RestaurantTableResponse>(`${this.baseUrl}/${id}/enable`, {});
+  }
+
+  markCleaned(id: string): Observable<RestaurantTableResponse> {
+    return this.http.patch<RestaurantTableResponse>(`${this.baseUrl}/${id}/mark-cleaned`, {});
   }
 
   regenerateQrCode(id: string): Observable<RestaurantTableResponse> {

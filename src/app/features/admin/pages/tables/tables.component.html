@@ -93,6 +93,13 @@
       {{ listError() }}
     </div>
   } @else {
+    @if (markCleanedError()) {
+      <div class="form-alert form-alert--error" role="alert">
+        <span class="material-icons" aria-hidden="true">error_outline</span>
+        {{ markCleanedError() }}
+      </div>
+    }
+
     <div class="tables-grid">
       @if (tables().length === 0) {
         <p class="field__hint">Nenhuma mesa encontrada.</p>
@@ -139,6 +146,16 @@
             <button type="button" class="icon-btn" title="Imprimir QR Code" (click)="printQrCode(table)">
               <span class="material-icons" aria-hidden="true">print</span>
             </button>
+            @if (table.operationalStatus === 'CLEANING') {
+              <button
+                type="button"
+                class="icon-btn"
+                title="Concluir limpeza"
+                [disabled]="markingCleanedTableId() === table.id"
+                (click)="markCleaned(table)">
+                <span class="material-icons" aria-hidden="true">cleaning_services</span>
+              </button>
+            }
             @if (canManageTables()) {
               <button type="button" class="icon-btn" title="Regenerar QR Code" (click)="requestRegenerateQr(table)">
                 <span class="material-icons" aria-hidden="true">autorenew</span>
