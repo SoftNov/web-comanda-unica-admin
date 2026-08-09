@@ -49,6 +49,19 @@
   background: #94a3b8;
 }
 
+.floor-plan-viewer__refresh-icon--spinning {
+  animation: floor-plan-viewer-spin 0.8s linear infinite;
+}
+
+@keyframes floor-plan-viewer-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .floor-plan-viewer__zoom {
   display: flex;
   align-items: center;

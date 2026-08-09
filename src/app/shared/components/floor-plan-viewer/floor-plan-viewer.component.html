@@ -8,6 +8,9 @@
     </div>
 
     <div class="floor-plan-viewer__zoom">
+      <button type="button" class="icon-btn" title="Atualizar status das mesas" [disabled]="isLoading() || isRefreshing()" (click)="refresh()">
+        <span class="material-icons" [class.floor-plan-viewer__refresh-icon--spinning]="isRefreshing()" aria-hidden="true">refresh</span>
+      </button>
       <button type="button" class="icon-btn" title="Diminuir zoom" [disabled]="isLoading()" (click)="zoomOut()">
         <span class="material-icons" aria-hidden="true">zoom_out</span>
       </button>

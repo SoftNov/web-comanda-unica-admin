@@ -4592,7 +4592,7 @@ var routes = [
       { path: "", pathMatch: "full", redirectTo: "dashboard" },
       {
         path: "dashboard",
-        loadComponent: () => import("./chunk-3QOGLBSM.js").then((m) => m.DashboardComponent),
+        loadComponent: () => import("./chunk-M6V2BFQI.js").then((m) => m.DashboardComponent),
         title: "Dashboard \u2014 Comanda \xDAnica"
       },
       {
@@ -4604,7 +4604,7 @@ var routes = [
       {
         path: "mesas",
         canActivate: [profileGuard(["ADMIN", "OWNER", "MANAGER"])],
-        loadComponent: () => import("./chunk-LP47TWC7.js").then((m) => m.TablesComponent),
+        loadComponent: () => import("./chunk-R37ZZ33K.js").then((m) => m.TablesComponent),
         title: "Mesas \u2014 Comanda \xDAnica"
       },
       {
@@ -4656,7 +4656,7 @@ var routes = [
       {
         path: "configuracoes/mapa-salao/:id",
         canActivate: [profileGuard(["ADMIN", "OWNER", "MANAGER"])],
-        loadComponent: () => import("./chunk-UXBUUC5W.js").then((m) => m.FloorPlanEditorComponent),
+        loadComponent: () => import("./chunk-GVU3WBZ2.js").then((m) => m.FloorPlanEditorComponent),
         title: "Mapa do Sal\xE3o \u2014 Comanda \xDAnica"
       },
       { path: "**", redirectTo: "dashboard" }

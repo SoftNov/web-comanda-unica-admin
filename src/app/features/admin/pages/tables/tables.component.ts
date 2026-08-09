@@ -210,6 +210,13 @@ export class TablesComponent {
     });
   }
 
+  // Status operacional (livre/ocupada/limpeza) muda por ações de outros apps (cliente pedindo/
+  // pagando no cardápio digital) — sem isso, a tela só reflete essas mudanças ao trocar filtro
+  // ou paginação, o que já dispara loadTables por conta própria.
+  refreshTables(): void {
+    this.loadTables(this.page());
+  }
+
   goToPage(page: number): void {
     if (page < 0 || page >= this.totalPages() || page === this.page()) {
       return;

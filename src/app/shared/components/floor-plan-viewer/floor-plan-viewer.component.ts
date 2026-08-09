@@ -8,6 +8,7 @@ import { buildFloorPlanTableVisual, FloorPlanTableShape } from '../../utils/floo
 
 interface ViewerItem {
   itemType: FloorPlanItemType;
+  tableId?: string;
   tableNumber?: number;
   tableName?: string;
   tableCapacity?: number;
@@ -64,10 +65,12 @@ export class FloorPlanViewerComponent implements AfterViewInit, OnChanges, OnDes
 
   readonly floorPlan = signal<FloorPlanResponse | null>(null);
   readonly isLoading = signal(true);
+  readonly isRefreshing = signal(false);
   readonly loadError = signal<string | null>(null);
   readonly zoom = signal(1);
   readonly zoomPercent = computed(() => Math.round(this.zoom() * 100));
 
+  private rawItems: FloorPlanItemResponse[] = [];
   private items: ViewerItem[] = [];
   private viewReady = false;
   private stage: Konva.Stage | null = null;
@@ -127,6 +130,7 @@ export class FloorPlanViewerComponent implements AfterViewInit, OnChanges, OnDes
     }).subscribe({
       next: ({ floorPlan, items, tables }) => {
         this.floorPlan.set(floorPlan);
+        this.rawItems = items;
         this.items = items.map((item) => this.toViewerItem(item, tables.content));
         this.isLoading.set(false);
         this.initStage();
@@ -134,6 +138,26 @@ export class FloorPlanViewerComponent implements AfterViewInit, OnChanges, OnDes
       error: () => {
         this.isLoading.set(false);
         this.loadError.set('Não foi possível carregar o mapa do ambiente.');
+      }
+    });
+  }
+
+  // Status operacional (ocupada/limpeza) muda por ações de outros apps (cliente pedindo/pagando
+  // no cardápio digital) — sem isso, o mapa só reflete essas mudanças ao trocar de ambiente ou
+  // recarregar a página. Recarrega só as mesas e redesenha, preservando zoom/posição atuais.
+  refresh(): void {
+    if (!this.floorPlanId || this.isLoading() || this.isRefreshing()) {
+      return;
+    }
+    this.isRefreshing.set(true);
+    this.tablesService.list({ status: 'ACTIVE', page: 0, size: 200, sortBy: 'number', sortDirection: 'ASC' }).subscribe({
+      next: (tables) => {
+        this.items = this.rawItems.map((item) => this.toViewerItem(item, tables.content));
+        this.isRefreshing.set(false);
+        this.renderLayerContents();
+      },
+      error: () => {
+        this.isRefreshing.set(false);
       }
     });
   }
@@ -150,6 +174,7 @@ export class FloorPlanViewerComponent implements AfterViewInit, OnChanges, OnDes
     }
     return {
       itemType: response.itemType,
+      tableId: table?.id,
       tableNumber: table?.number ?? response.tableNumber,
       tableName: table?.name,
       tableCapacity: table?.capacity,
@@ -182,17 +207,6 @@ export class FloorPlanViewerComponent implements AfterViewInit, OnChanges, OnDes
     this.layer = new Konva.Layer();
     this.stage.add(this.layer);
 
-    this.layer.add(
-      new Konva.Rect({
-        x: 0,
-        y: 0,
-        width: plan.width,
-        height: plan.height,
-        fill: plan.backgroundColor || '#ffffff',
-        listening: false
-      })
-    );
-
     this.stage.on('wheel', (event) => {
       event.evt.preventDefault();
       const pointer = this.stage!.getPointerPosition();
@@ -210,6 +224,25 @@ export class FloorPlanViewerComponent implements AfterViewInit, OnChanges, OnDes
       this.stage!.batchDraw();
     });
 
+    this.renderLayerContents();
+  }
+
+  private renderLayerContents(): void {
+    const plan = this.floorPlan();
+    if (!this.layer || !plan) {
+      return;
+    }
+    this.layer.destroyChildren();
+    this.layer.add(
+      new Konva.Rect({
+        x: 0,
+        y: 0,
+        width: plan.width,
+        height: plan.height,
+        fill: plan.backgroundColor || '#ffffff',
+        listening: false
+      })
+    );
     for (const item of this.items) {
       this.createNode(item);
     }
