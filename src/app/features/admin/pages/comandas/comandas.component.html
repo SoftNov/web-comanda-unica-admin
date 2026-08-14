@@ -1,0 +1,356 @@
+<div class="page-header page-header--row">
+  <div>
+    <h1 class="page-title">Comandas</h1>
+    <p class="page-subtitle">
+      Acompanhe as comandas abertas e encerradas de {{ selectedCompany()?.companyName ?? 'sua empresa' }}, com pedidos e pagamentos de cada uma.
+    </p>
+  </div>
+</div>
+
+<div class="card filters-card">
+  <div class="filters-row">
+    <div class="field">
+      <label class="field__label" for="filter-status">Status</label>
+      <div class="field__control">
+        <select id="filter-status" class="field__input" [value]="filterStatus()" (change)="setStatusFilter($any($event.target).value)">
+          <option value="all">Todas</option>
+          <option value="OPEN">Em aberto</option>
+          <option value="CLOSED">Encerradas</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field__label" for="filter-table">Mesa</label>
+      <div class="field__control">
+        <select id="filter-table" class="field__input" [value]="filterTableId()" (change)="setTableFilter($any($event.target).value)">
+          <option value="">Todas</option>
+          @for (table of tables(); track table.id) {
+            <option [value]="table.id">Mesa {{ table.number }}{{ table.name ? ' — ' + table.name : '' }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn--ghost btn--sm" [title]="sortDirection() === 'DESC' ? 'Mais recentes primeiro' : 'Mais antigas primeiro'" (click)="toggleSortDirection()">
+      <span class="material-icons" aria-hidden="true">{{ sortDirection() === 'DESC' ? 'arrow_downward' : 'arrow_upward' }}</span>
+      Abertura
+    </button>
+
+    <button type="button" class="btn btn--ghost btn--sm" [disabled]="isLoadingList()" (click)="refreshComandas()">
+      <span class="material-icons" aria-hidden="true">refresh</span>
+      Atualizar
+    </button>
+
+    <button type="button" class="btn btn--ghost btn--sm filters-row__reset" (click)="resetFilters()">
+      <span class="material-icons" aria-hidden="true">filter_alt_off</span>
+      Limpar filtros
+    </button>
+  </div>
+</div>
+
+@if (isLoadingList()) {
+  <p class="field__hint">Carregando comandas…</p>
+} @else if (listError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ listError() }}
+  </div>
+} @else {
+  @if (finalizeError()) {
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      {{ finalizeError() }}
+    </div>
+  }
+
+  <div class="card table-card">
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Mesa</th>
+            <th>Status</th>
+            <th>Pedidos</th>
+            <th>Total pedidos</th>
+            <th>Total pago</th>
+            <th>Saldo</th>
+            <th>Aberta em</th>
+            <th class="data-table__actions-col">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (comandas().length === 0) {
+            <tr>
+              <td colspan="8" class="data-table__empty">Nenhuma comanda encontrada.</td>
+            </tr>
+          }
+          @for (comanda of comandas(); track comanda.id) {
+            <tr>
+              <td>Mesa {{ comanda.tableNumber }}{{ comanda.tableName ? ' — ' + comanda.tableName : '' }}</td>
+              <td>
+                <span class="badge" [class]="displayStatusBadgeClass(comanda.displayStatus)">
+                  {{ displayStatusLabel(comanda.displayStatus) }}
+                </span>
+              </td>
+              <td>{{ comanda.orders.length }}</td>
+              <td>{{ formatCurrency(comanda.totalOrdersAmount) }}</td>
+              <td>{{ formatCurrency(comanda.totalPaidAmount) }}</td>
+              <td>{{ formatCurrency(comanda.balanceAmount) }}</td>
+              <td>{{ formatDateTime(comanda.openedAt) }}</td>
+              <td class="data-table__actions-col">
+                <button type="button" class="icon-btn" title="Ver detalhes" (click)="openDetail(comanda)">
+                  <span class="material-icons" aria-hidden="true">visibility</span>
+                </button>
+                @if (canFinalize(comanda)) {
+                  <button
+                    type="button"
+                    class="icon-btn icon-btn--success"
+                    title="Finalizar comanda (saldo zerado)"
+                    [disabled]="finalizingComandaId() === comanda.id"
+                    (click)="finalizeComanda(comanda)"
+                  >
+                    <span class="material-icons" aria-hidden="true">check_circle</span>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="pagination__info">{{ totalElements() }} comanda(s) — {{ pageLabel() }}</span>
+      <div class="pagination__controls">
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="page() === 0" (click)="previousPage()">
+          <span class="material-icons" aria-hidden="true">chevron_left</span>
+          Anterior
+        </button>
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="isLast()" (click)="nextPage()">
+          Próxima
+          <span class="material-icons" aria-hidden="true">chevron_right</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (selectedComanda(); as comanda) {
+  <div class="modal-backdrop">
+    <div class="modal-card modal-card--lg card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">
+          Comanda — Mesa {{ comanda.tableNumber }}{{ comanda.tableName ? ' — ' + comanda.tableName : '' }}
+        </h2>
+        <button type="button" class="icon-btn" (click)="closeDetail()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <div class="comanda-summary">
+        <div class="comanda-summary__status">
+          <span class="badge" [class]="displayStatusBadgeClass(comanda.displayStatus)">
+            {{ displayStatusLabel(comanda.displayStatus) }}
+          </span>
+
+          @if (canFinalize(comanda)) {
+            <button
+              type="button"
+              class="btn btn--success btn--sm"
+              [disabled]="finalizingComandaId() === comanda.id"
+              (click)="finalizeComanda(comanda)"
+            >
+              <span class="material-icons" aria-hidden="true">check_circle</span>
+              {{ finalizingComandaId() === comanda.id ? 'Finalizando…' : 'Finalizar comanda' }}
+            </button>
+          }
+        </div>
+
+        @if (finalizeError()) {
+          <div class="form-alert form-alert--error" role="alert">
+            <span class="material-icons" aria-hidden="true">error_outline</span>
+            {{ finalizeError() }}
+          </div>
+        }
+
+        <dl class="comanda-summary__stats">
+          <div>
+            <dt>Total pedidos</dt>
+            <dd>{{ formatCurrency(comanda.totalOrdersAmount) }}</dd>
+          </div>
+          <div>
+            <dt>Total pago</dt>
+            <dd>{{ formatCurrency(comanda.totalPaidAmount) }}</dd>
+          </div>
+          <div>
+            <dt>Saldo</dt>
+            <dd>{{ formatCurrency(comanda.balanceAmount) }}</dd>
+          </div>
+          <div>
+            <dt>Aberta em</dt>
+            <dd>{{ formatDateTime(comanda.openedAt) }}</dd>
+          </div>
+          @if (comanda.closedAt) {
+            <div>
+              <dt>Encerrada em</dt>
+              <dd>
+                {{ formatDateTime(comanda.closedAt) }}
+                @if (comanda.closedByUserName) {
+                  <span class="comanda-summary__by">por {{ comanda.closedByUserName }}</span>
+                }
+              </dd>
+            </div>
+          }
+        </dl>
+      </div>
+
+      <section class="comanda-section">
+        <h3 class="comanda-section__title">Pedidos</h3>
+        @if (comanda.orders.length === 0) {
+          <p class="field__hint">Nenhum pedido registrado nesta comanda.</p>
+        } @else {
+          <div class="table-wrapper">
+            <table class="data-table data-table--compact">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Status</th>
+                  <th>Valor</th>
+                  <th>Horário</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (order of comanda.orders; track order.id) {
+                  <tr>
+                    <td>{{ order.customerName }}</td>
+                    <td><span class="badge" [class]="orderStatusBadgeClass(order.status)">{{ orderStatusLabel(order.status) }}</span></td>
+                    <td>{{ formatCurrency(order.totalAmount) }}</td>
+                    <td>{{ formatDateTime(order.createdAt) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+
+      <section class="comanda-section">
+        <h3 class="comanda-section__title">Pagamentos</h3>
+        @if (comanda.payments.length === 0) {
+          <p class="field__hint">Nenhum pagamento registrado nesta comanda.</p>
+        } @else {
+          <div class="table-wrapper">
+            <table class="data-table data-table--compact">
+              <thead>
+                <tr>
+                  <th>Quem pagou</th>
+                  <th>Método</th>
+                  <th>Tipo</th>
+                  <th>Valor</th>
+                  <th>Horário</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (payment of comanda.payments; track payment.id) {
+                  <tr>
+                    <td>{{ payment.customerName ?? (payment.registeredByUserName ? 'Registrado por ' + payment.registeredByUserName : '—') }}</td>
+                    <td>{{ paymentMethodLabel(payment.method) }}</td>
+                    <td>{{ paymentTypeLabel(payment.type) }}</td>
+                    <td>{{ formatCurrency(payment.amount) }}</td>
+                    <td>{{ formatDateTime(payment.paidAt) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+
+      @if (comanda.status === 'OPEN') {
+        <section class="comanda-section">
+          <h3 class="comanda-section__title">Registrar pagamento em dinheiro</h3>
+          <p class="field__hint">Use quando o cliente optar por pagar em dinheiro no caixa ou diretamente com o garçom, em vez de pelo app.</p>
+
+          <form (submit)="$event.preventDefault(); submitPayment()" novalidate [formGroup]="paymentForm">
+            <div class="field__row">
+              <div class="field">
+                <label class="field__label" for="payment-amount">Valor (saldo: {{ formatCurrency(comanda.balanceAmount) }})</label>
+                <div class="field__control">
+                  <input
+                    id="payment-amount"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    class="field__input"
+                    [class.field__input--invalid]="paymentForm.controls.amount.invalid && paymentForm.controls.amount.touched"
+                    formControlName="amount"
+                    placeholder="0,00"
+                  >
+                </div>
+                @if (paymentForm.controls.amount.invalid && paymentForm.controls.amount.touched) {
+                  <span class="field__error">Informe um valor maior que zero.</span>
+                }
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="payment-method">Onde foi pago</label>
+                <div class="field__control">
+                  <select id="payment-method" class="field__input" formControlName="method">
+                    <option value="CASH_REGISTER">Dinheiro no caixa</option>
+                    <option value="CASH_WAITER">Dinheiro com o garçom</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            @if (paymentError()) {
+              <div class="form-alert form-alert--error" role="alert">
+                <span class="material-icons" aria-hidden="true">error_outline</span>
+                {{ paymentError() }}
+              </div>
+            }
+
+            <div class="step-actions">
+              <button type="submit" class="btn btn--primary" appRipple [disabled]="isSubmittingPayment()">
+                {{ isSubmittingPayment() ? 'Registrando…' : 'Registrar pagamento' }}
+              </button>
+            </div>
+          </form>
+        </section>
+      }
+
+      <section class="comanda-section">
+        <h3 class="comanda-section__title">Alterar status manualmente</h3>
+        <p class="field__hint">Sobrepõe o fluxo automático — use apenas em situações excepcionais (ex: comanda que deveria ter sido encerrada e não foi).</p>
+
+        <form (submit)="$event.preventDefault(); submitStatusChange()" novalidate [formGroup]="statusForm">
+          <div class="field__row">
+            <div class="field">
+              <label class="field__label" for="comanda-status">Novo status</label>
+              <div class="field__control">
+                <select id="comanda-status" class="field__input" formControlName="status">
+                  <option value="OPEN">Em aberto</option>
+                  <option value="CLOSED">Encerrada</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          @if (statusError()) {
+            <div class="form-alert form-alert--error" role="alert">
+              <span class="material-icons" aria-hidden="true">error_outline</span>
+              {{ statusError() }}
+            </div>
+          }
+
+          <div class="step-actions">
+            <button type="submit" class="btn btn--ghost" [disabled]="isSubmittingStatus()">
+              {{ isSubmittingStatus() ? 'Salvando…' : 'Salvar status' }}
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+  </div>
+}

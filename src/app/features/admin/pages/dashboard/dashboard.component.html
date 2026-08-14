@@ -5,28 +5,125 @@
   </p>
 </div>
 
-<div class="stat-grid">
-  <div class="card stat-card">
-    <span class="material-icons stat-card__icon" aria-hidden="true">receipt_long</span>
-    <span class="stat-card__label">Comandas abertas</span>
-    <span class="stat-card__value">—</span>
+@if (isManagementProfile()) {
+  <div class="card revenue-section">
+    <div class="revenue-section__header">
+      <div class="revenue-section__heading">
+        <h2 class="revenue-section__title">Faturamento</h2>
+        <div class="revenue-section__total">
+          <span class="revenue-section__total-value">{{ isLoadingRevenue() ? '—' : formatCurrency(revenueTotal()) }}</span>
+          <span class="revenue-section__total-label">no período selecionado</span>
+        </div>
+      </div>
+
+      <div class="revenue-section__controls">
+        <div class="revenue-section__presets">
+          @for (preset of revenuePresets; track preset.days) {
+            <button
+              type="button"
+              class="revenue-section__preset"
+              [class.revenue-section__preset--active]="activeRevenuePresetDays() === preset.days"
+              (click)="applyRevenuePreset(preset.days)"
+            >
+              {{ preset.label }}
+            </button>
+          }
+        </div>
+        <div class="revenue-section__custom-range">
+          <label class="revenue-section__date-field">
+            <span>De</span>
+            <input
+              type="date"
+              [value]="revenueStartDate()"
+              [max]="revenueEndDate()"
+              (change)="onRevenueStartDateChange($any($event.target).value)"
+            />
+          </label>
+          <label class="revenue-section__date-field">
+            <span>Até</span>
+            <input
+              type="date"
+              [value]="revenueEndDate()"
+              [min]="revenueStartDate()"
+              (change)="onRevenueEndDateChange($any($event.target).value)"
+            />
+          </label>
+        </div>
+      </div>
+    </div>
+
+    @if (revenueError()) {
+      <div class="form-alert form-alert--error" role="alert">
+        <span class="material-icons" aria-hidden="true">error_outline</span>
+        {{ revenueError() }}
+      </div>
+    } @else if (isLoadingRevenue()) {
+      <p class="field__hint">Carregando faturamento…</p>
+    } @else {
+      <app-line-chart [points]="revenuePoints()" [height]="260" />
+    }
   </div>
-  <div class="card stat-card">
-    <span class="material-icons stat-card__icon" aria-hidden="true">table_bar</span>
-    <span class="stat-card__label">Mesas ocupadas</span>
-    <span class="stat-card__value">—</span>
+
+  <div class="card operation-section">
+    <div class="operation-section__header">
+      <h2 class="operation-section__title">Operação</h2>
+      <span class="live-indicator" [class.live-indicator--error]="summaryError()">
+        <span class="live-indicator__dot" aria-hidden="true"></span>
+        {{ summaryError() ? 'Reconectando…' : 'Ao vivo' }}
+      </span>
+    </div>
+
+    @if (summaryError()) {
+      <div class="form-alert form-alert--error" role="alert">
+        <span class="material-icons" aria-hidden="true">error_outline</span>
+        {{ summaryError() }}
+      </div>
+    }
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="material-icons stat-card__icon" aria-hidden="true">receipt_long</span>
+        <span class="stat-card__label">Comandas abertas</span>
+        <span class="stat-card__value">{{ isLoadingSummary() ? '—' : summary()?.openComandas }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="material-icons stat-card__icon" aria-hidden="true">table_bar</span>
+        <span class="stat-card__label">Mesas ocupadas</span>
+        <span class="stat-card__value">{{ isLoadingSummary() ? '—' : summary()?.occupiedTables }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="material-icons stat-card__icon" aria-hidden="true">check_circle</span>
+        <span class="stat-card__label">Mesas livres</span>
+        <span class="stat-card__value">{{ isLoadingSummary() ? '—' : summary()?.freeTables }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="material-icons stat-card__icon" aria-hidden="true">cleaning_services</span>
+        <span class="stat-card__label">Mesas em limpeza</span>
+        <span class="stat-card__value">{{ isLoadingSummary() ? '—' : summary()?.cleaningTables }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="material-icons stat-card__icon" aria-hidden="true">groups</span>
+        <span class="stat-card__label">Funcionários ativos</span>
+        <span class="stat-card__value">{{ isLoadingSummary() ? '—' : summary()?.activeEmployees }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="material-icons stat-card__icon" aria-hidden="true">payments</span>
+        <span class="stat-card__label">Valor em comandas abertas</span>
+        <span class="stat-card__value">{{ isLoadingSummary() ? '—' : formatCurrency(summary()?.openComandasValue) }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="material-icons stat-card__icon" aria-hidden="true">point_of_sale</span>
+        <span class="stat-card__label">Pedidos feitos hoje</span>
+        <span class="stat-card__value">{{ isLoadingSummary() ? '—' : formatCurrency(summary()?.ordersValueToday) }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="material-icons stat-card__icon" aria-hidden="true">shopping_cart</span>
+        <span class="stat-card__label">Itens no carrinho</span>
+        <span class="stat-card__value">{{ isLoadingSummary() ? '—' : summary()?.openCartItemsCount }}</span>
+      </div>
+    </div>
   </div>
-  <div class="card stat-card">
-    <span class="material-icons stat-card__icon" aria-hidden="true">payments</span>
-    <span class="stat-card__label">Faturamento hoje</span>
-    <span class="stat-card__value">—</span>
-  </div>
-  <div class="card stat-card">
-    <span class="material-icons stat-card__icon" aria-hidden="true">groups</span>
-    <span class="stat-card__label">Funcionários ativos</span>
-    <span class="stat-card__value">—</span>
-  </div>
-</div>
+}
 
 <div class="card floor-plan-section">
   <div class="floor-plan-section__header">

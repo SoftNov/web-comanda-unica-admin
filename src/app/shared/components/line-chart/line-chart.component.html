@@ -1,0 +1,88 @@
+<div class="line-chart">
+  <div class="line-chart__toolbar">
+    <button type="button" class="line-chart__table-toggle" (click)="toggleTable()">
+      {{ isTableVisible() ? 'Ver gráfico' : 'Ver como tabela' }}
+    </button>
+  </div>
+
+  @if (isTableVisible()) {
+    <div class="line-chart__table-wrapper">
+      <table class="line-chart__table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Faturamento</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (point of points$(); track point.date) {
+            <tr>
+              <td>{{ formatFullDate(point.date) }}</td>
+              <td>{{ formatCurrency(point.amount) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else if (plotted().length === 0) {
+    <p class="field__hint">Sem dados de faturamento no período selecionado.</p>
+  } @else {
+    <svg
+      #svgRoot
+      class="line-chart__svg"
+      [style.height.px]="height"
+      [attr.viewBox]="'0 0 ' + viewWidth + ' ' + height"
+      preserveAspectRatio="none"
+      (pointermove)="onPointerMove($event)"
+      (pointerleave)="onPointerLeave()"
+    >
+      @for (tick of yTicks(); track tick.label + tick.y) {
+        <line
+          class="line-chart__gridline"
+          vector-effect="non-scaling-stroke"
+          [attr.x1]="padding.left"
+          [attr.x2]="viewWidth - padding.right"
+          [attr.y1]="tick.y"
+          [attr.y2]="tick.y"
+        />
+        <text class="line-chart__axis-label" [attr.x]="padding.left - 8" [attr.y]="tick.y" text-anchor="end" dominant-baseline="middle">
+          {{ tick.label }}
+        </text>
+      }
+
+      @for (tick of xTicks(); track tick.date) {
+        <text class="line-chart__axis-label" [attr.x]="tick.x" [attr.y]="height - 8" text-anchor="middle">
+          {{ formatShortDate(tick.date) }}
+        </text>
+      }
+
+      <path class="line-chart__area" [attr.d]="areaPath()" />
+      <path class="line-chart__line" vector-effect="non-scaling-stroke" [attr.d]="linePath()" />
+
+      @if (lastPoint(); as last) {
+        <circle class="line-chart__end-dot" vector-effect="non-scaling-stroke" [attr.cx]="last.x" [attr.cy]="last.y" r="4" />
+        <text class="line-chart__end-label" [attr.x]="last.x + 8" [attr.y]="last.y + 4" text-anchor="start">
+          {{ formatCurrency(last.amount) }}
+        </text>
+      }
+
+      @if (hoveredPoint(); as hovered) {
+        <line
+          class="line-chart__crosshair"
+          vector-effect="non-scaling-stroke"
+          [attr.x1]="hovered.x"
+          [attr.x2]="hovered.x"
+          [attr.y1]="padding.top"
+          [attr.y2]="height - padding.bottom"
+        />
+        <circle class="line-chart__hover-dot" vector-effect="non-scaling-stroke" [attr.cx]="hovered.x" [attr.cy]="hovered.y" r="5" />
+
+        <g [attr.transform]="'translate(' + tooltipX(hovered.x) + ', ' + padding.top + ')'">
+          <rect class="line-chart__tooltip-bg" x="-58" y="0" width="116" height="40" rx="6" />
+          <text class="line-chart__tooltip-value" x="0" y="18" text-anchor="middle">{{ formatCurrency(hovered.amount) }}</text>
+          <text class="line-chart__tooltip-date" x="0" y="32" text-anchor="middle">{{ formatFullDate(hovered.date) }}</text>
+        </g>
+      }
+    </svg>
+  }
+</div>

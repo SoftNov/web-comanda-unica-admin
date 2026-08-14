@@ -13,7 +13,12 @@ export interface MenuItem {
 // "children" viram um grupo expansível (submenu) em vez de um link direto.
 export const ADMIN_MENU_ITEMS: MenuItem[] = [
   { label: 'Dashboard', icon: 'dashboard', route: '/painel/dashboard' },
-  { label: 'Comandas', icon: 'receipt_long', route: '/painel/comandas' },
+  {
+    label: 'Comandas',
+    icon: 'receipt_long',
+    route: '/painel/comandas',
+    roles: ['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER']
+  },
   {
     label: 'Mesas',
     icon: 'table_bar',

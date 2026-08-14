@@ -43,8 +43,8 @@ export const routes: Routes = [
       },
       {
         path: 'comandas',
-        loadComponent: () => import('./features/admin/pages/placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
-        data: { title: 'Comandas' },
+        canActivate: [profileGuard(['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'])],
+        loadComponent: () => import('./features/admin/pages/comandas/comandas.component').then((m) => m.ComandasComponent),
         title: 'Comandas — Comanda Única'
       },
       {

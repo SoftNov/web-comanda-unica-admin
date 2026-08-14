@@ -12,42 +12,192 @@
   font-size: 1rem;
 }
 
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.live-indicator__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 0 3px var(--color-success-bg);
+}
+
+.live-indicator--error .live-indicator__dot {
+  background: #f87171;
+  box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.18);
+}
+
+// --- Faturamento ---------------------------------------------------------
+
+.revenue-section {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.revenue-section__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.revenue-section__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.revenue-section__title {
+  font-size: 1.125rem;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.revenue-section__total {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.revenue-section__total-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.revenue-section__total-label {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.revenue-section__controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+
+  @media (max-width: 640px) {
+    align-items: flex-start;
+    width: 100%;
+  }
+}
+
+.revenue-section__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.revenue-section__preset {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+.revenue-section__preset--active {
+  border-color: var(--color-accent);
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.revenue-section__custom-range {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.revenue-section__date-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+
+  input[type='date'] {
+    background: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text);
+    padding: 6px 10px;
+    font-size: 0.8125rem;
+    color-scheme: dark;
+  }
+}
+
+// --- Operação -------------------------------------------------------------
+
+.operation-section {
+  margin-top: 20px;
+  padding: 24px;
+}
+
+.operation-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.operation-section__title {
+  font-size: 1.125rem;
+  color: var(--color-text);
+  margin: 0;
+}
+
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  @media (max-width: 560px) {
-    grid-template-columns: 1fr;
-  }
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
 }
 
 .stat-card {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 24px;
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-elevated);
 }
 
 .stat-card__icon {
   color: var(--color-accent-hover);
-  font-size: 22px;
+  font-size: 20px;
 }
 
 .stat-card__label {
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--color-text-muted);
 }
 
 .stat-card__value {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--color-text);
 }
+
+// --- Mapa do estabelecimento -----------------------------------------------
 
 .floor-plan-section {
   margin-top: 20px;
