@@ -2,6 +2,7 @@ import { Component, HostListener, computed, inject, signal } from '@angular/core
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../../../auth/services/auth.service';
 import { AccountsService } from '../../../../shared/services/accounts.service';
+import { resolveHomeRoute } from '../../../../core/guards/home.guard';
 import { ADMIN_MENU_ITEMS, MenuItem } from '../../config/menu.config';
 
 @Component({
@@ -133,7 +134,7 @@ export class AdminLayoutComponent {
     this.accountsService.invalidateProfileCache();
     this.syncProfileImages();
     this.isCompanyMenuOpen.set(false);
-    this.router.navigateByUrl('/painel/dashboard');
+    this.router.navigateByUrl(resolveHomeRoute(this.selectedCompany()?.profileCode ?? null));
   }
 
   logout(): void {

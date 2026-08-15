@@ -7,9 +7,13 @@
 .line-chart__toolbar {
   display: flex;
   justify-content: flex-end;
+  gap: 4px;
 }
 
-.line-chart__table-toggle {
+.line-chart__mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   background: transparent;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
@@ -17,11 +21,26 @@
   font-size: 0.8125rem;
   padding: 6px 12px;
   cursor: pointer;
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+
+  .material-icons {
+    font-size: 16px;
+  }
 
   &:hover {
     background: rgba(255, 255, 255, 0.06);
     color: var(--color-text);
+  }
+
+  &--active {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fff;
+
+    &:hover {
+      background: var(--color-accent);
+      color: #fff;
+    }
   }
 }
 
@@ -66,6 +85,15 @@
   fill: var(--color-text);
   font-size: 12px;
   font-weight: 600;
+}
+
+.line-chart__bar {
+  fill: var(--color-accent);
+  transition: fill var(--transition-fast);
+}
+
+.line-chart__bar--hovered {
+  fill: var(--color-accent-hover);
 }
 
 .line-chart__crosshair {

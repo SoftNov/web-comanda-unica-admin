@@ -1,0 +1,154 @@
+<div class="page-header page-header--row">
+  <div>
+    <h1 class="page-title">Pedidos</h1>
+    <p class="page-subtitle">
+      Fila de pedidos de {{ selectedCompany()?.companyName ?? 'sua empresa' }} — acompanhe e movimente cada item do recebimento até a entrega.
+    </p>
+  </div>
+</div>
+
+<div class="card filters-card">
+  <div class="filters-row">
+    <div class="field">
+      <label class="field__label" for="filter-sector">Setor</label>
+      <div class="field__control">
+        <select id="filter-sector" class="field__input" [value]="sectorFilter()" (change)="setSectorFilter($any($event.target).value)">
+          <option value="">Todos os setores</option>
+          @for (sector of sectors(); track sector) {
+            <option [value]="sector">{{ sectorLabel(sector) }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn--ghost btn--sm" [disabled]="isLoading()" (click)="refresh()">
+      <span class="material-icons" aria-hidden="true">refresh</span>
+      Atualizar
+    </button>
+  </div>
+</div>
+
+@if (actionError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ actionError() }}
+  </div>
+}
+
+@if (isLoading()) {
+  <p class="field__hint">Carregando fila de pedidos…</p>
+} @else if (listError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ listError() }}
+  </div>
+} @else {
+  <div class="board">
+    @for (column of columns; track column) {
+      <div class="board-column">
+        <div class="board-column__header">
+          <h2 class="board-column__title">{{ statusLabel(column) }}</h2>
+          <span class="badge badge--muted">{{ itemsFor(column).length }}</span>
+        </div>
+
+        <div class="board-column__list">
+          @if (itemsFor(column).length === 0) {
+            <p class="board-column__empty">Nenhum item aqui.</p>
+          }
+          @for (item of itemsFor(column); track item.id) {
+            <div class="order-card card">
+              <div class="order-card__header">
+                <span class="order-card__table">Mesa {{ item.tableNumber }}{{ item.tableName ? ' — ' + item.tableName : '' }}</span>
+                <span class="order-card__time" [title]="formatDateTime(item.createdAt)">{{ formatTime(item.createdAt) }}</span>
+              </div>
+
+              <p class="order-card__customer">{{ item.customerName }}</p>
+
+              <p class="order-card__item-name">
+                <span class="order-card__item-qty">{{ item.quantity }}x</span>
+                {{ item.itemName }}
+              </p>
+
+              @if (item.kitchenSector) {
+                <span class="chip">{{ sectorLabel(item.kitchenSector) }}</span>
+              }
+
+              @if (item.notes) {
+                <p class="order-card__notes">
+                  <span class="material-icons" aria-hidden="true">sticky_note_2</span>
+                  {{ item.notes }}
+                </p>
+              }
+
+              @if (item.pickedUpByUserName) {
+                <div class="order-card__footer">
+                  <span class="order-card__picked-by" [title]="'Pego às ' + formatDateTime(item.pickedUpAt)">
+                    <span class="material-icons" aria-hidden="true">badge</span>
+                    {{ item.pickedUpByUserName }}
+                  </span>
+                </div>
+              }
+
+              @if (canAdvance(item) || canCancel(item)) {
+                <div class="order-card__actions">
+                  @if (canCancel(item)) {
+                    <button
+                      type="button"
+                      class="icon-btn icon-btn--danger"
+                      title="Cancelar item"
+                      [disabled]="movingItemId() === item.id"
+                      (click)="requestCancel(item)"
+                    >
+                      <span class="material-icons" aria-hidden="true">cancel</span>
+                    </button>
+                  }
+                  @if (canAdvance(item)) {
+                    <button
+                      type="button"
+                      class="btn btn--primary btn--sm order-card__advance"
+                      [disabled]="movingItemId() === item.id"
+                      (click)="advance(item)"
+                    >
+                      {{ movingItemId() === item.id ? 'Movendo…' : nextActionLabel(item.status) }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+}
+
+@if (itemToCancel(); as item) {
+  <div class="modal-backdrop" (click)="closeCancelModal()">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">Cancelar item</h2>
+        <button type="button" class="icon-btn" (click)="closeCancelModal()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <p class="field__hint">
+        Cancelar {{ item.quantity }}x {{ item.itemName }} do pedido de {{ item.customerName }} (Mesa {{ item.tableNumber }}). Esta ação não pode ser desfeita.
+      </p>
+
+      @if (cancelError()) {
+        <div class="form-alert form-alert--error" role="alert">
+          <span class="material-icons" aria-hidden="true">error_outline</span>
+          {{ cancelError() }}
+        </div>
+      }
+
+      <div class="step-actions">
+        <button type="button" class="btn btn--danger" [disabled]="isCancelling()" (click)="confirmCancel()">
+          {{ isCancelling() ? 'Cancelando…' : 'Cancelar item' }}
+        </button>
+        <button type="button" class="btn btn--ghost" (click)="closeCancelModal()">Voltar</button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { homeGuard } from './core/guards/home.guard';
 import { profileGuard } from './core/guards/profile.guard';
 
 export const routes: Routes = [
@@ -35,7 +36,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () => import('./features/admin/layout/admin-layout/admin-layout.component').then((m) => m.AdminLayoutComponent),
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      { path: '', pathMatch: 'full', canActivate: [homeGuard], children: [] },
       {
         path: 'dashboard',
         loadComponent: () => import('./features/admin/pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),
@@ -61,8 +62,7 @@ export const routes: Routes = [
       },
       {
         path: 'pedidos',
-        loadComponent: () => import('./features/admin/pages/placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
-        data: { title: 'Pedidos' },
+        loadComponent: () => import('./features/admin/pages/pedidos/pedidos.component').then((m) => m.PedidosComponent),
         title: 'Pedidos — Comanda Única'
       },
       {
@@ -107,7 +107,7 @@ export const routes: Routes = [
           import('./features/admin/pages/settings/floor-plan/floor-plan-editor.component').then((m) => m.FloorPlanEditorComponent),
         title: 'Mapa do Salão — Comanda Única'
       },
-      { path: '**', redirectTo: 'dashboard' }
+      { path: '**', canActivate: [homeGuard], children: [] }
     ]
   },
   {

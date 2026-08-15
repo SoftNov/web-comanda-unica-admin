@@ -15,14 +15,27 @@ interface AxisTick {
   label: string;
 }
 
+interface BarRect extends PlottedPoint {
+  barX: number;
+  barY: number;
+  width: number;
+  path: string;
+}
+
+export type ChartViewMode = 'line' | 'bar' | 'table';
+
 const VIEW_WIDTH = 800;
 const PADDING = { top: 20, right: 60, bottom: 32, left: 64 };
 const MAX_X_LABELS = 6;
+const MAX_BAR_WIDTH = 24;
+const BAR_GAP = 2;
+const BAR_RADIUS = 4;
 
-// Gráfico de linha de série única (faturamento por dia) em SVG inline, sem dependência externa —
-// segue a skill de dataviz do projeto: 2px de linha com join/cap arredondado, área a ~12% de
-// opacidade, gridlines/eixos recessivos, crosshair + tooltip no hover, e uma view em tabela para
-// acessibilidade (sem legenda, já que série única dispensa — o título do card já diz o que é).
+// Gráfico de série única (faturamento por dia) em SVG inline, sem dependência externa —
+// segue a skill de dataviz do projeto: linha de 2px ou barras de topo arredondado (4px, ≤24px de
+// espessura), área/gridlines/eixos recessivos, crosshair ou tooltip por barra no hover, e uma view
+// em tabela para acessibilidade (sem legenda, já que série única dispensa — o título do card já diz
+// o que é).
 @Component({
   selector: 'app-line-chart',
   standalone: true,
@@ -43,7 +56,7 @@ export class LineChartComponent {
   readonly points$ = computed(() => this._points());
 
   readonly hoveredIndex = signal<number | null>(null);
-  readonly isTableVisible = signal(false);
+  readonly viewMode = signal<ChartViewMode>('line');
 
   readonly viewWidth = VIEW_WIDTH;
   readonly padding = PADDING;
@@ -136,8 +149,44 @@ export class LineChartComponent {
     return pts.length > 0 ? pts[pts.length - 1] : null;
   });
 
-  toggleTable(): void {
-    this.isTableVisible.update((visible) => !visible);
+  readonly barRects = computed<BarRect[]>(() => {
+    const pts = this.plotted();
+    const n = pts.length;
+    if (n === 0) {
+      return [];
+    }
+    const baseline = PADDING.top + this.plotHeight();
+    const slot = n <= 1 ? this.plotWidth() : this.plotWidth() / (n - 1);
+    const width = Math.max(3, Math.min(MAX_BAR_WIDTH, slot - BAR_GAP));
+
+    return pts.map((point) => {
+      const barX = point.x - width / 2;
+      const barY = point.y;
+      const barHeight = Math.max(0, baseline - barY);
+      const radius = Math.min(BAR_RADIUS, width / 2, barHeight);
+      const path =
+        barHeight <= 0
+          ? ''
+          : `M${barX},${baseline} ` +
+            `L${barX},${(barY + radius).toFixed(2)} ` +
+            `A${radius},${radius} 0 0 1 ${(barX + radius).toFixed(2)},${barY.toFixed(2)} ` +
+            `L${(barX + width - radius).toFixed(2)},${barY.toFixed(2)} ` +
+            `A${radius},${radius} 0 0 1 ${(barX + width).toFixed(2)},${(barY + radius).toFixed(2)} ` +
+            `L${(barX + width).toFixed(2)},${baseline} Z`;
+      return { ...point, barX, barY, width, path };
+    });
+  });
+
+  readonly hoveredBar = computed<BarRect | null>(() => {
+    const index = this.hoveredIndex();
+    if (index === null) {
+      return null;
+    }
+    return this.barRects()[index] ?? null;
+  });
+
+  setViewMode(mode: ChartViewMode): void {
+    this.viewMode.set(mode);
   }
 
   onPointerMove(event: PointerEvent): void {
