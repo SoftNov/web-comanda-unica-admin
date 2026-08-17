@@ -12,6 +12,45 @@
   font-size: 1rem;
 }
 
+// --- Abas da home ----------------------------------------------------------
+
+.dashboard-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+
+.dashboard-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+
+  .material-icons {
+    font-size: 18px;
+  }
+
+  &:hover {
+    color: var(--color-text);
+  }
+}
+
+.dashboard-tabs__tab--active {
+  color: var(--color-text);
+  border-bottom-color: var(--color-accent);
+}
+
 .live-indicator {
   display: inline-flex;
   align-items: center;

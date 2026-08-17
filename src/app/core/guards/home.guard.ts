@@ -2,16 +2,17 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../../features/auth/services/auth.service';
 
-// Perfis operacionais que atendem a fila de pedidos direto na cozinha/salão — a tela inicial
-// deles é o kanban de pedidos, não o dashboard administrativo/financeiro.
-const QUEUE_HOME_PROFILES = ['KITCHEN', 'WAITER'];
-
-export function resolveHomeRoute(profileCode: string | null | undefined): string {
-  return profileCode && QUEUE_HOME_PROFILES.includes(profileCode) ? '/painel/pedidos' : '/painel/dashboard';
+// Todo perfil entra pelo dashboard — ele já se adapta por perfil (ver DashboardComponent):
+// ADMIN/OWNER/MANAGER veem indicadores administrativos, WAITER/KITCHEN veem a fila de pedidos
+// (e WAITER também os serviços gerais) embutidos na própria home, e o mapa do salão aparece pra
+// todo mundo. Não existe mais um profileCode com destino próprio — manter o parâmetro só para não
+// quebrar quem já chama resolveHomeRoute(profileCode) (ver AdminLayoutComponent#selectCompany).
+export function resolveHomeRoute(_profileCode: string | null | undefined): string {
+  return '/painel/dashboard';
 }
 
-// Resolve a rota inicial de "/painel" conforme o perfil do usuário na empresa selecionada — usado
-// no lugar de um redirectTo estático porque o destino depende do profileCode (ver menu.config.ts).
+// Resolve a rota inicial de "/painel" — usado no lugar de um redirectTo estático porque
+// AdminLayoutComponent#selectCompany chama a mesma resolveHomeRoute ao trocar de empresa.
 export const homeGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);

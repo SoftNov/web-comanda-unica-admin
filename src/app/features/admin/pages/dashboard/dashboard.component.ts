@@ -5,10 +5,27 @@ import { FloorPlanViewerComponent } from '../../../../shared/components/floor-pl
 import { FloorPlanResponse, FloorPlansService } from '../../../../shared/services/floor-plans.service';
 import { DashboardService, DashboardSummaryResponse } from '../../../../shared/services/dashboard.service';
 import { LineChartComponent, LineChartPoint } from '../../../../shared/components/line-chart/line-chart.component';
+import { PedidosComponent } from '../pedidos/pedidos.component';
+import { ServicosComponent } from '../servicos/servicos.component';
 
 const MANAGEMENT_PROFILES = ['ADMIN', 'OWNER', 'MANAGER'];
+// Perfis operacionais que vivem na fila de pedidos no dia a dia — a home entra direto na mesma
+// visão do menu Pedidos (ver PedidosComponent) em vez do mapa do salão, pra não exigir mais um
+// clique de quem só quer ver o que precisa preparar/servir agora.
+const QUEUE_HOME_PROFILES = ['WAITER', 'KITCHEN'];
+// Só WAITER: quem chama/atende limpeza, garçom, caixa, reclamação e ajuda de mesa — o backend nem
+// libera esses endpoints pra KITCHEN (ver TableServiceRequestController#@RequireProfile).
+const SERVICE_HOME_PROFILES = ['WAITER'];
 const WS_RETRY_DELAY_MS = 5000;
 const WS_SILENT_RETRIES = 3;
+
+type DashboardTabId = 'overview' | 'pedidos' | 'servicos' | 'floorplan';
+
+interface DashboardTab {
+  id: DashboardTabId;
+  label: string;
+  icon: string;
+}
 
 interface RevenuePreset {
   label: string;
@@ -24,7 +41,7 @@ const REVENUE_PRESETS: RevenuePreset[] = [
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [FloorPlanViewerComponent, LineChartComponent],
+  imports: [FloorPlanViewerComponent, LineChartComponent, PedidosComponent, ServicosComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
@@ -47,6 +64,21 @@ export class DashboardComponent implements OnDestroy {
     return !!profileCode && MANAGEMENT_PROFILES.includes(profileCode);
   });
 
+  // Garçom e cozinha entram direto na fila de pedidos (mesmo conteúdo do menu Pedidos, ver
+  // PedidosComponent) — o mapa do salão continua abaixo, mas o que importa pra esses perfis é ver
+  // e movimentar os itens assim que abrem a home.
+  readonly isQueueHomeProfile = computed(() => {
+    const profileCode = this.selectedCompany()?.profileCode;
+    return !!profileCode && QUEUE_HOME_PROFILES.includes(profileCode);
+  });
+
+  // Garçom também entra direto nos serviços gerais (mesmo conteúdo do menu Serviços, ver
+  // ServicosComponent) — logo abaixo da fila de pedidos na home.
+  readonly isServiceHomeProfile = computed(() => {
+    const profileCode = this.selectedCompany()?.profileCode;
+    return !!profileCode && SERVICE_HOME_PROFILES.includes(profileCode);
+  });
+
   // Indicadores operacionais, atualizados em tempo real via WebSocket (ver connectRealtime) —
   // não há mais um fetch único aqui, a conexão já recebe o estado atual ao abrir e depois a cada
   // ~10s (ver DashboardBroadcastScheduler no backend).
@@ -67,12 +99,41 @@ export class DashboardComponent implements OnDestroy {
   readonly isLoadingFloorPlans = signal(true);
   readonly selectedFloorPlanId = signal<string | null>(null);
 
+  // Views da home organizadas em abas — cada perfil só vê as abas que fazem sentido pra ele (ver
+  // isManagementProfile/isQueueHomeProfile/isServiceHomeProfile). Mapa do salão aparece pra todo
+  // mundo, sempre por último. Pedidos/Serviços só ficam montados (e só abrem WebSocket) enquanto a
+  // aba correspondente está ativa — trocar de aba desconecta a anterior e conecta a nova. A
+  // notificação de pedido/serviço novo (som + sino no topo) não depende de qual aba está ativa —
+  // ver NotificationsService, usado pelo AdminLayoutComponent.
+  readonly availableTabs = computed<DashboardTab[]>(() => {
+    const tabs: DashboardTab[] = [];
+    if (this.isManagementProfile()) {
+      tabs.push({ id: 'overview', label: 'Visão geral', icon: 'insights' });
+    }
+    if (this.isQueueHomeProfile()) {
+      tabs.push({ id: 'pedidos', label: 'Pedidos', icon: 'point_of_sale' });
+    }
+    if (this.isServiceHomeProfile()) {
+      tabs.push({ id: 'servicos', label: 'Serviços', icon: 'support_agent' });
+    }
+    tabs.push({ id: 'floorplan', label: 'Mapa do salão', icon: 'map' });
+    return tabs;
+  });
+
+  readonly activeTab = signal<DashboardTabId>('floorplan');
+
   constructor() {
+    this.activeTab.set(this.availableTabs()[0]?.id ?? 'floorplan');
+
     if (this.isManagementProfile()) {
       this.connectRealtimeSummary();
       this.loadRevenue();
     }
     this.loadFloorPlans();
+  }
+
+  selectTab(tabId: DashboardTabId): void {
+    this.activeTab.set(tabId);
   }
 
   ngOnDestroy(): void {

@@ -21,12 +21,18 @@ export type ComandaPaymentMethod = 'ONLINE' | 'CASH_REGISTER' | 'CASH_WAITER';
 // exclusivo do fluxo do app do cliente, não pode ser selecionado pela equipe.
 export type ManualComandaPaymentMethod = Extract<ComandaPaymentMethod, 'CASH_REGISTER' | 'CASH_WAITER'>;
 
+export interface ComandaOrderItemResponse {
+  itemName: string;
+  quantity: number;
+}
+
 export interface ComandaOrderResponse {
   id: string;
   customerName: string;
   status: ComandaOrderStatus;
   totalAmount: number;
   createdAt: string;
+  items: ComandaOrderItemResponse[];
 }
 
 export interface ComandaPaymentResponse {

@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { homeGuard } from './core/guards/home.guard';
+import { platformAdminGuard } from './core/guards/platform-admin.guard';
 import { profileGuard } from './core/guards/profile.guard';
 
 export const routes: Routes = [
@@ -66,10 +67,23 @@ export const routes: Routes = [
         title: 'Pedidos — Comanda Única'
       },
       {
+        path: 'servicos',
+        canActivate: [profileGuard(['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'])],
+        loadComponent: () => import('./features/admin/pages/servicos/servicos.component').then((m) => m.ServicosComponent),
+        title: 'Serviços — Comanda Única'
+      },
+      {
         path: 'financeiro',
         loadComponent: () => import('./features/admin/pages/placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
         data: { title: 'Financeiro' },
         title: 'Financeiro — Comanda Única'
+      },
+      {
+        path: 'financeiro-plataforma',
+        canActivate: [platformAdminGuard],
+        loadComponent: () =>
+          import('./features/admin/pages/financeiro-plataforma/financeiro-plataforma.component').then((m) => m.FinanceiroPlataformaComponent),
+        title: 'Financeiro Comanda Única — Comanda Única'
       },
       {
         path: 'funcionarios',

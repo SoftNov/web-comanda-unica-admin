@@ -1,7 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { interval } from 'rxjs';
+import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Subscription, retry, timer } from 'rxjs';
 import {
   ApiErrorResponse,
   KitchenSector,
@@ -11,7 +10,8 @@ import {
 } from '../../../../shared/services/order-queue.service';
 import { AuthService } from '../../../auth/services/auth.service';
 
-const AUTO_REFRESH_MS = 20000;
+const WS_RETRY_DELAY_MS = 5000;
+const WS_SILENT_RETRIES = 3;
 
 // Perfis que podem movimentar a fila (pegar/preparar/entregar/cancelar) — mesma regra de
 // @RequireProfile em OrderQueueController#updateStatus no backend. CASHIER só visualiza.
@@ -63,7 +63,7 @@ const CANCELLABLE_STATUSES: OrderQueueItemStatus[] = ['REQUESTED', 'PREPARING', 
   templateUrl: './pedidos.component.html',
   styleUrl: './pedidos.component.scss'
 })
-export class PedidosComponent {
+export class PedidosComponent implements OnDestroy {
   private readonly orderQueueService = inject(OrderQueueService);
   private readonly authService = inject(AuthService);
 
@@ -103,13 +103,15 @@ export class PedidosComponent {
   readonly isCancelling = signal(false);
   readonly cancelError = signal<string | null>(null);
 
+  private queueSubscription?: Subscription;
+
   constructor() {
     this.loadSectors();
-    this.loadQueue(true);
+    this.connectRealtimeQueue();
+  }
 
-    interval(AUTO_REFRESH_MS)
-      .pipe(takeUntilDestroyed())
-      .subscribe(() => this.loadQueue(false));
+  ngOnDestroy(): void {
+    this.queueSubscription?.unsubscribe();
   }
 
   // --- Apresentação -------------------------------------------------------------
@@ -141,8 +143,17 @@ export class PedidosComponent {
     return value ? this.timeFormatter.format(new Date(value)) : '—';
   }
 
+  // Colunas em fila (REQUESTED/PREPARING/ON_THE_WAY) mantêm a ordem FIFO que já vem do backend
+  // (createdAt ascendente — ver OrderQueueItemRepository#findQueue), certo para "quem chegou
+  // primeiro" numa fila operacional. A coluna Entregue é diferente: o que importa lá é o que
+  // acabou de sair, não o que foi pedido primeiro — por isso ordena por updatedAt decrescente
+  // (DELIVERED é status terminal, então updatedAt é o momento da entrega).
   itemsFor(status: OrderQueueItemStatus): OrderQueueItemResponse[] {
-    return this.itemsByStatus().get(status) ?? [];
+    const bucket = this.itemsByStatus().get(status) ?? [];
+    if (status !== 'DELIVERED') {
+      return bucket;
+    }
+    return [...bucket].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
 
   // --- Listagem -------------------------------------------------------------------
@@ -153,31 +164,59 @@ export class PedidosComponent {
     });
   }
 
-  loadQueue(showLoading: boolean): void {
-    if (showLoading) {
-      this.isLoading.set(true);
-    }
-    this.listError.set(null);
-
-    this.orderQueueService.listQueue({ sector: this.sectorFilter() || undefined }).subscribe({
-      next: (response) => {
-        this.items.set(response);
-        this.isLoading.set(false);
-      },
-      error: () => {
-        this.isLoading.set(false);
-        this.listError.set('Não foi possível carregar a fila de pedidos.');
-      }
-    });
-  }
-
+  // A fila chega via WebSocket (ver connectRealtimeQueue) — ao conectar, o backend já envia o
+  // estado atual (ver OrderQueueWebSocketHandler#afterConnectionEstablished), e depois a cada ~4s
+  // (ver OrderQueueBroadcastScheduler), então não existe mais um fetch REST único aqui.
   refresh(): void {
-    this.loadQueue(true);
+    this.connectRealtimeQueue();
   }
 
   setSectorFilter(value: string): void {
     this.sectorFilter.set(value as KitchenSector | '');
-    this.loadQueue(true);
+    // O filtro de setor viaja no handshake do WebSocket (query param "sector"), não como parâmetro
+    // de uma chamada REST — trocar o setor precisa reabrir a conexão.
+    this.connectRealtimeQueue();
+  }
+
+  private connectRealtimeQueue(): void {
+    const companyId = this.selectedCompany()?.companyId;
+    const token = this.authService.getAccessToken();
+    if (!companyId || !token) {
+      return;
+    }
+
+    this.queueSubscription?.unsubscribe();
+    this.isLoading.set(true);
+    this.listError.set(null);
+
+    // Mesma estratégia de reconexão do dashboard (ver DashboardComponent.connectRealtimeSummary):
+    // o WebSocket se reconecta sozinho com um pequeno atraso; só expõe erro na tela depois de
+    // algumas tentativas seguidas sem sucesso, resetando a contagem após reconectar.
+    this.queueSubscription = this.orderQueueService
+      .connectRealtime(companyId, token, this.sectorFilter() || undefined)
+      .pipe(
+        retry({
+          delay: (_, retryCount) => {
+            if (retryCount >= WS_SILENT_RETRIES) {
+              this.isLoading.set(false);
+              this.listError.set('Não foi possível conectar à atualização em tempo real da fila de pedidos.');
+            }
+            return timer(WS_RETRY_DELAY_MS);
+          },
+          resetOnSuccess: true
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          this.items.set(response);
+          this.isLoading.set(false);
+          this.listError.set(null);
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.listError.set('Não foi possível conectar à atualização em tempo real da fila de pedidos.');
+        }
+      });
   }
 
   // --- Movimentação de status -----------------------------------------------------

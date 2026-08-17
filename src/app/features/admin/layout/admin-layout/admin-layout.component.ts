@@ -4,6 +4,13 @@ import { AuthService } from '../../../auth/services/auth.service';
 import { AccountsService } from '../../../../shared/services/accounts.service';
 import { resolveHomeRoute } from '../../../../core/guards/home.guard';
 import { ADMIN_MENU_ITEMS, MenuItem } from '../../config/menu.config';
+import {
+  NotificationsService,
+  ORDER_QUEUE_NOTIFICATION_PROFILES,
+  SERVICE_REQUEST_NOTIFICATION_PROFILES,
+  SERVICE_TYPE_LABELS
+} from '../../../../shared/services/notifications.service';
+import { ServiceRequestType } from '../../../../shared/services/service-requests.service';
 
 @Component({
   selector: 'app-admin-layout',
@@ -15,22 +22,43 @@ import { ADMIN_MENU_ITEMS, MenuItem } from '../../config/menu.config';
 export class AdminLayoutComponent {
   private readonly authService = inject(AuthService);
   private readonly accountsService = inject(AccountsService);
+  private readonly notificationsService = inject(NotificationsService);
   private readonly router = inject(Router);
+
+  private readonly timeFormatter = new Intl.DateTimeFormat('pt-BR', { timeStyle: 'short' });
 
   readonly currentUser = this.authService.currentUser;
   readonly companies = this.authService.companies;
   readonly selectedCompany = this.authService.selectedCompany;
 
   readonly profileCode = computed(() => this.selectedCompany()?.profileCode ?? null);
-  readonly menuItems = computed(() => this.filterMenuByProfile(ADMIN_MENU_ITEMS, this.profileCode()));
+  readonly isPlatformAdmin = this.authService.isPlatformAdmin;
+  readonly menuItems = computed(() => this.filterMenuByProfile(ADMIN_MENU_ITEMS, this.profileCode(), this.isPlatformAdmin()));
 
   readonly isMobileSidebarOpen = signal(false);
   readonly isSidebarCollapsed = signal(false);
   readonly isCompanyMenuOpen = signal(false);
   readonly isUserMenuOpen = signal(false);
+  readonly isNotificationsMenuOpen = signal(false);
   readonly expandedGroups = signal<ReadonlySet<string>>(
     new Set(this.menuItems().filter((item) => this.isGroupActive(item)).map((item) => item.label))
   );
+
+  // Sino de notificações no topo — pedidos ainda não entregues e serviços gerais ainda não
+  // atendidos, atualizados em tempo real (ver NotificationsService). As duas seções só aparecem
+  // se o perfil atual tiver acesso ao respectivo recurso no backend (KITCHEN não vê serviços).
+  readonly hasOrderNotifications = computed(() => {
+    const code = this.profileCode();
+    return !!code && ORDER_QUEUE_NOTIFICATION_PROFILES.includes(code);
+  });
+  readonly hasServiceNotifications = computed(() => {
+    const code = this.profileCode();
+    return !!code && SERVICE_REQUEST_NOTIFICATION_PROFILES.includes(code);
+  });
+  readonly pendingOrders = this.notificationsService.pendingOrders;
+  readonly pendingServiceRequests = this.notificationsService.pendingServiceRequests;
+  readonly totalPendingCount = this.notificationsService.totalPendingCount;
+  readonly notificationToast = this.notificationsService.toast;
 
   constructor() {
     this.syncProfileImages();
@@ -49,6 +77,36 @@ export class AdminLayoutComponent {
   closeMenus(): void {
     this.isCompanyMenuOpen.set(false);
     this.isUserMenuOpen.set(false);
+    this.isNotificationsMenuOpen.set(false);
+  }
+
+  toggleNotificationsMenu(event: Event): void {
+    event.stopPropagation();
+    this.isCompanyMenuOpen.set(false);
+    this.isUserMenuOpen.set(false);
+    this.isNotificationsMenuOpen.update((open) => !open);
+  }
+
+  dismissToast(): void {
+    this.notificationsService.dismissToast();
+  }
+
+  formatTime(value: string): string {
+    return this.timeFormatter.format(new Date(value));
+  }
+
+  serviceTypeLabel(type: ServiceRequestType): string {
+    return SERVICE_TYPE_LABELS[type];
+  }
+
+  goToPedidos(): void {
+    this.isNotificationsMenuOpen.set(false);
+    void this.router.navigateByUrl('/painel/pedidos');
+  }
+
+  goToServicos(): void {
+    this.isNotificationsMenuOpen.set(false);
+    void this.router.navigateByUrl('/painel/servicos');
   }
 
   toggleMobileSidebar(): void {
@@ -89,10 +147,13 @@ export class AdminLayoutComponent {
     return (item.children ?? []).some((child) => !!child.route && this.router.url.startsWith(child.route));
   }
 
-  private filterMenuByProfile(items: MenuItem[], profileCode: string | null): MenuItem[] {
+  private filterMenuByProfile(items: MenuItem[], profileCode: string | null, isPlatformAdmin: boolean): MenuItem[] {
     return items
       .filter((item) => !item.roles || (!!profileCode && item.roles.includes(profileCode)))
-      .map((item) => (item.children ? { ...item, children: this.filterMenuByProfile(item.children, profileCode) } : item))
+      .filter((item) => !item.platformAdminOnly || isPlatformAdmin)
+      .map((item) =>
+        item.children ? { ...item, children: this.filterMenuByProfile(item.children, profileCode, isPlatformAdmin) } : item
+      )
       .filter((item) => !item.children || item.children.length > 0);
   }
 

@@ -233,6 +233,147 @@ $topbar-height: 68px;
   }
 }
 
+.admin-topbar__bell-btn {
+  position: relative;
+}
+
+.admin-topbar__bell-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-full);
+  background: #f87171;
+  color: #2a0a0a;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+  border: 2px solid var(--color-bg-base, #0f172a);
+}
+
+.admin-topbar__menu--notifications {
+  min-width: 320px;
+  max-width: 380px;
+  max-height: min(420px, calc(100vh - #{$topbar-height} - 32px));
+  overflow-y: auto;
+}
+
+.admin-topbar__notifications-empty {
+  padding: 16px 12px;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.admin-topbar__notifications-group {
+  & + & {
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px solid var(--color-border);
+  }
+}
+
+.admin-topbar__notifications-title {
+  display: block;
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--color-text-muted);
+}
+
+.admin-topbar__notification-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: none;
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+
+  .material-icons {
+    font-size: 18px;
+    color: var(--color-accent-hover);
+    margin-top: 1px;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+.admin-topbar__notification-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.875rem;
+}
+
+.admin-topbar__notification-meta {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+// --- Notificação de pedido/serviço novo (toast) -----------------------------
+
+.notification-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(320px, 40vw);
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-accent);
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  animation: notification-toast-in 0.2s ease-out;
+
+  @media (max-width: 720px) {
+    display: none;
+  }
+}
+
+.notification-toast__icon {
+  color: var(--color-accent-hover);
+  flex-shrink: 0;
+}
+
+.notification-toast__message {
+  font-size: 0.8125rem;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-toast__close {
+  font-size: 16px;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}
+
+@keyframes notification-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .admin-topbar__dropdown {
   position: relative;
 }

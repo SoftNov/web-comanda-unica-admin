@@ -1,0 +1,278 @@
+<div class="page-header">
+  <h1 class="page-title">Financeiro — Comanda Única</h1>
+  <p class="page-subtitle">
+    Regra de cobrança da plataforma sobre o valor das comandas. Painel exclusivo da equipe Comanda Única.
+  </p>
+</div>
+
+<div class="card default-rule-card">
+  <h2 class="section-title">Regra padrão</h2>
+  <p class="field__hint">Aplicada a qualquer empresa sem customização própria.</p>
+
+  @if (isLoadingDefault()) {
+    <p class="field__hint">Carregando regra padrão…</p>
+  } @else if (defaultError()) {
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      {{ defaultError() }}
+    </div>
+  } @else {
+    <form (submit)="$event.preventDefault(); submitDefaultForm()" novalidate [formGroup]="defaultForm">
+      <div class="field__row">
+        <div class="field">
+          <label class="field__label" for="default-percentage">Percentual até a faixa (%)</label>
+          <div class="field__control">
+            <input
+              id="default-percentage"
+              type="number"
+              min="0.01"
+              max="100"
+              step="0.01"
+              class="field__input"
+              formControlName="percentageRate"
+              placeholder="1,00"
+            >
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label" for="default-threshold">Faixa (R$)</label>
+          <div class="field__control">
+            <input
+              id="default-threshold"
+              type="number"
+              min="0.01"
+              step="0.01"
+              class="field__input"
+              formControlName="thresholdAmount"
+              placeholder="50,00"
+            >
+          </div>
+        </div>
+        <div class="field">
+          <label class="field__label" for="default-max">Valor fixo acima da faixa (R$)</label>
+          <div class="field__control">
+            <input
+              id="default-max"
+              type="number"
+              min="0.01"
+              step="0.01"
+              class="field__input"
+              formControlName="maxAmount"
+              placeholder="3,00"
+            >
+          </div>
+        </div>
+      </div>
+      <p class="field__hint">
+        Comandas até o valor da faixa pagam o percentual sobre o próprio valor; acima da faixa, pagam o valor fixo.
+      </p>
+
+      @if (defaultSaveError()) {
+        <div class="form-alert form-alert--error" role="alert">
+          <span class="material-icons" aria-hidden="true">error_outline</span>
+          {{ defaultSaveError() }}
+        </div>
+      }
+
+      <div class="step-actions">
+        <button type="submit" class="btn btn--primary" appRipple [disabled]="isSavingDefault()">
+          {{ isSavingDefault() ? 'Salvando…' : 'Salvar regra padrão' }}
+        </button>
+      </div>
+    </form>
+
+    <div class="simulator">
+      <label class="field__label" for="simulator-amount">Simular cobrança para uma comanda de</label>
+      <div class="simulator__row">
+        <div class="field__control simulator__input">
+          <input
+            id="simulator-amount"
+            type="number"
+            min="0"
+            step="0.01"
+            class="field__input"
+            [value]="simulatorAmount()"
+            (input)="onSimulatorAmountChange($any($event.target).value)"
+          >
+        </div>
+        <span class="simulator__result">
+          {{ formatCurrency(simulatedFee(defaultRule()?.percentageRate, defaultRule()?.thresholdAmount, defaultRule()?.maxAmount)) }}
+        </span>
+      </div>
+    </div>
+  }
+</div>
+
+<div class="card companies-card">
+  <div class="companies-card__header">
+    <h2 class="section-title">Empresas</h2>
+    <div class="field companies-card__search">
+      <div class="field__control">
+        <input
+          type="text"
+          class="field__input"
+          placeholder="Buscar por nome"
+          [value]="searchTerm()"
+          (input)="onSearchChange($any($event.target).value)"
+        >
+      </div>
+    </div>
+  </div>
+
+  @if (isLoadingCompanies()) {
+    <p class="field__hint">Carregando empresas…</p>
+  } @else if (companiesError()) {
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      {{ companiesError() }}
+    </div>
+  } @else {
+    @if (removeError()) {
+      <div class="form-alert form-alert--error" role="alert">
+        <span class="material-icons" aria-hidden="true">error_outline</span>
+        {{ removeError() }}
+      </div>
+    }
+
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Empresa</th>
+            <th>Percentual</th>
+            <th>Faixa</th>
+            <th>Valor fixo</th>
+            <th>Cobrança simulada</th>
+            <th>Regra</th>
+            <th>Atualizado em</th>
+            <th class="data-table__actions-col">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (companies().length === 0) {
+            <tr>
+              <td colspan="8" class="data-table__empty">Nenhuma empresa encontrada.</td>
+            </tr>
+          }
+          @for (company of companies(); track company.companyId) {
+            <tr>
+              <td>{{ company.companyName }}</td>
+              <td>{{ company.percentageRate }}%</td>
+              <td>{{ formatCurrency(company.thresholdAmount) }}</td>
+              <td>{{ formatCurrency(company.maxAmount) }}</td>
+              <td>{{ formatCurrency(simulatedFee(company.percentageRate, company.thresholdAmount, company.maxAmount)) }}</td>
+              <td>
+                <span class="badge" [class]="company.customized ? 'badge--warning' : 'badge--muted'">
+                  {{ company.customized ? 'Customizada' : 'Padrão' }}
+                </span>
+              </td>
+              <td>{{ formatDateTime(company.updatedAt) }}</td>
+              <td class="data-table__actions-col">
+                <button type="button" class="icon-btn" title="Customizar regra" (click)="openEditModal(company)">
+                  <span class="material-icons" aria-hidden="true">edit</span>
+                </button>
+                @if (company.customized) {
+                  <button
+                    type="button"
+                    class="icon-btn icon-btn--danger"
+                    title="Remover customização (volta à regra padrão)"
+                    [disabled]="removingCompanyId() === company.companyId"
+                    (click)="removeCustomization(company)"
+                  >
+                    <span class="material-icons" aria-hidden="true">restart_alt</span>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="pagination__info">{{ totalElements() }} empresa(s) — {{ pageLabel() }}</span>
+      <div class="pagination__controls">
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="page() === 0" (click)="previousPage()">
+          <span class="material-icons" aria-hidden="true">chevron_left</span>
+          Anterior
+        </button>
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="isLast()" (click)="nextPage()">
+          Próxima
+          <span class="material-icons" aria-hidden="true">chevron_right</span>
+        </button>
+      </div>
+    </div>
+  }
+</div>
+
+@if (editingCompany(); as company) {
+  <div class="modal-backdrop" (click)="closeEditModal()">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">Customizar regra — {{ company.companyName }}</h2>
+        <button type="button" class="icon-btn" (click)="closeEditModal()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <form (submit)="$event.preventDefault(); submitCompanyForm()" novalidate [formGroup]="companyForm">
+        <div class="field">
+          <label class="field__label" for="company-percentage">Percentual até a faixa (%)</label>
+          <div class="field__control">
+            <input
+              id="company-percentage"
+              type="number"
+              min="0.01"
+              max="100"
+              step="0.01"
+              class="field__input"
+              formControlName="percentageRate"
+            >
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="company-threshold">Faixa (R$)</label>
+          <div class="field__control">
+            <input
+              id="company-threshold"
+              type="number"
+              min="0.01"
+              step="0.01"
+              class="field__input"
+              formControlName="thresholdAmount"
+            >
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="company-max">Valor fixo acima da faixa (R$)</label>
+          <div class="field__control">
+            <input
+              id="company-max"
+              type="number"
+              min="0.01"
+              step="0.01"
+              class="field__input"
+              formControlName="maxAmount"
+            >
+          </div>
+        </div>
+
+        @if (companySaveError()) {
+          <div class="form-alert form-alert--error" role="alert">
+            <span class="material-icons" aria-hidden="true">error_outline</span>
+            {{ companySaveError() }}
+          </div>
+        }
+
+        <div class="step-actions">
+          <button type="submit" class="btn btn--primary" appRipple [disabled]="isSavingCompany()">
+            {{ isSavingCompany() ? 'Salvando…' : 'Salvar' }}
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="closeEditModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

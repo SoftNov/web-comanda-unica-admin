@@ -72,6 +72,68 @@
 
       <div class="admin-topbar__spacer"></div>
 
+      @if (notificationToast(); as toast) {
+        <div class="notification-toast" role="status" (click)="dismissToast()">
+          <span class="material-icons notification-toast__icon" aria-hidden="true">{{ toast.icon }}</span>
+          <span class="notification-toast__message">{{ toast.message }}</span>
+          <span class="material-icons notification-toast__close" aria-hidden="true">close</span>
+        </div>
+      }
+
+      @if (hasOrderNotifications() || hasServiceNotifications()) {
+        <div class="admin-topbar__dropdown">
+          <button
+            type="button"
+            class="admin-topbar__icon-btn admin-topbar__bell-btn"
+            (click)="toggleNotificationsMenu($event)"
+            aria-label="Notificações"
+          >
+            <span class="material-icons" aria-hidden="true">{{ totalPendingCount() > 0 ? 'notifications_active' : 'notifications' }}</span>
+            @if (totalPendingCount() > 0) {
+              <span class="admin-topbar__bell-badge">{{ totalPendingCount() }}</span>
+            }
+          </button>
+
+          @if (isNotificationsMenuOpen()) {
+            <div class="admin-topbar__menu admin-topbar__menu--right admin-topbar__menu--notifications" (click)="$event.stopPropagation()">
+              @if (totalPendingCount() === 0) {
+                <p class="admin-topbar__notifications-empty">Nenhuma pendência no momento.</p>
+              }
+
+              @if (hasOrderNotifications() && pendingOrders().length > 0) {
+                <div class="admin-topbar__notifications-group">
+                  <span class="admin-topbar__notifications-title">Pedidos pendentes ({{ pendingOrders().length }})</span>
+                  @for (order of pendingOrders(); track order.id) {
+                    <button type="button" class="admin-topbar__notification-item" (click)="goToPedidos()">
+                      <span class="material-icons" aria-hidden="true">point_of_sale</span>
+                      <span class="admin-topbar__notification-text">
+                        <span>Mesa {{ order.tableNumber }}{{ order.tableName ? ' — ' + order.tableName : '' }}</span>
+                        <span class="admin-topbar__notification-meta">{{ order.itemName }} · {{ formatTime(order.createdAt) }}</span>
+                      </span>
+                    </button>
+                  }
+                </div>
+              }
+
+              @if (hasServiceNotifications() && pendingServiceRequests().length > 0) {
+                <div class="admin-topbar__notifications-group">
+                  <span class="admin-topbar__notifications-title">Serviços pendentes ({{ pendingServiceRequests().length }})</span>
+                  @for (request of pendingServiceRequests(); track request.id) {
+                    <button type="button" class="admin-topbar__notification-item" (click)="goToServicos()">
+                      <span class="material-icons" aria-hidden="true">support_agent</span>
+                      <span class="admin-topbar__notification-text">
+                        <span>Mesa {{ request.tableNumber }}{{ request.tableName ? ' — ' + request.tableName : '' }}</span>
+                        <span class="admin-topbar__notification-meta">{{ serviceTypeLabel(request.type) }} · {{ formatTime(request.createdAt) }}</span>
+                      </span>
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+
       @if (companies().length > 1) {
         <div class="admin-topbar__dropdown">
           <button type="button" class="admin-topbar__company-btn" (click)="toggleCompanyMenu($event)">

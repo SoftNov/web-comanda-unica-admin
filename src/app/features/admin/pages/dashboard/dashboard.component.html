@@ -5,7 +5,25 @@
   </p>
 </div>
 
-@if (isManagementProfile()) {
+@if (availableTabs().length > 1) {
+  <div class="dashboard-tabs" role="tablist">
+    @for (tab of availableTabs(); track tab.id) {
+      <button
+        type="button"
+        role="tab"
+        class="dashboard-tabs__tab"
+        [class.dashboard-tabs__tab--active]="activeTab() === tab.id"
+        [attr.aria-selected]="activeTab() === tab.id"
+        (click)="selectTab(tab.id)"
+      >
+        <span class="material-icons" aria-hidden="true">{{ tab.icon }}</span>
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+}
+
+@if (activeTab() === 'overview') {
   <div class="card revenue-section">
     <div class="revenue-section__header">
       <div class="revenue-section__heading">
@@ -125,30 +143,40 @@
   </div>
 }
 
-<div class="card floor-plan-section">
-  <div class="floor-plan-section__header">
-    <h2 class="floor-plan-section__title">Mapa do estabelecimento</h2>
-    @if (floorPlans().length > 1) {
-      <div class="floor-plan-section__tabs">
-        @for (floorPlan of floorPlans(); track floorPlan.id) {
-          <button
-            type="button"
-            class="floor-plan-section__tab"
-            [class.floor-plan-section__tab--active]="floorPlan.id === selectedFloorPlanId()"
-            (click)="selectFloorPlan(floorPlan.id)"
-          >
-            {{ floorPlan.name }}
-          </button>
-        }
-      </div>
+@if (activeTab() === 'pedidos') {
+  <app-admin-pedidos />
+}
+
+@if (activeTab() === 'servicos') {
+  <app-admin-servicos />
+}
+
+@if (activeTab() === 'floorplan') {
+  <div class="card floor-plan-section">
+    <div class="floor-plan-section__header">
+      <h2 class="floor-plan-section__title">Mapa do estabelecimento</h2>
+      @if (floorPlans().length > 1) {
+        <div class="floor-plan-section__tabs">
+          @for (floorPlan of floorPlans(); track floorPlan.id) {
+            <button
+              type="button"
+              class="floor-plan-section__tab"
+              [class.floor-plan-section__tab--active]="floorPlan.id === selectedFloorPlanId()"
+              (click)="selectFloorPlan(floorPlan.id)"
+            >
+              {{ floorPlan.name }}
+            </button>
+          }
+        </div>
+      }
+    </div>
+
+    @if (isLoadingFloorPlans()) {
+      <p class="field__hint">Carregando mapa…</p>
+    } @else if (selectedFloorPlanId()) {
+      <app-floor-plan-viewer [floorPlanId]="selectedFloorPlanId()!" />
+    } @else {
+      <p class="field__hint">Nenhum ambiente com mapa cadastrado ainda.</p>
     }
   </div>
-
-  @if (isLoadingFloorPlans()) {
-    <p class="field__hint">Carregando mapa…</p>
-  } @else if (selectedFloorPlanId()) {
-    <app-floor-plan-viewer [floorPlanId]="selectedFloorPlanId()!" />
-  } @else {
-    <p class="field__hint">Nenhum ambiente com mapa cadastrado ainda.</p>
-  }
-</div>
+}

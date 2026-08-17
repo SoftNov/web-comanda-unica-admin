@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   ApiErrorResponse,
   ComandaDisplayStatus,
+  ComandaOrderResponse,
   ComandaOrderStatus,
   ComandaPaymentMethod,
   ComandaPaymentType,
@@ -171,6 +172,16 @@ export class ComandasComponent {
 
   formatDateTime(value: string | undefined | null): string {
     return value ? this.dateTimeFormatter.format(new Date(value)) : '—';
+  }
+
+  // "2x X-Burger, 1x Coca-Cola" — itens cancelados individualmente já não vêm nesta lista (ver
+  // ComandaServiceImpl#loadItemsByOrderId no backend), então o que aparece aqui é exatamente o
+  // que compõe o totalAmount do pedido.
+  orderItemsSummary(order: ComandaOrderResponse): string {
+    if (order.items.length === 0) {
+      return '—';
+    }
+    return order.items.map((item) => `${item.quantity}x ${item.itemName}`).join(', ');
   }
 
   // --- Listagem -------------------------------------------------------------------

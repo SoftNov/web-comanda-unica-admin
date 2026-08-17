@@ -1,0 +1,163 @@
+<div class="page-header page-header--row">
+  <div>
+    <h1 class="page-title">Serviços</h1>
+    <p class="page-subtitle">
+      Solicitações de atendimento das mesas de {{ selectedCompany()?.companyName ?? 'sua empresa' }} — limpeza, chamar garçom/caixa, reclamação e ajuda.
+    </p>
+  </div>
+
+  <button type="button" class="btn btn--primary" appRipple (click)="openCreateModal()">
+    <span class="material-icons" aria-hidden="true">add</span>
+    Nova solicitação
+  </button>
+</div>
+
+@if (actionError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ actionError() }}
+  </div>
+}
+
+@if (isLoading()) {
+  <p class="field__hint">Carregando serviços…</p>
+} @else if (listError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ listError() }}
+  </div>
+} @else {
+  <div class="board">
+    @for (column of columns; track column) {
+      <div class="board-column">
+        <div class="board-column__header">
+          <h2 class="board-column__title">{{ statusLabel(column) }}</h2>
+          <span class="badge badge--muted">{{ requestsFor(column).length }}</span>
+        </div>
+
+        <div class="board-column__list">
+          @if (requestsFor(column).length === 0) {
+            <p class="board-column__empty">Nenhuma solicitação aqui.</p>
+          }
+          @for (request of requestsFor(column); track request.id) {
+            <div class="request-card card">
+              <div class="request-card__header">
+                <span class="request-card__type">
+                  <span class="material-icons" aria-hidden="true">{{ typeIcon(request.type) }}</span>
+                  {{ typeLabel(request.type) }}
+                </span>
+                <span class="request-card__time" [title]="formatDateTime(request.createdAt)">{{ formatTime(request.createdAt) }}</span>
+              </div>
+
+              <p class="request-card__table">Mesa {{ request.tableNumber }}{{ request.tableName ? ' — ' + request.tableName : '' }}</p>
+
+              <p class="request-card__origin">{{ requestOrigin(request) }}</p>
+
+              @if (request.notes) {
+                <p class="request-card__notes">
+                  <span class="material-icons" aria-hidden="true">sticky_note_2</span>
+                  {{ request.notes }}
+                </p>
+              }
+
+              @if (request.assignedToUserName) {
+                <div class="request-card__footer">
+                  <span class="request-card__assigned" [title]="'Assumiu às ' + formatDateTime(request.assignedAt)">
+                    <span class="material-icons" aria-hidden="true">badge</span>
+                    {{ request.assignedToUserName }}
+                  </span>
+                </div>
+              }
+
+              @if (canAdvance(request)) {
+                <div class="request-card__actions">
+                  <button
+                    type="button"
+                    class="btn btn--primary btn--sm request-card__advance"
+                    [disabled]="movingRequestId() === request.id"
+                    (click)="advance(request)"
+                  >
+                    {{ movingRequestId() === request.id ? 'Movendo…' : nextActionLabel(request.status) }}
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+}
+
+@if (isCreateModalOpen()) {
+  <div class="modal-backdrop" (click)="closeCreateModal()">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">Nova solicitação</h2>
+        <button type="button" class="icon-btn" (click)="closeCreateModal()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <form (submit)="$event.preventDefault(); submitCreate()" novalidate [formGroup]="createForm">
+        <div class="field">
+          <label class="field__label" for="request-table">Mesa</label>
+          <div class="field__control">
+            <select
+              id="request-table"
+              class="field__input"
+              formControlName="tableId"
+              [class.field__input--invalid]="createForm.controls.tableId.invalid && createForm.controls.tableId.touched"
+            >
+              <option value="" disabled>Selecione a mesa</option>
+              @for (table of tables(); track table.id) {
+                <option [value]="table.id">Mesa {{ table.number }}{{ table.name ? ' — ' + table.name : '' }}</option>
+              }
+            </select>
+          </div>
+          @if (createForm.controls.tableId.invalid && createForm.controls.tableId.touched) {
+            <span class="field__error">Selecione a mesa.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="request-type">Tipo</label>
+          <div class="field__control">
+            <select id="request-type" class="field__input" formControlName="type">
+              @for (type of types(); track type) {
+                <option [value]="type">{{ typeLabel(type) }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="request-notes">Observação (opcional)</label>
+          <div class="field__control">
+            <textarea
+              id="request-notes"
+              class="field__input"
+              rows="3"
+              formControlName="notes"
+              placeholder="Detalhe a solicitação, se necessário"
+            ></textarea>
+          </div>
+        </div>
+
+        @if (createError()) {
+          <div class="form-alert form-alert--error" role="alert">
+            <span class="material-icons" aria-hidden="true">error_outline</span>
+            {{ createError() }}
+          </div>
+        }
+
+        <div class="step-actions">
+          <button type="submit" class="btn btn--primary" appRipple [disabled]="isSubmittingCreate()">
+            {{ isSubmittingCreate() ? 'Abrindo…' : 'Abrir solicitação' }}
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="closeCreateModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

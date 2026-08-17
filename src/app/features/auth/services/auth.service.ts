@@ -28,6 +28,9 @@ export interface LoginResponse {
   email: string;
   fullName: string;
   companies: CompanyAccessResponse[];
+  // Acesso ao painel financeiro da Comanda Única — fora do modelo de empresas, ver
+  // PlatformAdminAccessAspect no backend.
+  platformAdmin: boolean;
 }
 
 export interface ApiErrorResponse {
@@ -79,6 +82,7 @@ interface SessionData {
   avatarUrl?: string;
   companies: CompanyAccessResponse[];
   selectedCompanyId: string | null;
+  platformAdmin: boolean;
 }
 
 const SESSION_COOKIE = 'cu_session';
@@ -100,6 +104,7 @@ export class AuthService {
       : null;
   });
   readonly companies = computed(() => this.session()?.companies ?? []);
+  readonly isPlatformAdmin = computed(() => this.session()?.platformAdmin ?? false);
   readonly selectedCompany = computed(() => {
     const session = this.session();
     if (!session) {
@@ -119,7 +124,8 @@ export class AuthService {
           email: response.email,
           fullName: response.fullName,
           companies: response.companies,
-          selectedCompanyId: response.companies[0]?.companyId ?? null
+          selectedCompanyId: response.companies[0]?.companyId ?? null,
+          platformAdmin: response.platformAdmin
         };
         // Descarta qualquer sessão/cache remanescente de um usuário anterior antes de
         // gravar a nova, evitando que dados de outra conta vazem para esta sessão.

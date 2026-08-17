@@ -215,6 +215,7 @@
               <thead>
                 <tr>
                   <th>Cliente</th>
+                  <th>Itens</th>
                   <th>Status</th>
                   <th>Valor</th>
                   <th>Horário</th>
@@ -224,6 +225,7 @@
                 @for (order of comanda.orders; track order.id) {
                   <tr>
                     <td>{{ order.customerName }}</td>
+                    <td>{{ orderItemsSummary(order) }}</td>
                     <td><span class="badge" [class]="orderStatusBadgeClass(order.status)">{{ orderStatusLabel(order.status) }}</span></td>
                     <td>{{ formatCurrency(order.totalAmount) }}</td>
                     <td>{{ formatDateTime(order.createdAt) }}</td>

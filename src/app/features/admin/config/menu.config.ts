@@ -5,6 +5,10 @@ export interface MenuItem {
   // Quando informado, o item só aparece para usuários cujo profileCode na
   // empresa selecionada esteja nesta lista. Sem "roles", o item é visível a todos.
   roles?: string[];
+  // Independente de empresa/perfil — só aparece para quem tem User.isPlatformAdmin=true (ver
+  // AuthService.isPlatformAdmin). Não se combina com "roles": o painel financeiro da Comanda
+  // Única fica fora do modelo de empresas.
+  platformAdminOnly?: boolean;
   children?: MenuItem[];
 }
 
@@ -39,7 +43,25 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
   },
   { label: 'Cardápio', icon: 'restaurant_menu', route: '/painel/cardapio', roles: ['ADMIN', 'OWNER', 'MANAGER'] },
   { label: 'Pedidos', icon: 'point_of_sale', route: '/painel/pedidos' },
+  {
+    label: 'Serviços Gerais',
+    icon: 'support_agent',
+    children: [
+      {
+        label: 'Serviços',
+        icon: 'room_service',
+        route: '/painel/servicos',
+        roles: ['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER']
+      }
+    ]
+  },
   { label: 'Financeiro', icon: 'payments', route: '/painel/financeiro' },
+  {
+    label: 'Financeiro Comanda Única',
+    icon: 'account_balance',
+    route: '/painel/financeiro-plataforma',
+    platformAdminOnly: true
+  },
   { label: 'Funcionários', icon: 'groups', route: '/painel/funcionarios', roles: ['ADMIN', 'OWNER', 'MANAGER'] },
   {
     label: 'Configurações',
