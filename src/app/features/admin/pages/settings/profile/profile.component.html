@@ -276,6 +276,7 @@
             [class.field__input--invalid]="addressForm.controls.number.invalid && addressForm.controls.number.touched"
             formControlName="number"
             placeholder="Nº"
+            (blur)="onNumberBlur()"
           >
         </div>
         @if (addressForm.controls.number.invalid && addressForm.controls.number.touched) {
@@ -346,6 +347,57 @@
         @if (addressForm.controls.state.invalid && addressForm.controls.state.touched) {
           <span class="field__error">Informe o estado.</span>
         }
+      </div>
+
+      <div class="field">
+        <div class="map-header">
+          <label class="field__label">Localização e raio de entrega</label>
+          <button
+            type="button"
+            class="btn btn--ghost btn--sm"
+            appRipple
+            [disabled]="isGeocoding()"
+            (click)="onLocateAddressClick()"
+          >
+            <span class="material-icons" aria-hidden="true">my_location</span>
+            {{ isGeocoding() ? 'Localizando…' : 'Localizar endereço no mapa' }}
+          </button>
+        </div>
+        <span class="field__hint">
+          Arraste o marcador ou clique no mapa para ajustar o ponto exato do estabelecimento. Só clientes
+          dentro do raio destacado poderão acessar o cardápio e fazer pedidos.
+        </span>
+        @if (geocodeError()) {
+          <span class="field__error">{{ geocodeError() }}</span>
+        }
+
+        <app-address-radius-map
+          class="address-map"
+          [latitude]="addressForm.controls.latitude.value"
+          [longitude]="addressForm.controls.longitude.value"
+          [radiusMeters]="addressForm.controls.radius.value"
+          (positionChange)="onMapPositionChange($event)"
+        ></app-address-radius-map>
+
+        @if (addressForm.controls.latitude.invalid && addressForm.controls.latitude.touched) {
+          <span class="field__error">Selecione a localização da empresa no mapa.</span>
+        }
+
+        <div class="radius-control">
+          <label class="field__label" for="profile-radius">
+            Raio máximo de entrega: {{ formatRadius(addressForm.controls.radius.value) }}
+          </label>
+          <input
+            id="profile-radius"
+            type="range"
+            min="100"
+            [max]="maxRadiusMeters"
+            step="50"
+            class="field__range"
+            [value]="addressForm.controls.radius.value"
+            (input)="onRadiusInput($event)"
+          >
+        </div>
       </div>
     </div>
   }

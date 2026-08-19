@@ -128,3 +128,35 @@ form.is-loading {
   align-items: flex-start;
   gap: 6px;
 }
+
+.map-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+
+  .field__label {
+    margin: 0;
+  }
+
+  .material-icons {
+    font-size: 16px;
+  }
+}
+
+.address-map {
+  display: block;
+  margin-top: 12px;
+}
+
+.radius-control {
+  margin-top: 16px;
+}
+
+.field__range {
+  width: 100%;
+  margin-top: 8px;
+  accent-color: var(--color-accent);
+}

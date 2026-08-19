@@ -27,6 +27,9 @@ export interface AddressRequest {
   neighborhood: string;
   city: string;
   state: string;
+  latitude?: number;
+  longitude?: number;
+  deliveryRadiusMeters?: number;
 }
 
 export interface CreateAccountRequest {
@@ -95,6 +98,9 @@ export interface AddressResponse {
   neighborhood: string;
   city: string;
   state: string;
+  latitude?: number;
+  longitude?: number;
+  deliveryRadiusMeters?: number;
 }
 
 export interface OwnerProfileResponse {

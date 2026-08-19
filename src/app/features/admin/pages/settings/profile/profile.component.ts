@@ -8,25 +8,32 @@ import {
   UpdateProfileRequest
 } from '../../../../../shared/services/accounts.service';
 import { CepService } from '../../../../../shared/services/cep.service';
+import { GeocodingService } from '../../../../../shared/services/geocoding.service';
 import { cepValidator, fullNameValidator, phoneValidator } from '../../../../../shared/validators/br-document.validator';
 import { formatCEP, formatCellphone, onlyDigits } from '../../../../../shared/utils/br-format.util';
 import { RippleDirective } from '../../../../../shared/directives/ripple.directive';
+import { AddressRadiusMapComponent } from '../../../../../shared/components/address-radius-map/address-radius-map.component';
 import { AuthService } from '../../../../auth/services/auth.service';
 
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const DEFAULT_DELIVERY_RADIUS_METERS = 300;
+const MAX_DELIVERY_RADIUS_METERS = 500;
 
 @Component({
   selector: 'app-admin-profile',
   standalone: true,
-  imports: [ReactiveFormsModule, RippleDirective],
+  imports: [ReactiveFormsModule, RippleDirective, AddressRadiusMapComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss'
 })
 export class ProfileComponent {
+  readonly maxRadiusMeters = MAX_DELIVERY_RADIUS_METERS;
+
   private readonly fb = new FormBuilder();
   private readonly accountsService = inject(AccountsService);
   private readonly cepService = inject(CepService);
+  private readonly geocodingService = inject(GeocodingService);
   private readonly authService = inject(AuthService);
 
   readonly profileCode = computed(() => this.authService.selectedCompany()?.profileCode ?? null);
@@ -43,6 +50,9 @@ export class ProfileComponent {
 
   readonly isLookingUpCep = signal(false);
   readonly cepNotFound = signal(false);
+
+  readonly isGeocoding = signal(false);
+  readonly geocodeError = signal<string | null>(null);
 
   readonly personalEmail = signal(this.authService.currentUser()?.email ?? '');
 
@@ -72,7 +82,14 @@ export class ProfileComponent {
     complement: [''],
     neighborhood: ['', [Validators.required]],
     city: ['', [Validators.required]],
-    state: ['', [Validators.required]]
+    state: ['', [Validators.required]],
+    latitude: this.fb.control<number | null>(null, Validators.required),
+    longitude: this.fb.control<number | null>(null, Validators.required),
+    radius: this.fb.nonNullable.control(DEFAULT_DELIVERY_RADIUS_METERS, [
+      Validators.required,
+      Validators.min(100),
+      Validators.max(MAX_DELIVERY_RADIUS_METERS)
+    ])
   });
 
   constructor() {
@@ -117,10 +134,68 @@ export class ProfileComponent {
           city: result.city,
           state: result.state
         });
+        this.locateAddressOnMap();
       },
       error: () => {
         this.isLookingUpCep.set(false);
         this.cepNotFound.set(true);
+      }
+    });
+  }
+
+  onNumberBlur(): void {
+    if (this.addressForm.controls.number.value.trim()) {
+      this.locateAddressOnMap();
+    }
+  }
+
+  onLocateAddressClick(): void {
+    this.locateAddressOnMap();
+  }
+
+  onMapPositionChange(position: { latitude: number; longitude: number }): void {
+    this.geocodeError.set(null);
+    this.addressForm.patchValue({ latitude: position.latitude, longitude: position.longitude });
+  }
+
+  onRadiusInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.addressForm.controls.radius.setValue(Number(input.value));
+  }
+
+  formatRadius(meters: number): string {
+    if (meters >= 1000) {
+      return `${(meters / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} km`;
+    }
+    return `${meters} m`;
+  }
+
+  private locateAddressOnMap(): void {
+    const address = this.addressForm.getRawValue();
+    if (!address.street || !address.city || !address.state) {
+      return;
+    }
+
+    const query = [address.street, address.number, address.neighborhood, address.city, address.state, 'Brasil']
+      .map((part) => part?.trim())
+      .filter(Boolean)
+      .join(', ');
+
+    this.isGeocoding.set(true);
+    this.geocodeError.set(null);
+
+    this.geocodingService.geocodeAddress(query).subscribe({
+      next: (result) => {
+        this.isGeocoding.set(false);
+        if (!result) {
+          this.geocodeError.set('Não foi possível localizar este endereço no mapa. Ajuste o marcador manualmente.');
+          return;
+        }
+        this.addressForm.patchValue({ latitude: result.latitude, longitude: result.longitude });
+      },
+      error: () => {
+        this.isGeocoding.set(false);
+        this.geocodeError.set('Não foi possível localizar este endereço no mapa. Ajuste o marcador manualmente.');
       }
     });
   }
@@ -277,7 +352,10 @@ export class ProfileComponent {
         complement: address.complement ?? '',
         neighborhood: address.neighborhood ?? '',
         city: address.city ?? '',
-        state: address.state ?? ''
+        state: address.state ?? '',
+        latitude: address.latitude ?? null,
+        longitude: address.longitude ?? null,
+        radius: address.deliveryRadiusMeters ?? DEFAULT_DELIVERY_RADIUS_METERS
       });
     }
   }
@@ -324,7 +402,10 @@ export class ProfileComponent {
           complement: address.complement.trim() || undefined,
           neighborhood: address.neighborhood.trim(),
           city: address.city.trim(),
-          state: address.state.trim().toUpperCase()
+          state: address.state.trim().toUpperCase(),
+          latitude: address.latitude ?? undefined,
+          longitude: address.longitude ?? undefined,
+          deliveryRadiusMeters: address.radius
         }
       };
     }
