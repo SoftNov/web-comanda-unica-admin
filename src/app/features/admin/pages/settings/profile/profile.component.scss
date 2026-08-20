@@ -160,3 +160,68 @@ form.is-loading {
   margin-top: 8px;
   accent-color: var(--color-accent);
 }
+
+.business-hours {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 16px;
+}
+
+.business-hours__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.business-hours__day {
+  flex-shrink: 0;
+  width: 120px;
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.business-hours__times {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+
+  .field__input {
+    width: 110px;
+  }
+}
+
+.business-hours__separator {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.business-hours__closed-label {
+  flex: 1;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.business-hours__toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+
+  input[type='checkbox'] {
+    accent-color: var(--color-accent);
+    width: 16px;
+    height: 16px;
+  }
+}

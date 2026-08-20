@@ -7,6 +7,12 @@ import {
   ApiErrorResponse,
   UpdateProfileRequest
 } from '../../../../../shared/services/accounts.service';
+import {
+  BusinessHoursDay,
+  BusinessHoursResponse,
+  BusinessHoursService,
+  WeekDay
+} from '../../../../../shared/services/business-hours.service';
 import { CepService } from '../../../../../shared/services/cep.service';
 import { GeocodingService } from '../../../../../shared/services/geocoding.service';
 import { cepValidator, fullNameValidator, phoneValidator } from '../../../../../shared/validators/br-document.validator';
@@ -20,6 +26,21 @@ const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const DEFAULT_DELIVERY_RADIUS_METERS = 300;
 const MAX_DELIVERY_RADIUS_METERS = 500;
 
+const WEEK_DAYS: { key: WeekDay; label: string }[] = [
+  { key: 'MONDAY', label: 'Segunda-feira' },
+  { key: 'TUESDAY', label: 'Terça-feira' },
+  { key: 'WEDNESDAY', label: 'Quarta-feira' },
+  { key: 'THURSDAY', label: 'Quinta-feira' },
+  { key: 'FRIDAY', label: 'Sexta-feira' },
+  { key: 'SATURDAY', label: 'Sábado' },
+  { key: 'SUNDAY', label: 'Domingo' }
+];
+
+// "HH:mm:ss" (java.time.LocalTime) -> "HH:mm" ('<input type="time">' não aceita segundos).
+function toTimeInputValue(time?: string): string {
+  return time ? time.slice(0, 5) : '';
+}
+
 @Component({
   selector: 'app-admin-profile',
   standalone: true,
@@ -30,8 +51,11 @@ const MAX_DELIVERY_RADIUS_METERS = 500;
 export class ProfileComponent {
   readonly maxRadiusMeters = MAX_DELIVERY_RADIUS_METERS;
 
+  readonly weekDays = WEEK_DAYS;
+
   private readonly fb = new FormBuilder();
   private readonly accountsService = inject(AccountsService);
+  private readonly businessHoursService = inject(BusinessHoursService);
   private readonly cepService = inject(CepService);
   private readonly geocodingService = inject(GeocodingService);
   private readonly authService = inject(AuthService);
@@ -92,8 +116,28 @@ export class ProfileComponent {
     ])
   });
 
+  readonly businessHoursForm = this.fb.array(
+    WEEK_DAYS.map(() =>
+      this.fb.nonNullable.group({
+        closed: this.fb.nonNullable.control(true),
+        openTime: this.fb.nonNullable.control(''),
+        closeTime: this.fb.nonNullable.control('')
+      })
+    )
+  );
+
+  readonly isLoadingBusinessHours = signal(true);
+  readonly loadBusinessHoursError = signal<string | null>(null);
+  readonly isSavingBusinessHours = signal(false);
+  readonly businessHoursTouched = signal(false);
+  readonly businessHoursSuccess = signal(false);
+  readonly businessHoursError = signal<string | null>(null);
+
   constructor() {
     this.loadProfile();
+    if (this.canEditCompany()) {
+      this.loadBusinessHours();
+    }
   }
 
   onPersonalPhoneInput(event: Event): void {
@@ -233,6 +277,56 @@ export class ProfileComponent {
     });
   }
 
+  businessHoursGroupAt(index: number) {
+    return this.businessHoursForm.at(index);
+  }
+
+  isBusinessHoursDayValid(index: number): boolean {
+    const day = this.businessHoursForm.at(index).getRawValue();
+    if (day.closed) {
+      return true;
+    }
+    return !!day.openTime && !!day.closeTime && day.openTime < day.closeTime;
+  }
+
+  onSubmitBusinessHours(): void {
+    this.businessHoursTouched.set(true);
+    const allValid = this.businessHoursForm.controls.every((_, index) => this.isBusinessHoursDayValid(index));
+
+    if (!allValid) {
+      this.businessHoursSuccess.set(false);
+      this.businessHoursError.set('Verifique os dias destacados: informe abertura e fechamento, com a abertura antes do fechamento.');
+      return;
+    }
+
+    this.businessHoursError.set(null);
+    this.businessHoursSuccess.set(false);
+    this.isSavingBusinessHours.set(true);
+
+    const days: BusinessHoursDay[] = WEEK_DAYS.map((day, index) => {
+      const row = this.businessHoursForm.at(index).getRawValue();
+      return {
+        dayOfWeek: day.key,
+        closed: row.closed,
+        openTime: row.closed ? undefined : row.openTime,
+        closeTime: row.closed ? undefined : row.closeTime
+      };
+    });
+
+    this.businessHoursService.update({ days }).subscribe({
+      next: (response) => {
+        this.isSavingBusinessHours.set(false);
+        this.businessHoursTouched.set(false);
+        this.businessHoursSuccess.set(true);
+        this.applyBusinessHoursResponse(response);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isSavingBusinessHours.set(false);
+        this.businessHoursError.set(this.resolveBusinessHoursErrorMessage(error));
+      }
+    });
+  }
+
   onAvatarFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
@@ -358,6 +452,48 @@ export class ProfileComponent {
         radius: address.deliveryRadiusMeters ?? DEFAULT_DELIVERY_RADIUS_METERS
       });
     }
+  }
+
+  private loadBusinessHours(): void {
+    this.isLoadingBusinessHours.set(true);
+    this.loadBusinessHoursError.set(null);
+
+    this.businessHoursService.get().subscribe({
+      next: (response) => {
+        this.isLoadingBusinessHours.set(false);
+        this.applyBusinessHoursResponse(response);
+      },
+      error: () => {
+        this.isLoadingBusinessHours.set(false);
+        this.loadBusinessHoursError.set('Não foi possível carregar o horário de funcionamento.');
+      }
+    });
+  }
+
+  private applyBusinessHoursResponse(response: BusinessHoursResponse): void {
+    const byDay = new Map(response.days.map((day) => [day.dayOfWeek, day]));
+    WEEK_DAYS.forEach((day, index) => {
+      const found = byDay.get(day.key);
+      this.businessHoursForm.at(index).patchValue({
+        closed: found?.closed ?? true,
+        openTime: toTimeInputValue(found?.openTime),
+        closeTime: toTimeInputValue(found?.closeTime)
+      });
+    });
+  }
+
+  private resolveBusinessHoursErrorMessage(error: HttpErrorResponse): string {
+    const body = error.error as ApiErrorResponse | undefined;
+    if (body?.mensagem) {
+      return body.mensagem;
+    }
+    if (error.status === 403) {
+      return 'Você não tem permissão para alterar o horário de funcionamento.';
+    }
+    if (error.status === 422) {
+      return 'Verifique os dias destacados: informe abertura e fechamento, com a abertura antes do fechamento.';
+    }
+    return 'Não foi possível salvar o horário de funcionamento. Tente novamente em instantes.';
   }
 
   private validateImageFile(file: File, errorSignal: WritableSignal<string | null>): boolean {
