@@ -1,0 +1,49 @@
+<div class="card stripe-card">
+  <div class="stripe-status__icon" [class.stripe-status__icon--pending]="!config.credentialsConfigured">
+    <span class="material-icons" aria-hidden="true">{{ config.credentialsConfigured ? 'verified' : 'warning' }}</span>
+  </div>
+  <h2 class="step-heading">Status geral da integração</h2>
+  <p class="stripe-status__description">
+    Estas são as credenciais da plataforma Comanda Única — usadas para o Stripe Connect das empresas clientes,
+    nunca as credenciais de uma empresa específica.
+  </p>
+
+  <div class="stripe-status__grid">
+    <div class="stripe-status__item">
+      <span class="stripe-status__label">Credenciais</span>
+      <span class="stripe-status__pill" [class.stripe-status__pill--ok]="config.credentialsConfigured" [class.stripe-status__pill--pending]="!config.credentialsConfigured">
+        <span class="stripe-status__dot"></span>
+        {{ config.credentialsConfigured ? 'Configuradas' : 'Não configuradas' }}
+      </span>
+    </div>
+
+    <div class="stripe-status__item">
+      <span class="stripe-status__label">Ambiente</span>
+      <span class="stripe-status__pill" [class.stripe-status__pill--ok]="config.environment === 'live'" [class.stripe-status__pill--pending]="config.environment === 'test'">
+        <span class="stripe-status__dot"></span>
+        {{ config.environment === 'live' ? 'Produção (live)' : config.environment === 'test' ? 'Teste (test)' : 'Indefinido' }}
+      </span>
+    </div>
+
+    <div class="stripe-status__item">
+      <span class="stripe-status__label">Stripe Connect</span>
+      <span class="stripe-status__pill" [class.stripe-status__pill--ok]="config.connectEnabled" [class.stripe-status__pill--pending]="!config.connectEnabled">
+        <span class="stripe-status__dot"></span>
+        {{ config.connectEnabled ? 'Habilitado' : 'Desabilitado' }}
+      </span>
+    </div>
+
+    <div class="stripe-status__item">
+      <span class="stripe-status__label">Webhook</span>
+      <span class="stripe-status__pill" [class.stripe-status__pill--ok]="config.webhookConfigured" [class.stripe-status__pill--pending]="!config.webhookConfigured">
+        <span class="stripe-status__dot"></span>
+        {{ config.webhookConfigured ? 'Configurado' : 'Não configurado' }}
+      </span>
+    </div>
+
+    <div class="stripe-status__item">
+      <span class="stripe-status__label">Empresas conectadas</span>
+      <span class="stripe-status__value">{{ config.connectedAccountsCount }}</span>
+    </div>
+  </div>
+</div>

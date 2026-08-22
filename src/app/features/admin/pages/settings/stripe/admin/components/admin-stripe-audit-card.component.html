@@ -1,0 +1,16 @@
+<div class="card stripe-card">
+  <h2 class="step-heading">Última alteração</h2>
+
+  @if (config.updatedByUserEmail) {
+    <div class="stripe-audit__item">
+      <span class="stripe-status__label">Administrador</span>
+      <span class="stripe-audit__value">{{ config.updatedByUserEmail }}</span>
+    </div>
+    <div class="stripe-audit__item">
+      <span class="stripe-status__label">Data</span>
+      <span class="stripe-audit__value">{{ formatDateTime(config.updatedAt) }}</span>
+    </div>
+  } @else {
+    <p class="field__hint">Nenhuma alteração registrada ainda.</p>
+  }
+</div>

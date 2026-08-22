@@ -1,0 +1,53 @@
+<div class="page-header">
+  <h1 class="page-title">Stripe da Plataforma</h1>
+  <p class="page-subtitle">
+    Configuração da conta Stripe da própria Comanda Única — credenciais, Stripe Connect, webhook e taxa da
+    plataforma. Restrito a administradores da plataforma.
+  </p>
+</div>
+
+@if (isLoading()) {
+  <p class="field__hint">Carregando configuração…</p>
+} @else if (loadError()) {
+  <div class="card stripe-load-error">
+    <p>Não foi possível carregar a configuração Stripe da plataforma.</p>
+    <button type="button" class="btn btn--primary" (click)="retryLoad()">Tentar novamente</button>
+  </div>
+} @else {
+  @if (config(); as config) {
+    <div class="stripe-page-grid">
+      <div class="stripe-page-grid__col">
+        <app-admin-stripe-status-card [config]="config" />
+
+        <app-admin-stripe-credentials-card
+          [config]="config"
+          [testResult]="connectionTestResult()"
+          [isTesting]="isTestingConnection()"
+          (test)="testConnection()"
+        />
+
+        <app-admin-stripe-webhook-card
+          [config]="config"
+          [testResult]="webhookTestResult()"
+          [isTesting]="isTestingWebhook()"
+          (test)="testWebhook()"
+        />
+      </div>
+
+      <div class="stripe-page-grid__col">
+        <app-admin-stripe-connect-card
+          [config]="config"
+          [isSaving]="isSavingSettings()"
+          [error]="settingsError()"
+          (save)="submitSettings($event)"
+        />
+
+        <app-admin-stripe-fee-card />
+
+        <app-admin-stripe-security-card />
+
+        <app-admin-stripe-audit-card [config]="config" />
+      </div>
+    </div>
+  }
+}

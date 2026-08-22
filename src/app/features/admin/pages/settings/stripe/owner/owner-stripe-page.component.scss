@@ -1,0 +1,98 @@
+:host {
+  display: block;
+}
+
+.page-header {
+  margin-bottom: 28px;
+}
+
+.page-title {
+  font-size: 1.75rem;
+  color: var(--color-text);
+}
+
+.page-subtitle {
+  margin-top: 8px;
+  font-size: 1rem;
+  color: var(--color-text-muted);
+}
+
+.field__hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.step-heading {
+  margin-top: 0;
+  font-size: 1.0625rem;
+  color: var(--color-text);
+}
+
+.step-actions {
+  display: flex;
+  gap: 12px;
+}
+
+// Empilha em uma coluna por padrão (mobile/tablet) — só abre em duas colunas a partir de
+// desktop, mesmo limiar usado no restante do painel (ver profile.component.scss).
+.stripe-page-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.stripe-page-grid__col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+@media (min-width: 960px) {
+  .stripe-page-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    max-width: 1100px;
+  }
+}
+
+.stripe-security,
+.stripe-support {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  max-width: 1100px;
+  margin-top: 24px;
+  padding: 24px 28px;
+
+  p {
+    margin-top: 6px;
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+  }
+}
+
+.stripe-security__icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-muted);
+}
+
+.stripe-support {
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+
+  > div {
+    flex: 1;
+    min-width: 220px;
+  }
+}

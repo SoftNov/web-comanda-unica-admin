@@ -12,6 +12,7 @@ import {
 } from '../../../../shared/services/service-requests.service';
 import { RestaurantTableResponse, TablesService } from '../../../../shared/services/tables.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
+import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
 import { AuthService } from '../../../auth/services/auth.service';
 
 const WS_RETRY_DELAY_MS = 5000;
@@ -224,6 +225,7 @@ export class ServicosComponent implements OnDestroy {
       error: (error: HttpErrorResponse) => {
         this.movingRequestId.set(null);
         this.actionError.set(this.resolveErrorMessage(error));
+        autoDismiss(this.actionError, null);
       }
     });
   }
@@ -273,6 +275,7 @@ export class ServicosComponent implements OnDestroy {
       error: (error: HttpErrorResponse) => {
         this.isSubmittingCreate.set(false);
         this.createError.set(this.resolveErrorMessage(error));
+        autoDismiss(this.createError, null);
       }
     });
   }

@@ -5,12 +5,17 @@ import { environment } from '../../../environments/environment';
 
 export type WeekDay = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
 
+export interface TimeRange {
+  // "HH:mm:ss" vindo da API (java.time.LocalTime).
+  openTime: string;
+  closeTime: string;
+}
+
 export interface BusinessHoursDay {
   dayOfWeek: WeekDay;
-  closed: boolean;
-  // "HH:mm:ss" vindo da API (java.time.LocalTime); undefined quando closed = true.
-  openTime?: string;
-  closeTime?: string;
+  // Vazia = dia fechado; um dia pode ter mais de uma faixa (ex: almoço e jantar, ou um
+  // horário que passa da meia-noite cadastrado como duas faixas em dias diferentes).
+  ranges: TimeRange[];
 }
 
 export interface BusinessHoursResponse {

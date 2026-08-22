@@ -11,6 +11,7 @@ import {
 import { ProfileResponse, ProfilesService } from '../../../../shared/services/profiles.service';
 import { cpfValidator, fullNameValidator, phoneValidator } from '../../../../shared/validators/br-document.validator';
 import { formatCPF, formatCellphone, onlyDigits } from '../../../../shared/utils/br-format.util';
+import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { AuthService } from '../../../auth/services/auth.service';
 
@@ -169,6 +170,7 @@ export class EmployeesComponent {
     if (this.employeeForm.invalid) {
       this.employeeForm.markAllAsTouched();
       this.formError.set('Verifique os campos destacados antes de salvar.');
+      autoDismiss(this.formError, null);
       return;
     }
 
@@ -185,6 +187,7 @@ export class EmployeesComponent {
         error: (error: HttpErrorResponse) => {
           this.isSubmitting.set(false);
           this.formError.set(this.resolveErrorMessage(error));
+          autoDismiss(this.formError, null);
         }
       });
       return;
@@ -204,6 +207,7 @@ export class EmployeesComponent {
       error: (error: HttpErrorResponse) => {
         this.isSubmitting.set(false);
         this.formError.set(this.resolveErrorMessage(error));
+        autoDismiss(this.formError, null);
       }
     });
   }
@@ -235,6 +239,7 @@ export class EmployeesComponent {
       error: (error: HttpErrorResponse) => {
         this.isDeactivating.set(false);
         this.deactivateError.set(this.resolveErrorMessage(error));
+        autoDismiss(this.deactivateError, null);
       }
     });
   }

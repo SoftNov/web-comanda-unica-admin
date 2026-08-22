@@ -1,0 +1,38 @@
+.stripe-card {
+  padding: 32px;
+}
+
+.step-heading {
+  margin-top: 0;
+  font-size: 1.0625rem;
+  color: var(--color-text);
+}
+
+.stripe-card__description {
+  margin-top: 4px;
+  margin-bottom: 24px;
+  font-size: 0.9375rem;
+  color: var(--color-text-muted);
+
+  strong {
+    color: var(--color-text);
+  }
+}
+
+.stripe-connect__subheading {
+  margin: 20px 0 12px;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.field__row--checkboxes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.step-actions {
+  margin-top: 24px;
+}

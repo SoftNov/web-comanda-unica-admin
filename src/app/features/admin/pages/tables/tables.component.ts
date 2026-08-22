@@ -18,6 +18,7 @@ import {
   UpdateTableSectorRequest
 } from '../../../../shared/services/table-sectors.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
+import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
 import { AuthService } from '../../../auth/services/auth.service';
 
 const PAGE_SIZE = 12;
@@ -308,6 +309,7 @@ export class TablesComponent {
     if (this.tableForm.invalid) {
       this.tableForm.markAllAsTouched();
       this.tableFormError.set('Verifique os campos destacados antes de salvar.');
+      autoDismiss(this.tableFormError, null);
       return;
     }
 
@@ -324,6 +326,7 @@ export class TablesComponent {
         error: (error: HttpErrorResponse) => {
           this.isSubmittingTable.set(false);
           this.tableFormError.set(this.resolveErrorMessage(error, 'table'));
+          autoDismiss(this.tableFormError, null);
         }
       });
       return;
@@ -343,6 +346,7 @@ export class TablesComponent {
       error: (error: HttpErrorResponse) => {
         this.isSubmittingTable.set(false);
         this.tableFormError.set(this.resolveErrorMessage(error, 'table'));
+        autoDismiss(this.tableFormError, null);
       }
     });
   }
@@ -352,7 +356,10 @@ export class TablesComponent {
     const request$ = table.status === 'ACTIVE' ? this.tablesService.disable(table.id) : this.tablesService.enable(table.id);
     request$.subscribe({
       next: (updated) => this.replaceTable(updated),
-      error: () => this.listError.set('Não foi possível atualizar o status da mesa.')
+      error: () => {
+        this.listError.set('Não foi possível atualizar o status da mesa.');
+        autoDismiss(this.listError, null);
+      }
     });
   }
 
@@ -369,6 +376,7 @@ export class TablesComponent {
       error: (error: HttpErrorResponse) => {
         this.markingCleanedTableId.set(null);
         this.markCleanedError.set(this.resolveErrorMessage(error, 'table'));
+        autoDismiss(this.markCleanedError, null);
       }
     });
   }
@@ -401,6 +409,7 @@ export class TablesComponent {
       error: (error: HttpErrorResponse) => {
         this.isRegeneratingQr.set(false);
         this.regenerateQrError.set(this.resolveErrorMessage(error, 'table'));
+        autoDismiss(this.regenerateQrError, null);
       }
     });
   }
@@ -554,6 +563,7 @@ export class TablesComponent {
     if (this.sectorForm.invalid) {
       this.sectorForm.markAllAsTouched();
       this.sectorFormError.set('Verifique os campos destacados antes de salvar.');
+      autoDismiss(this.sectorFormError, null);
       return;
     }
 
@@ -579,6 +589,7 @@ export class TablesComponent {
         error: (error: HttpErrorResponse) => {
           this.isSubmittingSector.set(false);
           this.sectorFormError.set(this.resolveErrorMessage(error, 'sector'));
+          autoDismiss(this.sectorFormError, null);
         }
       });
       return;
@@ -604,6 +615,7 @@ export class TablesComponent {
       error: (error: HttpErrorResponse) => {
         this.isSubmittingSector.set(false);
         this.sectorFormError.set(this.resolveErrorMessage(error, 'sector'));
+        autoDismiss(this.sectorFormError, null);
       }
     });
   }
@@ -635,6 +647,7 @@ export class TablesComponent {
       error: (error: HttpErrorResponse) => {
         this.isDeletingSector.set(false);
         this.deleteSectorError.set(this.resolveErrorMessage(error, 'sector'));
+        autoDismiss(this.deleteSectorError, null);
       }
     });
   }

@@ -132,7 +132,8 @@
   }
 
   @if (canEditCompany() && activeTab() === 'company') {
-    <div class="card profile-card" [formGroup]="companyForm">
+    <div class="company-grid">
+    <div class="card profile-card company-grid__company" [formGroup]="companyForm">
       <h2 class="step-heading">Dados da empresa</h2>
 
       <div class="image-upload">
@@ -220,7 +221,7 @@
       </div>
     </div>
 
-    <div class="card profile-card" [formGroup]="addressForm">
+    <div class="card profile-card company-grid__address" [formGroup]="addressForm">
       <h2 class="step-heading">Endereço</h2>
 
       <div class="field">
@@ -401,9 +402,13 @@
       </div>
     </div>
 
-    <div class="card profile-card">
+    <div class="card profile-card company-grid__hours">
       <h2 class="step-heading">Horário de funcionamento</h2>
-      <span class="field__hint">Defina os dias e horários em que o estabelecimento está aberto.</span>
+      <span class="field__hint">
+        Defina os dias e horários em que o estabelecimento está aberto. Um dia pode ter mais de uma faixa (ex:
+        almoço e jantar). Para horários que passam da meia-noite, cadastre uma faixa terminando às 23:59 e outra
+        começando às 00:00 no dia seguinte (ex: sexta 17:00 às 23:59 e sábado 00:00 às 02:30).
+      </span>
 
       @if (isLoadingBusinessHours()) {
         <p class="field__hint">Carregando horário de funcionamento…</p>
@@ -415,39 +420,49 @@
       } @else {
         <div class="business-hours">
           @for (day of weekDays; track day.key; let i = $index) {
-            <div class="business-hours__row" [formGroup]="businessHoursGroupAt(i)">
-              <span class="business-hours__day">{{ day.label }}</span>
+            <div class="business-hours__day-block">
+              <div class="business-hours__day-header">
+                <span class="business-hours__day">{{ day.label }}</span>
+                <button type="button" class="business-hours__add" appRipple (click)="addBusinessHoursRange(i)">
+                  <span class="material-icons" aria-hidden="true">add</span>
+                  Adicionar horário
+                </button>
+              </div>
 
-              @if (!businessHoursGroupAt(i).controls.closed.value) {
-                <div class="business-hours__times">
-                  <input
-                    type="time"
-                    class="field__input"
-                    [class.field__input--invalid]="businessHoursTouched() && !isBusinessHoursDayValid(i)"
-                    formControlName="openTime"
-                    [attr.aria-label]="'Horário de abertura — ' + day.label"
-                  >
-                  <span class="business-hours__separator">às</span>
-                  <input
-                    type="time"
-                    class="field__input"
-                    [class.field__input--invalid]="businessHoursTouched() && !isBusinessHoursDayValid(i)"
-                    formControlName="closeTime"
-                    [attr.aria-label]="'Horário de fechamento — ' + day.label"
-                  >
-                </div>
+              @if (!businessHoursRangesAt(i).controls.length) {
+                <span class="business-hours__closed-label">Fechado</span>
               } @else {
-                <span class="business-hours__closed-label">—</span>
+                <div class="business-hours__ranges">
+                  @for (range of businessHoursRangesAt(i).controls; track range; let j = $index) {
+                    <div class="business-hours__range" [formGroup]="range">
+                      <input
+                        type="time"
+                        class="field__input"
+                        [class.field__input--invalid]="businessHoursTouched() && !isBusinessHoursDayValid(i)"
+                        formControlName="openTime"
+                        [attr.aria-label]="'Horário de abertura — ' + day.label"
+                      >
+                      <span class="business-hours__separator">às</span>
+                      <input
+                        type="time"
+                        class="field__input"
+                        [class.field__input--invalid]="businessHoursTouched() && !isBusinessHoursDayValid(i)"
+                        formControlName="closeTime"
+                        [attr.aria-label]="'Horário de fechamento — ' + day.label"
+                      >
+                      <button
+                        type="button"
+                        class="business-hours__remove"
+                        appRipple
+                        [attr.aria-label]="'Remover faixa de horário — ' + day.label"
+                        (click)="removeBusinessHoursRange(i, j)"
+                      >
+                        <span class="material-icons" aria-hidden="true">close</span>
+                      </button>
+                    </div>
+                  }
+                </div>
               }
-
-              <label class="business-hours__toggle" [for]="'business-hours-closed-' + i">
-                <input
-                  [id]="'business-hours-closed-' + i"
-                  type="checkbox"
-                  formControlName="closed"
-                >
-                Fechado
-              </label>
             </div>
           }
         </div>
@@ -478,6 +493,7 @@
         </div>
       }
     </div>
+    </div>
   }
 
   @if (profileSuccess()) {
@@ -493,7 +509,7 @@
     </div>
   }
 
-  <div class="step-actions">
+  <div class="step-actions" [class.step-actions--wide]="canEditCompany() && activeTab() === 'company'">
     <button type="submit" class="btn btn--primary" appRipple [disabled]="isSubmittingProfile() || isLoadingProfile()">
       {{ isSubmittingProfile() ? 'Salvando…' : 'Salvar alterações' }}
     </button>

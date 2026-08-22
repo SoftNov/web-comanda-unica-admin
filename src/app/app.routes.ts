@@ -108,6 +108,22 @@ export const routes: Routes = [
         title: 'Redefinir Senha — Comanda Única'
       },
       {
+        path: 'configuracoes/pagamentos',
+        canActivate: [profileGuard(['OWNER', 'ADMIN'])],
+        loadComponent: () =>
+          import('./features/admin/pages/settings/stripe/owner/owner-stripe-page.component').then((m) => m.OwnerStripePageComponent),
+        title: 'Pagamentos — Comanda Única'
+      },
+      {
+        path: 'configuracoes/stripe-plataforma',
+        canActivate: [platformAdminGuard],
+        loadComponent: () =>
+          import('./features/admin/pages/settings/stripe/admin/admin-stripe-config-page.component').then(
+            (m) => m.AdminStripeConfigPageComponent
+          ),
+        title: 'Stripe da Plataforma — Comanda Única'
+      },
+      {
         path: 'configuracoes/mapa-salao',
         canActivate: [profileGuard(['ADMIN', 'OWNER', 'MANAGER'])],
         loadComponent: () =>

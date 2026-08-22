@@ -23,6 +23,7 @@ import {
 } from '../../../../shared/services/menu-theme.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { formatCurrencyInput, parseCurrencyInput } from '../../../../shared/utils/br-format.util';
+import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
 import { AuthService } from '../../../auth/services/auth.service';
 
 const PAGE_SIZE = 10;
@@ -455,6 +456,7 @@ export class MenuComponent {
     if (this.itemForm.invalid) {
       this.itemForm.markAllAsTouched();
       this.itemFormError.set('Verifique os campos destacados antes de salvar.');
+      autoDismiss(this.itemFormError, null);
       return;
     }
 
@@ -496,6 +498,7 @@ export class MenuComponent {
         error: (error: HttpErrorResponse) => {
           this.isSubmittingItem.set(false);
           this.itemFormError.set(this.resolveErrorMessage(error, 'item'));
+          autoDismiss(this.itemFormError, null);
         }
       });
       return;
@@ -515,6 +518,7 @@ export class MenuComponent {
       error: (error: HttpErrorResponse) => {
         this.isSubmittingItem.set(false);
         this.itemFormError.set(this.resolveErrorMessage(error, 'item'));
+        autoDismiss(this.itemFormError, null);
       }
     });
   }
@@ -546,6 +550,7 @@ export class MenuComponent {
       error: (error: HttpErrorResponse) => {
         this.isDeletingItem.set(false);
         this.deleteItemError.set(this.resolveErrorMessage(error, 'item'));
+        autoDismiss(this.deleteItemError, null);
       }
     });
   }
@@ -775,6 +780,7 @@ export class MenuComponent {
     if (this.categoryForm.invalid) {
       this.categoryForm.markAllAsTouched();
       this.categoryFormError.set('Verifique os campos destacados antes de salvar.');
+      autoDismiss(this.categoryFormError, null);
       return;
     }
 
@@ -803,6 +809,7 @@ export class MenuComponent {
         error: (error: HttpErrorResponse) => {
           this.isSubmittingCategory.set(false);
           this.categoryFormError.set(this.resolveErrorMessage(error, 'category'));
+          autoDismiss(this.categoryFormError, null);
         }
       });
       return;
@@ -831,6 +838,7 @@ export class MenuComponent {
       error: (error: HttpErrorResponse) => {
         this.isSubmittingCategory.set(false);
         this.categoryFormError.set(this.resolveErrorMessage(error, 'category'));
+        autoDismiss(this.categoryFormError, null);
       }
     });
   }
@@ -862,6 +870,7 @@ export class MenuComponent {
       error: (error: HttpErrorResponse) => {
         this.isDeletingCategory.set(false);
         this.deleteCategoryError.set(this.resolveErrorMessage(error, 'category'));
+        autoDismiss(this.deleteCategoryError, null);
       }
     });
   }
@@ -887,6 +896,7 @@ export class MenuComponent {
     if (this.themeForm.invalid) {
       this.themeForm.markAllAsTouched();
       this.themeFormError.set('Verifique os campos destacados antes de salvar.');
+      autoDismiss(this.themeFormError, null);
       return;
     }
 
@@ -898,11 +908,13 @@ export class MenuComponent {
       next: (response) => {
         this.isSubmittingTheme.set(false);
         this.themeSuccess.set(true);
+        autoDismiss(this.themeSuccess, false);
         this.applyThemeResponse(response);
       },
       error: (error: HttpErrorResponse) => {
         this.isSubmittingTheme.set(false);
         this.themeFormError.set(this.resolveThemeErrorMessage(error));
+        autoDismiss(this.themeFormError, null);
       }
     });
   }

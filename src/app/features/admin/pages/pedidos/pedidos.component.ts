@@ -8,6 +8,7 @@ import {
   OrderQueueItemStatus,
   OrderQueueService
 } from '../../../../shared/services/order-queue.service';
+import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
 import { AuthService } from '../../../auth/services/auth.service';
 
 const WS_RETRY_DELAY_MS = 5000;
@@ -255,6 +256,7 @@ export class PedidosComponent implements OnDestroy {
       error: (error: HttpErrorResponse) => {
         this.isCancelling.set(false);
         this.cancelError.set(this.resolveErrorMessage(error));
+        autoDismiss(this.cancelError, null);
       }
     });
   }
@@ -271,6 +273,7 @@ export class PedidosComponent implements OnDestroy {
       error: (error: HttpErrorResponse) => {
         this.movingItemId.set(null);
         this.actionError.set(this.resolveErrorMessage(error));
+        autoDismiss(this.actionError, null);
       }
     });
   }

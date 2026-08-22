@@ -1,0 +1,98 @@
+.stripe-card {
+  padding: 40px 32px;
+  text-align: center;
+}
+
+.stripe-connect__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-strong);
+}
+
+.stripe-connect__icon--error {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: transparent;
+
+  .material-icons {
+    color: #f87171;
+    font-size: 28px;
+  }
+}
+
+.step-heading {
+  margin-top: 0;
+}
+
+.stripe-connect__description {
+  max-width: 440px;
+  margin: 8px auto 0;
+  color: var(--color-text-muted);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.stripe-connect__benefits {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 420px;
+  margin: 24px auto 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.875rem;
+    color: var(--color-text);
+  }
+
+  .material-icons {
+    flex-shrink: 0;
+    font-size: 18px;
+    color: var(--color-accent-hover);
+    margin-top: 1px;
+  }
+}
+
+.step-actions {
+  justify-content: center;
+  margin-top: 28px;
+}
+
+.stripe-connect__cta {
+  min-width: 260px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.stripe-connect__spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: stripe-connect-spin 0.7s linear infinite;
+}
+
+@keyframes stripe-connect-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.stripe-connect__hint {
+  margin-top: 12px;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}

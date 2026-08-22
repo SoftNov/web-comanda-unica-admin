@@ -1,0 +1,16 @@
+<div class="stripe-alert" role="alert">
+  <span class="material-icons stripe-alert__icon" aria-hidden="true">info</span>
+  <div class="stripe-alert__body">
+    <strong>Há informações pendentes na sua conta Stripe.</strong>
+    <p>Para começar ou continuar recebendo pagamentos, conclua as informações solicitadas pelo Stripe.</p>
+  </div>
+  <button
+    type="button"
+    class="btn btn--primary stripe-alert__action"
+    appRipple
+    [disabled]="isLoading"
+    (click)="continueOnboarding.emit()"
+  >
+    {{ isLoading ? 'Preparando…' : 'Continuar cadastro' }}
+  </button>
+</div>

@@ -1,0 +1,15 @@
+<div class="card stripe-card">
+  <div class="stripe-security-card__icon">
+    <span class="material-icons" aria-hidden="true">shield</span>
+  </div>
+  <h2 class="step-heading">Segurança</h2>
+
+  <ul class="stripe-security-card__list">
+    @for (item of checklist; track item) {
+      <li>
+        <span class="material-icons" aria-hidden="true">check_circle</span>
+        {{ item }}
+      </li>
+    }
+  </ul>
+</div>

@@ -8,6 +8,7 @@ import {
   UpsertPlatformFeeRuleRequest
 } from '../../../../shared/services/platform-fee-rules.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
+import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
 
 const PAGE_SIZE = 10;
 
@@ -153,6 +154,7 @@ export class FinanceiroPlataformaComponent {
       error: (error: HttpErrorResponse) => {
         this.isSavingDefault.set(false);
         this.defaultSaveError.set(this.resolveErrorMessage(error));
+        autoDismiss(this.defaultSaveError, null);
       }
     });
   }
@@ -239,6 +241,7 @@ export class FinanceiroPlataformaComponent {
       error: (error: HttpErrorResponse) => {
         this.isSavingCompany.set(false);
         this.companySaveError.set(this.resolveErrorMessage(error));
+        autoDismiss(this.companySaveError, null);
       }
     });
   }
@@ -255,6 +258,7 @@ export class FinanceiroPlataformaComponent {
       error: (error: HttpErrorResponse) => {
         this.removingCompanyId.set(null);
         this.removeError.set(this.resolveErrorMessage(error));
+        autoDismiss(this.removeError, null);
       }
     });
   }

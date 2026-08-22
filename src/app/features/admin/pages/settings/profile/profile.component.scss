@@ -70,6 +70,42 @@ form.is-loading {
   margin-bottom: 24px;
 }
 
+// Abaixo de 960px o grid vira bloco normal e cada .profile-card mantém seu empilhamento e
+// max-width padrão (560px) — só acima disso vale a pena abrir em duas colunas.
+@media (min-width: 960px) {
+  .company-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'company address'
+      'hours   address';
+    align-items: start;
+    gap: 24px;
+    max-width: 1100px;
+  }
+
+  .company-grid .profile-card {
+    max-width: none;
+    margin-bottom: 0;
+  }
+
+  .company-grid__company {
+    grid-area: company;
+  }
+
+  .company-grid__address {
+    grid-area: address;
+  }
+
+  .company-grid__hours {
+    grid-area: hours;
+  }
+
+  .step-actions--wide {
+    max-width: 1100px;
+  }
+}
+
 .step-heading {
   margin-top: 0;
   font-size: 1.0625rem;
@@ -168,11 +204,7 @@ form.is-loading {
   margin-top: 16px;
 }
 
-.business-hours__row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+.business-hours__day-block {
   padding: 10px 0;
   border-bottom: 1px solid var(--color-border);
 
@@ -181,18 +213,47 @@ form.is-loading {
   }
 }
 
+.business-hours__day-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .business-hours__day {
-  flex-shrink: 0;
-  width: 120px;
   font-size: 0.875rem;
   color: var(--color-text);
 }
 
-.business-hours__times {
+.business-hours__add {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--color-accent-hover);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+
+  .material-icons {
+    font-size: 16px;
+  }
+}
+
+.business-hours__ranges {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.business-hours__range {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 1;
 
   .field__input {
     width: 110px;
@@ -205,23 +266,30 @@ form.is-loading {
 }
 
 .business-hours__closed-label {
-  flex: 1;
+  display: block;
+  margin-top: 6px;
   font-size: 0.8125rem;
   color: var(--color-text-muted);
 }
 
-.business-hours__toggle {
+.business-hours__remove {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-  font-size: 0.8125rem;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-elevated);
   color: var(--color-text-muted);
   cursor: pointer;
 
-  input[type='checkbox'] {
-    accent-color: var(--color-accent);
-    width: 16px;
-    height: 16px;
+  .material-icons {
+    font-size: 16px;
+  }
+
+  &:hover {
+    color: var(--color-error);
   }
 }

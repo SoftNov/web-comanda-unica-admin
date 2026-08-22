@@ -1,0 +1,49 @@
+<div class="card stripe-card">
+  <div class="stripe-status__icon">
+    <span class="material-icons" aria-hidden="true">check_circle</span>
+  </div>
+  <h2 class="step-heading">Conta Stripe conectada</h2>
+  <p class="stripe-status__description">
+    Sua conta está conectada ao Comanda Única e pronta para receber pagamentos.
+  </p>
+
+  <div class="stripe-status__grid">
+    <div class="stripe-status__item">
+      <span class="stripe-status__label">Status da conta</span>
+      <span class="stripe-status__pill stripe-status__pill--ok">
+        <span class="stripe-status__dot"></span>
+        Conectada
+      </span>
+    </div>
+
+    <div class="stripe-status__item">
+      <span class="stripe-status__label">Pagamentos</span>
+      <span class="stripe-status__pill" [class.stripe-status__pill--ok]="status.chargesEnabled" [class.stripe-status__pill--pending]="!status.chargesEnabled">
+        <span class="stripe-status__dot"></span>
+        {{ status.chargesEnabled ? 'Habilitados' : 'Pendente' }}
+      </span>
+    </div>
+
+    <div class="stripe-status__item">
+      <span class="stripe-status__label">Recebimentos</span>
+      <span class="stripe-status__pill" [class.stripe-status__pill--ok]="status.payoutsEnabled" [class.stripe-status__pill--pending]="!status.payoutsEnabled">
+        <span class="stripe-status__dot"></span>
+        {{ status.payoutsEnabled ? 'Habilitados' : 'Pendente' }}
+      </span>
+    </div>
+
+    <div class="stripe-status__item">
+      <span class="stripe-status__label">Conta Stripe</span>
+      <code class="stripe-status__account">{{ status.accountId }}</code>
+    </div>
+  </div>
+
+  <div class="step-actions">
+    <button type="button" class="btn btn--ghost" [disabled]="isOpeningDashboard" appRipple (click)="manage.emit()">
+      {{ isOpeningDashboard ? 'Abrindo…' : 'Gerenciar conta Stripe' }}
+    </button>
+    <button type="button" class="btn btn--primary" [disabled]="isRefreshing" appRipple (click)="refresh.emit()">
+      {{ isRefreshing ? 'Atualizando…' : 'Atualizar status' }}
+    </button>
+  </div>
+</div>

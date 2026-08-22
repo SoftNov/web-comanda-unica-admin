@@ -62,6 +62,12 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
     route: '/painel/financeiro-plataforma',
     platformAdminOnly: true
   },
+  {
+    label: 'Stripe da Plataforma',
+    icon: 'credit_card',
+    route: '/painel/configuracoes/stripe-plataforma',
+    platformAdminOnly: true
+  },
   { label: 'Funcionários', icon: 'groups', route: '/painel/funcionarios', roles: ['ADMIN', 'OWNER', 'MANAGER'] },
   {
     label: 'Configurações',
@@ -69,7 +75,13 @@ export const ADMIN_MENU_ITEMS: MenuItem[] = [
     children: [
       { label: 'Geral', icon: 'tune', route: '/painel/configuracoes' },
       { label: 'Meu perfil', icon: 'person', route: '/painel/configuracoes/perfil' },
-      { label: 'Redefinir senha', icon: 'lock_reset', route: '/painel/configuracoes/redefinir-senha' }
+      { label: 'Redefinir senha', icon: 'lock_reset', route: '/painel/configuracoes/redefinir-senha' },
+      {
+        label: 'Pagamentos',
+        icon: 'account_balance_wallet',
+        route: '/painel/configuracoes/pagamentos',
+        roles: ['OWNER', 'ADMIN']
+      }
     ]
   }
 ];

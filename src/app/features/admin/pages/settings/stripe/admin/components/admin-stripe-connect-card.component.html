@@ -1,0 +1,34 @@
+<div class="card stripe-card">
+  <h2 class="step-heading">Stripe Connect e métodos de pagamento</h2>
+  <p class="stripe-card__description">
+    Conta conectada tipo <strong>Express</strong> — usada para o onboarding das empresas clientes.
+    <strong>{{ config.connectedAccountsCount }}</strong>
+    {{ config.connectedAccountsCount === 1 ? 'empresa conectada' : 'empresas conectadas' }} no momento.
+  </p>
+
+  <form (submit)="$event.preventDefault(); submit()" novalidate [formGroup]="form">
+    <div class="field">
+      <label class="field__checkbox">
+        <input type="checkbox" formControlName="connectEnabled"> Permitir que empresas conectem contas Stripe
+      </label>
+    </div>
+
+    <h3 class="stripe-connect__subheading">Métodos de pagamento aceitos</h3>
+
+    <div class="field__row field__row--checkboxes">
+      <label class="field__checkbox"><input type="checkbox" formControlName="paymentMethodCard"> Cartão</label>
+      <label class="field__checkbox"><input type="checkbox" formControlName="paymentMethodPix"> PIX</label>
+      <label class="field__checkbox"><input type="checkbox" formControlName="paymentMethodOther"> Outros</label>
+    </div>
+
+    @if (error) {
+      <div class="form-alert form-alert--error">{{ error }}</div>
+    }
+
+    <div class="step-actions">
+      <button type="submit" class="btn btn--primary" [disabled]="isSaving" appRipple>
+        {{ isSaving ? 'Salvando…' : 'Salvar configurações' }}
+      </button>
+    </div>
+  </form>
+</div>

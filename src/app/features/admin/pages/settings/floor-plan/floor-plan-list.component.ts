@@ -10,6 +10,7 @@ import {
   UpdateFloorPlanRequest
 } from '../../../../../shared/services/floor-plans.service';
 import { RippleDirective } from '../../../../../shared/directives/ripple.directive';
+import { autoDismiss } from '../../../../../shared/utils/auto-dismiss.util';
 
 type ModalMode = 'create' | 'edit';
 
@@ -104,6 +105,7 @@ export class FloorPlanListComponent {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       this.formError.set('Verifique os campos destacados antes de salvar.');
+      autoDismiss(this.formError, null);
       return;
     }
 
@@ -128,6 +130,7 @@ export class FloorPlanListComponent {
         error: (error: HttpErrorResponse) => {
           this.isSubmitting.set(false);
           this.formError.set(this.resolveErrorMessage(error));
+          autoDismiss(this.formError, null);
         }
       });
       return;
@@ -147,6 +150,7 @@ export class FloorPlanListComponent {
       error: (error: HttpErrorResponse) => {
         this.isSubmitting.set(false);
         this.formError.set(this.resolveErrorMessage(error));
+        autoDismiss(this.formError, null);
       }
     });
   }
@@ -178,6 +182,7 @@ export class FloorPlanListComponent {
       error: (error: HttpErrorResponse) => {
         this.isDeleting.set(false);
         this.deleteError.set(this.resolveErrorMessage(error));
+        autoDismiss(this.deleteError, null);
       }
     });
   }

@@ -1,0 +1,62 @@
+:host {
+  display: block;
+}
+
+.page-header {
+  margin-bottom: 28px;
+}
+
+.page-title {
+  font-size: 1.75rem;
+  color: var(--color-text);
+}
+
+.page-subtitle {
+  margin-top: 8px;
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  max-width: 720px;
+}
+
+.field__hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.stripe-load-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  max-width: 640px;
+  padding: 24px 28px;
+
+  p {
+    color: var(--color-text-muted);
+  }
+}
+
+// Empilha em uma coluna por padrão; abre em duas colunas a partir de desktop — mesmo limiar
+// usado nas outras telas do painel (ver owner-stripe-page.component.scss).
+.stripe-page-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.stripe-page-grid__col {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+@media (min-width: 960px) {
+  .stripe-page-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    max-width: 1200px;
+  }
+}

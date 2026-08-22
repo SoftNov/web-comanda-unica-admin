@@ -1,0 +1,36 @@
+<div class="card stripe-card">
+  <h2 class="step-heading">Minha conta Stripe</h2>
+
+  <dl class="stripe-account__list">
+    <div class="stripe-account__row">
+      <dt>Status</dt>
+      <dd>Conectada</dd>
+    </div>
+    <div class="stripe-account__row">
+      <dt>Tipo</dt>
+      <dd>Express</dd>
+    </div>
+    <div class="stripe-account__row">
+      <dt>País</dt>
+      <dd>Brasil</dd>
+    </div>
+    <div class="stripe-account__row">
+      <dt>Conta</dt>
+      <dd><code>{{ status.accountId }}</code></dd>
+    </div>
+    <div class="stripe-account__row">
+      <dt>Pagamentos</dt>
+      <dd>{{ status.chargesEnabled ? 'Habilitados' : 'Pendente' }}</dd>
+    </div>
+    <div class="stripe-account__row">
+      <dt>Recebimentos</dt>
+      <dd>{{ status.payoutsEnabled ? 'Habilitados' : 'Pendente' }}</dd>
+    </div>
+  </dl>
+
+  <div class="step-actions">
+    <button type="button" class="btn btn--ghost" [disabled]="isOpeningDashboard" appRipple (click)="manage.emit()">
+      {{ isOpeningDashboard ? 'Abrindo…' : 'Gerenciar conta Stripe' }}
+    </button>
+  </div>
+</div>

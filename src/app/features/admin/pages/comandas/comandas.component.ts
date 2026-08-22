@@ -15,6 +15,7 @@ import {
 } from '../../../../shared/services/comandas.service';
 import { RestaurantTableResponse, TablesService } from '../../../../shared/services/tables.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
+import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
 import { AuthService } from '../../../auth/services/auth.service';
 
 const PAGE_SIZE = 10;
@@ -297,6 +298,7 @@ export class ComandasComponent {
       error: (error: HttpErrorResponse) => {
         this.isSubmittingStatus.set(false);
         this.statusError.set(this.resolveErrorMessage(error));
+        autoDismiss(this.statusError, null);
       }
     });
   }
@@ -321,6 +323,7 @@ export class ComandasComponent {
       error: (error: HttpErrorResponse) => {
         this.finalizingComandaId.set(null);
         this.finalizeError.set(this.resolveErrorMessage(error));
+        autoDismiss(this.finalizeError, null);
       }
     });
   }
@@ -348,6 +351,7 @@ export class ComandasComponent {
         error: (error: HttpErrorResponse) => {
           this.isSubmittingPayment.set(false);
           this.paymentError.set(this.resolveErrorMessage(error));
+          autoDismiss(this.paymentError, null);
         }
       });
   }
