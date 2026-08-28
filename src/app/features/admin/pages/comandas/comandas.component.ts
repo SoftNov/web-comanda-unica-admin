@@ -3,6 +3,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   ApiErrorResponse,
+  ComandaChargeMethod,
   ComandaDisplayStatus,
   ComandaOrderResponse,
   ComandaOrderStatus,
@@ -159,6 +160,10 @@ export class ComandasComponent {
       default:
         return 'App do cliente';
     }
+  }
+
+  chargeMethodLabel(method: ComandaChargeMethod): string {
+    return method === 'PIX' ? 'Pix' : 'Cartão de crédito';
   }
 
   // Comanda sem saldo em aberto (já quitada, ou sem pedidos) pode ser encerrada com um clique,

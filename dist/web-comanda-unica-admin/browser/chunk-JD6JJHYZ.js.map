@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/shared/utils/auto-dismiss.util.ts"],
+  "sourcesContent": ["import { WritableSignal } from '@angular/core';\n\nexport const AUTO_DISMISS_MS = 3000;\n\n// Limpa um signal de mensagem de confirmação/erro de ação (\".form-alert--success\"/\"--error\")\n// sozinho depois de 3s, em vez de ficar preso na tela até a próxima ação do usuário. Uso: logo\n// após o .set(valor) que faz o banner aparecer, chame autoDismiss(signal, valorDeLimpeza).\n//\n// NÃO usar em signals de erro de carregamento inicial de página/lista (ex: \"Não foi possível\n// carregar...\" exibido no lugar do conteúdo principal) — esses precisam continuar visíveis até\n// o usuário tentar de novo, senão a tela fica em branco sem explicação.\nexport function autoDismiss<T>(messageSignal: WritableSignal<T>, clearValue: T, ms: number = AUTO_DISMISS_MS): void {\n  setTimeout(() => messageSignal.set(clearValue), ms);\n}\n"],
+  "mappings": ";AAEO,IAAM,kBAAkB;AASzB,SAAU,YAAe,eAAkC,YAAe,KAAa,iBAAe;AAC1G,aAAW,MAAM,cAAc,IAAI,UAAU,GAAG,EAAE;AACpD;",
+  "names": []
+}

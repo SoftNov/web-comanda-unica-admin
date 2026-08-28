@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/admin/pages/settings/security/security.component.scss"],
+  "sourcesContent": [".page-header {\n  margin-bottom: 28px;\n}\n\n.page-title {\n  font-size: 1.75rem;\n  color: var(--color-text);\n}\n\n.page-subtitle {\n  margin-top: 8px;\n  font-size: 1rem;\n}\n\n.security-card {\n  max-width: 480px;\n  padding: 32px;\n}\n"],
+  "mappings": ";AAAA,CAAA;AACE,iBAAA;;AAGF,CAAA;AACE,aAAA;AACA,SAAA,IAAA;;AAGF,CAAA;AACE,cAAA;AACA,aAAA;;AAGF,CAAA;AACE,aAAA;AACA,WAAA;;",
+  "names": []
+}

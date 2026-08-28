@@ -17,6 +17,7 @@ export type ComandaDisplayStatus = 'OPEN' | 'OPEN_PARTIAL' | 'CLOSED';
 export type ComandaOrderStatus = 'RECEIVED' | 'IN_PREPARATION' | 'READY' | 'DELIVERED' | 'CLOSED' | 'CANCELLED';
 export type ComandaPaymentType = 'FULL' | 'PARTIAL' | 'OWN_BILL';
 export type ComandaPaymentMethod = 'ONLINE' | 'CASH_REGISTER' | 'CASH_WAITER';
+export type ComandaChargeMethod = 'CREDIT_CARD' | 'PIX';
 // Métodos aceitos para registro manual (ver ComandaApi#registerPayment no backend) — ONLINE é
 // exclusivo do fluxo do app do cliente, não pode ser selecionado pela equipe.
 export type ManualComandaPaymentMethod = Extract<ComandaPaymentMethod, 'CASH_REGISTER' | 'CASH_WAITER'>;
@@ -46,6 +47,28 @@ export interface ComandaPaymentResponse {
   paidAt: string;
 }
 
+export interface ComandaChargeFeeResponse {
+  id: string;
+  customerName?: string;
+  method: ComandaChargeMethod;
+  type: ComandaPaymentType;
+  amount: number;
+  // Nulos enquanto o Stripe não confirmou a repartição (webhook), ou em cobranças antigas.
+  stripeFeeAmount?: number;
+  platformFeeAmount?: number;
+  netAmount?: number;
+  paidAt: string;
+}
+
+export interface ComandaFeesResponse {
+  grossOnlineAmount: number;
+  stripeFeeAmount: number;
+  platformFeeAmount: number;
+  netToEstablishmentAmount: number;
+  hasPendingBreakdown: boolean;
+  charges: ComandaChargeFeeResponse[];
+}
+
 export interface ComandaResponse {
   id: string;
   tableId: string;
@@ -62,6 +85,8 @@ export interface ComandaResponse {
   closedByUserName?: string;
   orders: ComandaOrderResponse[];
   payments: ComandaPaymentResponse[];
+  // Repartição das taxas dos pagamentos online (cartão/Pix) — ausente quando não houve nenhum.
+  fees?: ComandaFeesResponse;
 }
 
 export interface ComandaListParams {

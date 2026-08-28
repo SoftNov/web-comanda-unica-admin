@@ -507,6 +507,12 @@ html {
   color: #f87171;
 }
 
+.form-alert--info {
+  background: rgba(96, 165, 250, 0.12);
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  color: #93c5fd;
+}
+
 .form-footer {
   margin-top: 28px;
   text-align: center;

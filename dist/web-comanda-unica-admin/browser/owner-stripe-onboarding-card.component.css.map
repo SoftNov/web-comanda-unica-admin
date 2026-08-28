@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/admin/pages/settings/stripe/owner/components/owner-stripe-onboarding-card.component.scss"],
+  "sourcesContent": [".stripe-alert {\n  display: flex;\n  align-items: center;\n  gap: 14px;\n  flex-wrap: wrap;\n  padding: 16px 20px;\n  margin-bottom: 24px;\n  border-radius: var(--radius-md);\n  background: var(--color-accent-bg);\n  border: 1px solid rgba(59, 130, 246, 0.28);\n}\n\n.stripe-alert__icon {\n  flex-shrink: 0;\n  color: var(--color-accent-hover);\n}\n\n.stripe-alert__body {\n  flex: 1;\n  min-width: 220px;\n\n  strong {\n    display: block;\n    color: var(--color-text);\n    font-size: 0.9375rem;\n  }\n\n  p {\n    margin-top: 4px;\n    font-size: 0.8125rem;\n    color: var(--color-text-muted);\n  }\n}\n\n.stripe-alert__action {\n  flex-shrink: 0;\n  white-space: nowrap;\n}\n"],
+  "mappings": ";AAAA,CAAA;AACE,WAAA;AACA,eAAA;AACA,OAAA;AACA,aAAA;AACA,WAAA,KAAA;AACA,iBAAA;AACA,iBAAA,IAAA;AACA,cAAA,IAAA;AACA,UAAA,IAAA,MAAA,KAAA,EAAA,EAAA,GAAA,EAAA,GAAA,EAAA;;AAGF,CAAA;AACE,eAAA;AACA,SAAA,IAAA;;AAGF,CAAA;AACE,QAAA;AACA,aAAA;;AAEA,CAJF,mBAIE;AACE,WAAA;AACA,SAAA,IAAA;AACA,aAAA;;AAGF,CAVF,mBAUE;AACE,cAAA;AACA,aAAA;AACA,SAAA,IAAA;;AAIJ,CAAA;AACE,eAAA;AACA,eAAA;;",
+  "names": []
+}

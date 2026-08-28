@@ -313,3 +313,49 @@ select.field__input {
   font-size: 0.9375rem;
   color: var(--color-text);
 }
+
+// --- Taxas e repasse ----------------------------------------------------------
+.comanda-fees {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 14px 0;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  dt {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+}
+
+.comanda-fees__deduction dd {
+  color: #f87171;
+}
+
+.comanda-fees__net {
+  dt {
+    color: var(--color-success);
+  }
+
+  dd {
+    color: var(--color-success);
+    font-size: 1.125rem;
+  }
+}

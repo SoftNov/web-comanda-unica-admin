@@ -269,6 +269,72 @@
         }
       </section>
 
+      @if (comanda.fees; as fees) {
+        <section class="comanda-section">
+          <h3 class="comanda-section__title">Taxas e repasse dos pagamentos online</h3>
+          <p class="field__hint">
+            Pagamentos por cartão ou Pix caem direto na conta Stripe do estabelecimento. A conta do
+            estabelecimento paga a taxa de processamento do Stripe; a Comanda Única recebe apenas a
+            taxa da plataforma.
+          </p>
+
+          @if (fees.hasPendingBreakdown) {
+            <div class="form-alert form-alert--info" role="status">
+              <span class="material-icons" aria-hidden="true">hourglass_top</span>
+              Alguns valores ainda estão sendo confirmados pelo Stripe — os totais abaixo podem ser parciais.
+            </div>
+          }
+
+          <dl class="comanda-fees">
+            <div>
+              <dt>Bruto (clientes)</dt>
+              <dd>{{ formatCurrency(fees.grossOnlineAmount) }}</dd>
+            </div>
+            <div class="comanda-fees__deduction">
+              <dt>Taxa do Stripe</dt>
+              <dd>− {{ formatCurrency(fees.stripeFeeAmount) }}</dd>
+            </div>
+            <div class="comanda-fees__deduction">
+              <dt>Taxa da Comanda Única</dt>
+              <dd>− {{ formatCurrency(fees.platformFeeAmount) }}</dd>
+            </div>
+            <div class="comanda-fees__net">
+              <dt>Líquido ao estabelecimento</dt>
+              <dd>{{ formatCurrency(fees.netToEstablishmentAmount) }}</dd>
+            </div>
+          </dl>
+
+          <div class="table-wrapper">
+            <table class="data-table data-table--compact">
+              <thead>
+                <tr>
+                  <th>Quem pagou</th>
+                  <th>Meio</th>
+                  <th>Valor</th>
+                  <th>Taxa Stripe</th>
+                  <th>Taxa Comanda Única</th>
+                  <th>Líquido</th>
+                  <th>Horário</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (charge of fees.charges; track charge.id) {
+                  <tr>
+                    <td>{{ charge.customerName ?? '—' }}</td>
+                    <td>{{ chargeMethodLabel(charge.method) }}</td>
+                    <td>{{ formatCurrency(charge.amount) }}</td>
+                    <td>{{ charge.stripeFeeAmount != null ? formatCurrency(charge.stripeFeeAmount) : '—' }}</td>
+                    <td>{{ formatCurrency(charge.platformFeeAmount) }}</td>
+                    <td>{{ charge.netAmount != null ? formatCurrency(charge.netAmount) : '—' }}</td>
+                    <td>{{ formatDateTime(charge.paidAt) }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+
       @if (comanda.status === 'OPEN') {
         <section class="comanda-section">
           <h3 class="comanda-section__title">Registrar pagamento em dinheiro</h3>
