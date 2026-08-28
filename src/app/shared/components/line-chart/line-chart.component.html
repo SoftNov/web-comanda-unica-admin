@@ -1,35 +1,50 @@
 <div class="line-chart">
-  <div class="line-chart__toolbar" role="group" aria-label="Tipo de visualização">
-    <button
-      type="button"
-      class="line-chart__mode-toggle"
-      [class.line-chart__mode-toggle--active]="viewMode() === 'line'"
-      [attr.aria-pressed]="viewMode() === 'line'"
-      (click)="setViewMode('line')"
-    >
-      <span class="material-icons" aria-hidden="true">show_chart</span>
-      Linha
-    </button>
-    <button
-      type="button"
-      class="line-chart__mode-toggle"
-      [class.line-chart__mode-toggle--active]="viewMode() === 'bar'"
-      [attr.aria-pressed]="viewMode() === 'bar'"
-      (click)="setViewMode('bar')"
-    >
-      <span class="material-icons" aria-hidden="true">bar_chart</span>
-      Barras
-    </button>
-    <button
-      type="button"
-      class="line-chart__mode-toggle"
-      [class.line-chart__mode-toggle--active]="viewMode() === 'table'"
-      [attr.aria-pressed]="viewMode() === 'table'"
-      (click)="setViewMode('table')"
-    >
-      <span class="material-icons" aria-hidden="true">table_rows</span>
-      Tabela
-    </button>
+  <div class="line-chart__header">
+    <div class="line-chart__toolbar" role="group" aria-label="Tipo de visualização">
+      <button
+        type="button"
+        class="line-chart__mode-toggle"
+        [class.line-chart__mode-toggle--active]="viewMode() === 'line'"
+        [attr.aria-pressed]="viewMode() === 'line'"
+        (click)="setViewMode('line')"
+      >
+        <span class="material-icons" aria-hidden="true">show_chart</span>
+        Linha
+      </button>
+      <button
+        type="button"
+        class="line-chart__mode-toggle"
+        [class.line-chart__mode-toggle--active]="viewMode() === 'bar'"
+        [attr.aria-pressed]="viewMode() === 'bar'"
+        (click)="setViewMode('bar')"
+      >
+        <span class="material-icons" aria-hidden="true">bar_chart</span>
+        Barras
+      </button>
+      <button
+        type="button"
+        class="line-chart__mode-toggle"
+        [class.line-chart__mode-toggle--active]="viewMode() === 'table'"
+        [attr.aria-pressed]="viewMode() === 'table'"
+        (click)="setViewMode('table')"
+      >
+        <span class="material-icons" aria-hidden="true">table_rows</span>
+        Tabela
+      </button>
+    </div>
+
+    @if (hasComparison()) {
+      <div class="line-chart__legend">
+        <span class="line-chart__legend-item">
+          <span class="line-chart__legend-swatch line-chart__legend-swatch--primary"></span>
+          {{ primaryLabel }}
+        </span>
+        <span class="line-chart__legend-item">
+          <span class="line-chart__legend-swatch line-chart__legend-swatch--comparison"></span>
+          {{ comparisonLabel }}
+        </span>
+      </div>
+    }
   </div>
 
   @if (viewMode() === 'table') {
@@ -38,21 +53,27 @@
         <thead>
           <tr>
             <th>Data</th>
-            <th>Faturamento</th>
+            <th>{{ hasComparison() ? primaryLabel : 'Faturamento' }}</th>
+            @if (hasComparison()) {
+              <th>{{ comparisonLabel }}</th>
+            }
           </tr>
         </thead>
         <tbody>
-          @for (point of points$(); track point.date) {
+          @for (row of tableRows(); track row.date) {
             <tr>
-              <td>{{ formatFullDate(point.date) }}</td>
-              <td>{{ formatCurrency(point.amount) }}</td>
+              <td>{{ formatFullDate(row.date) }}</td>
+              <td>{{ formatCurrency(row.amount) }}</td>
+              @if (hasComparison()) {
+                <td>{{ formatCurrency(row.comparisonAmount) }}</td>
+              }
             </tr>
           }
         </tbody>
       </table>
     </div>
   } @else if (plotted().length === 0) {
-    <p class="field__hint">Sem dados de faturamento no período selecionado.</p>
+    <p class="field__hint">Sem dados no período selecionado.</p>
   } @else {
     <svg
       #svgRoot
@@ -92,22 +113,22 @@
           />
         }
 
+        @if (hasComparison()) {
+          <path class="line-chart__line line-chart__line--comparison" vector-effect="non-scaling-stroke" [attr.d]="comparisonLinePath()" />
+        }
+
         @if (lastPoint(); as last) {
           <text class="line-chart__end-label" [attr.x]="last.x" [attr.y]="last.y - 8" text-anchor="middle">
             {{ formatCurrency(last.amount) }}
           </text>
         }
-
-        @if (hoveredBar(); as hovered) {
-          <g [attr.transform]="'translate(' + tooltipX(hovered.x) + ', ' + padding.top + ')'">
-            <rect class="line-chart__tooltip-bg" x="-58" y="0" width="116" height="40" rx="6" />
-            <text class="line-chart__tooltip-value" x="0" y="18" text-anchor="middle">{{ formatCurrency(hovered.amount) }}</text>
-            <text class="line-chart__tooltip-date" x="0" y="32" text-anchor="middle">{{ formatFullDate(hovered.date) }}</text>
-          </g>
-        }
       } @else {
         <path class="line-chart__area" [attr.d]="areaPath()" />
         <path class="line-chart__line" vector-effect="non-scaling-stroke" [attr.d]="linePath()" />
+
+        @if (hasComparison()) {
+          <path class="line-chart__line line-chart__line--comparison" vector-effect="non-scaling-stroke" [attr.d]="comparisonLinePath()" />
+        }
 
         @if (lastPoint(); as last) {
           <circle class="line-chart__end-dot" vector-effect="non-scaling-stroke" [attr.cx]="last.x" [attr.cy]="last.y" r="4" />
@@ -115,24 +136,42 @@
             {{ formatCurrency(last.amount) }}
           </text>
         }
+      }
 
-        @if (hoveredPoint(); as hovered) {
-          <line
-            class="line-chart__crosshair"
+      @if (hoveredPoint(); as hovered) {
+        <line
+          class="line-chart__crosshair"
+          vector-effect="non-scaling-stroke"
+          [attr.x1]="hovered.x"
+          [attr.x2]="hovered.x"
+          [attr.y1]="padding.top"
+          [attr.y2]="height - padding.bottom"
+        />
+        <circle class="line-chart__hover-dot" vector-effect="non-scaling-stroke" [attr.cx]="hovered.x" [attr.cy]="hovered.y" r="5" />
+        @if (hoveredComparisonPoint(); as hoveredComparison) {
+          <circle
+            class="line-chart__hover-dot line-chart__hover-dot--comparison"
             vector-effect="non-scaling-stroke"
-            [attr.x1]="hovered.x"
-            [attr.x2]="hovered.x"
-            [attr.y1]="padding.top"
-            [attr.y2]="height - padding.bottom"
+            [attr.cx]="hoveredComparison.x"
+            [attr.cy]="hoveredComparison.y"
+            r="5"
           />
-          <circle class="line-chart__hover-dot" vector-effect="non-scaling-stroke" [attr.cx]="hovered.x" [attr.cy]="hovered.y" r="5" />
+        }
 
-          <g [attr.transform]="'translate(' + tooltipX(hovered.x) + ', ' + padding.top + ')'">
-            <rect class="line-chart__tooltip-bg" x="-58" y="0" width="116" height="40" rx="6" />
+        <g [attr.transform]="'translate(' + tooltipX(hovered.x) + ', ' + padding.top + ')'">
+          <rect class="line-chart__tooltip-bg" x="-64" y="0" width="128" [attr.height]="hasComparison() ? 56 : 40" rx="6" />
+          @if (hasComparison()) {
+            <text class="line-chart__tooltip-label" x="0" y="15" text-anchor="middle">{{ primaryLabel }}</text>
+            <text class="line-chart__tooltip-value" x="0" y="28" text-anchor="middle">{{ formatCurrency(hovered.amount) }}</text>
+            <text class="line-chart__tooltip-value line-chart__tooltip-value--comparison" x="0" y="42" text-anchor="middle">
+              {{ formatCurrency(hoveredComparisonPoint()?.amount ?? 0) }} · {{ comparisonLabel }}
+            </text>
+            <text class="line-chart__tooltip-date" x="0" y="52" text-anchor="middle">{{ formatFullDate(hovered.date) }}</text>
+          } @else {
             <text class="line-chart__tooltip-value" x="0" y="18" text-anchor="middle">{{ formatCurrency(hovered.amount) }}</text>
             <text class="line-chart__tooltip-date" x="0" y="32" text-anchor="middle">{{ formatFullDate(hovered.date) }}</text>
-          </g>
-        }
+          }
+        </g>
       }
     </svg>
   }

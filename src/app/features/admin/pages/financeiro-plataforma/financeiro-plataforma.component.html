@@ -1,8 +1,64 @@
 <div class="page-header">
   <h1 class="page-title">Financeiro — Comanda Única</h1>
   <p class="page-subtitle">
-    Regra de cobrança da plataforma sobre o valor das comandas. Painel exclusivo da equipe Comanda Única.
+    Taxas recebidas dos estabelecimentos e regra de cobrança da plataforma. Painel exclusivo da equipe Comanda Única.
   </p>
+</div>
+
+<div class="card fees-card">
+  <div class="fees-card__header">
+    <div class="fees-card__heading">
+      <h2 class="section-title">Taxas recebidas</h2>
+      <div class="fees-card__totals">
+        <div class="fees-card__total">
+          <span class="fees-card__total-value">{{ isLoadingFinance() ? '—' : formatCurrency(totalFeeAmount()) }}</span>
+          <span class="fees-card__total-label">taxas no período</span>
+        </div>
+        <div class="fees-card__total">
+          <span class="fees-card__total-value">
+            {{ isLoadingFinance() ? '—' : (stripeBalance() != null ? formatCurrency(stripeBalance()) : '—') }}
+          </span>
+          <span class="fees-card__total-label">saldo disponível na Stripe da plataforma</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="fees-card__controls">
+      <div class="fees-card__presets">
+        @for (preset of financePresets; track preset.days) {
+          <button
+            type="button"
+            class="fees-card__preset"
+            [class.fees-card__preset--active]="activeFinancePresetDays() === preset.days"
+            (click)="applyFinancePreset(preset.days)"
+          >
+            {{ preset.label }}
+          </button>
+        }
+      </div>
+      <div class="fees-card__range">
+        <label class="fees-card__date-field">
+          <span>De</span>
+          <input type="date" [value]="financeStartDate()" [max]="financeEndDate()" (change)="onFinanceStartDateChange($any($event.target).value)" />
+        </label>
+        <label class="fees-card__date-field">
+          <span>Até</span>
+          <input type="date" [value]="financeEndDate()" [min]="financeStartDate()" (change)="onFinanceEndDateChange($any($event.target).value)" />
+        </label>
+      </div>
+    </div>
+  </div>
+
+  @if (financeError()) {
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      {{ financeError() }}
+    </div>
+  } @else if (isLoadingFinance()) {
+    <p class="field__hint">Carregando taxas recebidas…</p>
+  } @else {
+    <app-line-chart [points]="feePoints()" [height]="240" />
+  }
 </div>
 
 <div class="card default-rule-card">

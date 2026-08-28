@@ -4607,7 +4607,7 @@ var routes = [
       { path: "", pathMatch: "full", canActivate: [homeGuard], children: [] },
       {
         path: "dashboard",
-        loadComponent: () => import("./chunk-6BIG7SIB.js").then((m) => m.DashboardComponent),
+        loadComponent: () => import("./chunk-5HHJGK6J.js").then((m) => m.DashboardComponent),
         title: "Dashboard \u2014 Comanda \xDAnica"
       },
       {
@@ -4648,7 +4648,7 @@ var routes = [
       {
         path: "financeiro-plataforma",
         canActivate: [platformAdminGuard],
-        loadComponent: () => import("./chunk-SBLWHADR.js").then((m) => m.FinanceiroPlataformaComponent),
+        loadComponent: () => import("./chunk-7OFEORB2.js").then((m) => m.FinanceiroPlataformaComponent),
         title: "Financeiro Comanda \xDAnica \u2014 Comanda \xDAnica"
       },
       {

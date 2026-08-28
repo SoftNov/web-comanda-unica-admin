@@ -28,9 +28,23 @@
     <div class="revenue-section__header">
       <div class="revenue-section__heading">
         <h2 class="revenue-section__title">Faturamento</h2>
-        <div class="revenue-section__total">
-          <span class="revenue-section__total-value">{{ isLoadingRevenue() ? '—' : formatCurrency(revenueTotal()) }}</span>
-          <span class="revenue-section__total-label">no período selecionado</span>
+        <div class="revenue-section__totals">
+          <div class="revenue-section__total">
+            <span class="revenue-section__total-value">{{ isLoadingRevenue() ? '—' : formatCurrency(revenueTotal()) }}</span>
+            <span class="revenue-section__total-label">faturado no período</span>
+          </div>
+          <div class="revenue-section__total">
+            <span class="revenue-section__total-value revenue-section__total-value--net">
+              {{ isLoadingRevenue() ? '—' : formatCurrency(revenueNetTotal()) }}
+            </span>
+            <span class="revenue-section__total-label">líquido recebido</span>
+          </div>
+          <div class="revenue-section__total">
+            <span class="revenue-section__total-value">
+              {{ isLoadingStripeBalance() ? '—' : (stripeBalance() != null ? formatCurrency(stripeBalance()) : '—') }}
+            </span>
+            <span class="revenue-section__total-label">saldo disponível na Stripe</span>
+          </div>
         </div>
       </div>
 
@@ -78,7 +92,13 @@
     } @else if (isLoadingRevenue()) {
       <p class="field__hint">Carregando faturamento…</p>
     } @else {
-      <app-line-chart [points]="revenuePoints()" [height]="260" />
+      <app-line-chart
+        [points]="grossPoints()"
+        [comparisonPoints]="netPoints()"
+        primaryLabel="Faturado"
+        comparisonLabel="Líquido recebido"
+        [height]="260"
+      />
     }
   </div>
 

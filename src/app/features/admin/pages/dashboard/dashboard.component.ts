@@ -3,7 +3,7 @@ import { Subscription, retry, timer } from 'rxjs';
 import { AuthService } from '../../../auth/services/auth.service';
 import { FloorPlanViewerComponent } from '../../../../shared/components/floor-plan-viewer/floor-plan-viewer.component';
 import { FloorPlanResponse, FloorPlansService } from '../../../../shared/services/floor-plans.service';
-import { DashboardService, DashboardSummaryResponse } from '../../../../shared/services/dashboard.service';
+import { DashboardService, DashboardSummaryResponse, RevenuePoint } from '../../../../shared/services/dashboard.service';
 import { LineChartComponent, LineChartPoint } from '../../../../shared/components/line-chart/line-chart.component';
 import { PedidosComponent } from '../pedidos/pedidos.component';
 import { ServicosComponent } from '../servicos/servicos.component';
@@ -87,13 +87,25 @@ export class DashboardComponent implements OnDestroy {
   readonly summaryError = signal<string | null>(null);
   private summarySubscription?: Subscription;
 
-  readonly revenuePoints = signal<LineChartPoint[]>([]);
+  readonly revenueSeries = signal<RevenuePoint[]>([]);
   readonly isLoadingRevenue = signal(false);
   readonly revenueError = signal<string | null>(null);
   readonly revenueStartDate = signal(this.toIsoDate(this.daysAgo(29)));
   readonly revenueEndDate = signal(this.toIsoDate(new Date()));
   readonly activeRevenuePresetDays = signal<number | null>(30);
-  readonly revenueTotal = computed(() => this.revenuePoints().reduce((total, point) => total + point.amount, 0));
+
+  readonly grossPoints = computed<LineChartPoint[]>(() =>
+    this.revenueSeries().map((point) => ({ date: point.date, amount: point.amount }))
+  );
+  readonly netPoints = computed<LineChartPoint[]>(() =>
+    this.revenueSeries().map((point) => ({ date: point.date, amount: point.netAmount ?? 0 }))
+  );
+  readonly revenueTotal = computed(() => this.revenueSeries().reduce((total, point) => total + point.amount, 0));
+  readonly revenueNetTotal = computed(() => this.revenueSeries().reduce((total, point) => total + (point.netAmount ?? 0), 0));
+
+  // Saldo disponível na conta Stripe do estabelecimento — indicador, não série.
+  readonly stripeBalance = signal<number | null>(null);
+  readonly isLoadingStripeBalance = signal(false);
 
   readonly floorPlans = signal<FloorPlanResponse[]>([]);
   readonly isLoadingFloorPlans = signal(true);
@@ -128,6 +140,7 @@ export class DashboardComponent implements OnDestroy {
     if (this.isManagementProfile()) {
       this.connectRealtimeSummary();
       this.loadRevenue();
+      this.loadStripeBalance();
     }
     this.loadFloorPlans();
   }
@@ -218,10 +231,12 @@ export class DashboardComponent implements OnDestroy {
       return;
     }
 
-    this.revenuePoints.update((points) => {
+    // Só atualiza o "faturado" de hoje ao vivo (o WS manda o bruto). O "líquido recebido" do dia
+    // se ajusta no próximo carregamento do período — depende da confirmação de taxa pela Stripe.
+    this.revenueSeries.update((points) => {
       const index = points.findIndex((point) => point.date === today);
       if (index === -1) {
-        return [...points, { date: today, amount }].sort((a, b) => a.date.localeCompare(b.date));
+        return [...points, { date: today, amount, netAmount: amount }].sort((a, b) => a.date.localeCompare(b.date));
       }
       if (points[index].amount === amount) {
         return points;
@@ -238,12 +253,26 @@ export class DashboardComponent implements OnDestroy {
 
     this.dashboardService.getRevenueSeries(this.revenueStartDate(), this.revenueEndDate()).subscribe({
       next: (points) => {
-        this.revenuePoints.set(points);
+        this.revenueSeries.set(points);
         this.isLoadingRevenue.set(false);
       },
       error: () => {
         this.isLoadingRevenue.set(false);
         this.revenueError.set('Não foi possível carregar o faturamento do período selecionado.');
+      }
+    });
+  }
+
+  private loadStripeBalance(): void {
+    this.isLoadingStripeBalance.set(true);
+    this.dashboardService.getStripeBalance().subscribe({
+      next: (balance) => {
+        this.stripeBalance.set(balance.availableAmount);
+        this.isLoadingStripeBalance.set(false);
+      },
+      error: () => {
+        this.stripeBalance.set(null);
+        this.isLoadingStripeBalance.set(false);
       }
     });
   }

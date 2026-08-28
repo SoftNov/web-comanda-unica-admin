@@ -52,8 +52,30 @@ export class LineChartComponent {
     this._points.set(value ?? []);
   }
 
+  // Série de comparação opcional (ex: "líquido recebido" sobre "faturado") — mesma escala e mesmos
+  // dias da série principal. Quando presente, o gráfico ganha legenda e o tooltip mostra os dois
+  // valores. Renderizada como linha simples (sem área/barras).
+  @Input() set comparisonPoints(value: LineChartPoint[] | null | undefined) {
+    this._comparison.set(value ?? []);
+  }
+
+  @Input() primaryLabel = 'Faturado';
+  @Input() comparisonLabel = 'Líquido recebido';
+
   private readonly _points = signal<LineChartPoint[]>([]);
+  private readonly _comparison = signal<LineChartPoint[]>([]);
   readonly points$ = computed(() => this._points());
+  readonly comparison$ = computed(() => this._comparison());
+  readonly hasComparison = computed(() => this._comparison().length > 0);
+
+  // Linhas da view em tabela: valor principal + (quando houver) valor de comparação do mesmo dia.
+  readonly tableRows = computed(() =>
+    this._points().map((point, index) => ({
+      date: point.date,
+      amount: point.amount,
+      comparisonAmount: this._comparison()[index]?.amount ?? 0
+    }))
+  );
 
   readonly hoveredIndex = signal<number | null>(null);
   readonly viewMode = signal<ChartViewMode>('line');
@@ -72,7 +94,11 @@ export class LineChartComponent {
   private readonly fullDateFormatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
   readonly maxAmount = computed(() => {
-    const max = Math.max(0, ...this._points().map((point) => point.amount));
+    const max = Math.max(
+      0,
+      ...this._points().map((point) => point.amount),
+      ...this._comparison().map((point) => point.amount)
+    );
     return max === 0 ? 1 : max * 1.15;
   });
 
@@ -96,6 +122,32 @@ export class LineChartComponent {
   readonly linePath = computed(() => {
     const pts = this.plotted();
     return pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
+  });
+
+  // Linha de comparação: reaproveita as posições x da série principal (mesmos dias), só o y muda.
+  readonly comparisonPlotted = computed<PlottedPoint[]>(() => {
+    const comparison = this._comparison();
+    const primary = this.plotted();
+    const heightPx = this.plotHeight();
+    const max = this.maxAmount();
+    return comparison.map((point, index) => ({
+      ...point,
+      x: primary[index]?.x ?? PADDING.left,
+      y: PADDING.top + heightPx - (point.amount / max) * heightPx
+    }));
+  });
+
+  readonly comparisonLinePath = computed(() => {
+    const pts = this.comparisonPlotted();
+    return pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
+  });
+
+  readonly hoveredComparisonPoint = computed<PlottedPoint | null>(() => {
+    const index = this.hoveredIndex();
+    if (index === null) {
+      return null;
+    }
+    return this.comparisonPlotted()[index] ?? null;
   });
 
   readonly areaPath = computed(() => {

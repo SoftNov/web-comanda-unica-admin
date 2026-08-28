@@ -101,16 +101,27 @@
   margin: 0;
 }
 
+.revenue-section__totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px 32px;
+}
+
 .revenue-section__total {
   display: flex;
-  align-items: baseline;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .revenue-section__total-value {
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: var(--color-text);
+  line-height: 1.1;
+}
+
+.revenue-section__total-value--net {
+  color: var(--color-success);
 }
 
 .revenue-section__total-label {

@@ -22,7 +22,15 @@ export interface DashboardSummaryResponse {
 
 export interface RevenuePoint {
   date: string;
+  // Faturado (bruto) no dia.
   amount: number;
+  // Líquido recebido no dia (dinheiro cheio + online já sem taxa Stripe e taxa Comanda Única).
+  netAmount: number;
+}
+
+export interface StripeBalanceResponse {
+  availableAmount: number;
+  currency: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -44,6 +52,12 @@ export class DashboardService {
       params['endDate'] = endDate;
     }
     return this.http.get<RevenuePoint[]>(`${this.baseUrl}/revenue`, { params });
+  }
+
+  // Saldo disponível na conta Stripe Connect do estabelecimento — valor atual (cache curto no
+  // servidor), não série histórica.
+  getStripeBalance(): Observable<StripeBalanceResponse> {
+    return this.http.get<StripeBalanceResponse>(`${this.baseUrl}/stripe-balance`);
   }
 
   // Abre a conexão em tempo real dos indicadores operacionais. O token vem por query param
