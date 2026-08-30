@@ -104,6 +104,17 @@
         </text>
       }
 
+      @if (zeroY(); as zy) {
+        <line
+          class="line-chart__zero-line"
+          vector-effect="non-scaling-stroke"
+          [attr.x1]="padding.left"
+          [attr.x2]="viewWidth - padding.right"
+          [attr.y1]="zy"
+          [attr.y2]="zy"
+        />
+      }
+
       @if (viewMode() === 'bar') {
         @for (bar of barRects(); track bar.date) {
           <path

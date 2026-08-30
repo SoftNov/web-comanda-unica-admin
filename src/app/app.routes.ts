@@ -3,6 +3,7 @@ import { authGuard } from './core/guards/auth.guard';
 import { homeGuard } from './core/guards/home.guard';
 import { platformAdminGuard } from './core/guards/platform-admin.guard';
 import { profileGuard } from './core/guards/profile.guard';
+import { profileOrPlatformAdminGuard } from './core/guards/profile-or-platform-admin.guard';
 
 export const routes: Routes = [
   {
@@ -74,9 +75,10 @@ export const routes: Routes = [
       },
       {
         path: 'financeiro',
-        loadComponent: () => import('./features/admin/pages/placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
-        data: { title: 'Financeiro' },
-        title: 'Financeiro — Comanda Única'
+        canActivate: [profileOrPlatformAdminGuard(['ADMIN', 'OWNER', 'MANAGER'])],
+        loadComponent: () =>
+          import('./features/admin/pages/extrato-financeiro/extrato-financeiro.component').then((m) => m.ExtratoFinanceiroComponent),
+        title: 'Extrato Financeiro — Comanda Única'
       },
       {
         path: 'financeiro-plataforma',

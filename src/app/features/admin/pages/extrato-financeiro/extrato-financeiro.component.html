@@ -1,0 +1,514 @@
+<div class="page-header">
+  <h1 class="page-title">Extrato Financeiro</h1>
+  <p class="page-subtitle">Movimentações da conta Stripe do estabelecimento — bruto, taxas e líquido direto da Stripe.</p>
+</div>
+
+<div class="card extrato-company">
+  @if (isPlatformAdmin()) {
+    <div class="extrato-company__search">
+      <button
+        type="button"
+        class="extrato-company__platform-btn"
+        [class.extrato-company__platform-btn--active]="platformMode()"
+        appRipple
+        (click)="selectPlatformAccount()"
+      >
+        <span class="material-icons" aria-hidden="true">account_balance</span>
+        {{ platformAccountLabel }}
+      </button>
+
+      <label class="extrato-company__label">
+        <span>Estabelecimento</span>
+        <div class="extrato-company__search-row">
+          <input
+            type="text"
+            placeholder="Buscar estabelecimento por nome…"
+            [value]="companySearchTerm()"
+            (input)="onCompanySearchTermChange($any($event.target).value)"
+            (keyup.enter)="searchCompanies()"
+          />
+          <button type="button" class="btn btn--ghost" appRipple (click)="searchCompanies()">
+            <span class="material-icons" aria-hidden="true">search</span>
+            Buscar
+          </button>
+        </div>
+      </label>
+      @if (selectedCompanyName()) {
+        <p class="extrato-company__selected">Consultando: <strong>{{ selectedCompanyName() }}</strong></p>
+      }
+      @if (isSearchingCompanies()) {
+        <p class="field__hint">Buscando…</p>
+      } @else if (companySearchResults().length > 0) {
+        <ul class="extrato-company__results">
+          @for (company of companySearchResults(); track company.companyId) {
+            <li>
+              <button type="button" (click)="selectCompanyFromSearch(company)">{{ company.companyName }}</button>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  } @else if (myCompanies().length > 1) {
+    <label class="extrato-company__label">
+      <span>Estabelecimento</span>
+      <select [value]="selectedCompanyId()" (change)="onMyCompanyChange($any($event.target).value)">
+        @for (company of myCompanies(); track company.companyId) {
+          <option [value]="company.companyId">{{ company.companyName }}</option>
+        }
+      </select>
+    </label>
+  } @else {
+    <p class="extrato-company__selected">Estabelecimento: <strong>{{ selectedCompanyName() }}</strong></p>
+  }
+</div>
+
+@if (!hasCompany()) {
+  <div class="card">
+    <p class="field__hint">Selecione um estabelecimento para ver o extrato financeiro.</p>
+  </div>
+} @else {
+  <div class="card extrato-summary">
+    @if (platformMode()) {
+      @if (platformResumo(); as resumo) {
+        <div class="stat-grid">
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">account_balance_wallet</span>
+            <span class="stat-card__label">Saldo disponível</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.saldoDisponivel) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">hourglass_empty</span>
+            <span class="stat-card__label">Saldo pendente</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.saldoPendente) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">history</span>
+            <span class="stat-card__label">Saldo inicial (estimado)</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.saldoInicial) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">trending_up</span>
+            <span class="stat-card__label">Entradas</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.totalEntradas) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">percent</span>
+            <span class="stat-card__label">Taxas</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.totalTaxas) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">undo</span>
+            <span class="stat-card__label">Reembolsos</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.totalReembolsos) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">south</span>
+            <span class="stat-card__label">Retiradas (payouts)</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.totalPayouts) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">swap_horiz</span>
+            <span class="stat-card__label">Repasses recebidos</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.totalRepasses) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">trending_down</span>
+            <span class="stat-card__label">Outras saídas</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.totalOutrasSaidas) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">payments</span>
+            <span class="stat-card__label">Saldo final (estimado)</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.saldoFinal) }}</span>
+          </div>
+        </div>
+      } @else if (isLoading()) {
+        <p class="field__hint">Carregando resumo…</p>
+      }
+    } @else {
+      @if (resumo(); as resumo) {
+        <div class="stat-grid">
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">account_balance_wallet</span>
+            <span class="stat-card__label">Saldo disponível</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.saldoDisponivel) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">hourglass_empty</span>
+            <span class="stat-card__label">Saldo pendente</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.saldoPendente) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">trending_up</span>
+            <span class="stat-card__label">Entradas</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.entradas) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">trending_down</span>
+            <span class="stat-card__label">Saídas</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.saidas) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">percent</span>
+            <span class="stat-card__label">Taxas Stripe</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.taxasStripe) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">account_balance</span>
+            <span class="stat-card__label">Taxas Comanda Única</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.taxasComandaUnica) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">undo</span>
+            <span class="stat-card__label">Estornos</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.estornos) }}</span>
+          </div>
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">payments</span>
+            <span class="stat-card__label">Líquido</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.liquido) }}</span>
+          </div>
+        </div>
+      } @else if (isLoading()) {
+        <p class="field__hint">Carregando resumo…</p>
+      }
+    }
+  </div>
+
+  <div class="card extrato-filters">
+    <div class="extrato-filters__row">
+      <div class="revenue-section__presets">
+        @for (preset of periodPresets; track preset.id) {
+          <button
+            type="button"
+            class="revenue-section__preset"
+            [class.revenue-section__preset--active]="activePresetId() === preset.id"
+            (click)="applyPreset(preset.id)"
+          >
+            {{ preset.label }}
+          </button>
+        }
+      </div>
+      <div class="extrato-filters__dates">
+        <label class="revenue-section__date-field">
+          <span>De</span>
+          <input type="date" [value]="startDate()" [max]="endDate()" (change)="onCustomStartDateChange($any($event.target).value)" />
+        </label>
+        <label class="revenue-section__date-field">
+          <span>Até</span>
+          <input type="date" [value]="endDate()" [min]="startDate()" (change)="onCustomEndDateChange($any($event.target).value)" />
+        </label>
+      </div>
+    </div>
+
+    <div class="extrato-filters__row">
+      <input
+        type="text"
+        class="extrato-filters__search"
+        placeholder="Buscar por PaymentIntent, Charge, Balance Transaction ou comanda…"
+        [value]="searchTerm()"
+        (input)="onSearchTermChange($any($event.target).value)"
+        (keyup.enter)="submitSearch()"
+      />
+      <select [value]="typeFilter()" (change)="onTypeFilterChange($any($event.target).value)">
+        @for (option of typeOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+      @if (platformMode()) {
+        <select [value]="directionFilter()" (change)="onDirectionFilterChange($any($event.target).value)">
+          @for (option of directionOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      } @else {
+        <select [value]="statusFilter()" (change)="onStatusFilterChange($any($event.target).value)">
+          @for (option of statusOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      }
+      <button type="button" class="btn btn--ghost" appRipple (click)="refresh()" [disabled]="isLoading()">
+        <span class="material-icons" aria-hidden="true">refresh</span>
+        {{ isLoading() ? 'Atualizando…' : 'Atualizar' }}
+      </button>
+      <button type="button" class="btn btn--ghost" appRipple (click)="exportCsv()" [disabled]="isExporting()">
+        <span class="material-icons" aria-hidden="true">download</span>
+        {{ isExporting() ? 'Exportando…' : 'Exportar CSV' }}
+      </button>
+    </div>
+    @if (exportError()) {
+      <div class="form-alert form-alert--error" role="alert">
+        <span class="material-icons" aria-hidden="true">error_outline</span>
+        {{ exportError() }}
+      </div>
+    }
+  </div>
+
+  <div class="card extrato-table-card">
+    @if (loadError()) {
+      <div class="form-alert form-alert--error" role="alert">
+        <span class="material-icons" aria-hidden="true">error_outline</span>
+        {{ loadError() }}
+      </div>
+    } @else if (isLoading()) {
+      <p class="field__hint">Carregando extrato…</p>
+    } @else if (platformMode()) {
+      @if (platformTransacoes().length === 0) {
+        <p class="field__hint">Nenhuma movimentação encontrada para os filtros selecionados.</p>
+      } @else {
+        <div class="extrato-table-wrapper">
+          <table class="extrato-table">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Tipo</th>
+                <th>Direção</th>
+                <th>Descrição</th>
+                <th>Empresa relacionada</th>
+                <th class="extrato-table__number">Valor</th>
+                <th class="extrato-table__number">Taxa</th>
+                <th class="extrato-table__number">Líquido</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (transacao of platformTransacoes(); track transacao.balanceTransactionId) {
+                <tr (click)="openPlatformDetail(transacao)" class="extrato-table__row">
+                  <td>{{ formatDateTime(transacao.createdAt) }}</td>
+                  <td>{{ platformTipoLabel(transacao.category) }}</td>
+                  <td>{{ transacao.direction === 'CREDIT' ? 'Entrada' : 'Saída' }}</td>
+                  <td>{{ transacao.description || '—' }}</td>
+                  <td>{{ transacao.relatedCompanyName || '—' }}</td>
+                  <td class="extrato-table__number">{{ formatCurrency(transacao.amount) }}</td>
+                  <td class="extrato-table__number">{{ formatCurrency(transacao.fee) }}</td>
+                  <td class="extrato-table__number">{{ formatCurrency(transacao.net) }}</td>
+                  <td>
+                    <span class="extrato-status" [class.extrato-status--pending]="transacao.status === 'PENDING'">
+                      {{ platformStatusLabel(transacao) }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (hasMore()) {
+          <div class="extrato-load-more">
+            <button type="button" class="btn btn--ghost" appRipple [disabled]="isLoadingMore()" (click)="loadMore()">
+              {{ isLoadingMore() ? 'Carregando…' : 'Carregar mais' }}
+            </button>
+          </div>
+        }
+      }
+    } @else if (transacoes().length === 0) {
+      <p class="field__hint">Nenhuma movimentação encontrada para os filtros selecionados.</p>
+    } @else {
+      <div class="extrato-table-wrapper">
+        <table class="extrato-table">
+          <thead>
+            <tr>
+              <th>Data</th>
+              <th>Tipo</th>
+              <th>Descrição</th>
+              <th class="extrato-table__number">Bruto</th>
+              <th class="extrato-table__number">Taxa</th>
+              <th class="extrato-table__number">Líquido</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (transacao of transacoes(); track transacao.id) {
+              <tr (click)="openDetail(transacao)" class="extrato-table__row">
+                <td>{{ formatDateTime(transacao.data) }}</td>
+                <td>{{ tipoLabel(transacao.tipo) }}</td>
+                <td>{{ transacao.descricao || comandaResumo(transacao.comandaUnica) }}</td>
+                <td class="extrato-table__number">{{ formatCurrency(transacao.valorBruto) }}</td>
+                <td class="extrato-table__number">{{ formatCurrency(transacao.taxaStripe) }}</td>
+                <td class="extrato-table__number">{{ formatCurrency(transacao.valorLiquido) }}</td>
+                <td>
+                  <span class="extrato-status" [class.extrato-status--pending]="isStatusPending(transacao)">
+                    {{ statusLabel(transacao) }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      @if (hasMore()) {
+        <div class="extrato-load-more">
+          <button type="button" class="btn btn--ghost" appRipple [disabled]="isLoadingMore()" (click)="loadMore()">
+            {{ isLoadingMore() ? 'Carregando…' : 'Carregar mais' }}
+          </button>
+        </div>
+      }
+    }
+  </div>
+}
+
+@if (selectedTransacao(); as transacao) {
+  <div class="modal-backdrop" (click)="closeDetail()">
+    <div class="modal-card card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">Detalhes da transação</h2>
+        <button type="button" class="icon-btn" (click)="closeDetail()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <dl class="extrato-detail">
+        <div>
+          <dt>Status</dt>
+          <dd>{{ statusLabel(transacao) }}</dd>
+        </div>
+        <div>
+          <dt>Tipo</dt>
+          <dd>{{ tipoLabel(transacao.tipo) }}</dd>
+        </div>
+        <div>
+          <dt>Data</dt>
+          <dd>{{ formatDateTime(transacao.data) }}</dd>
+        </div>
+      </dl>
+
+      <dl class="extrato-detail">
+        <div>
+          <dt>Valor bruto</dt>
+          <dd>{{ formatCurrency(transacao.valorBruto) }}</dd>
+        </div>
+        <div>
+          <dt>Taxa Stripe</dt>
+          <dd>{{ formatCurrency(transacao.taxaStripe) }}</dd>
+        </div>
+        @if (transacao.taxaComandaUnica != null) {
+          <div>
+            <dt>Taxa Comanda Única</dt>
+            <dd>{{ formatCurrency(transacao.taxaComandaUnica) }}</dd>
+          </div>
+        }
+        <div>
+          <dt>Valor líquido</dt>
+          <dd>{{ formatCurrency(transacao.valorLiquido) }}</dd>
+        </div>
+      </dl>
+
+      <h3 class="extrato-detail__section-title">Stripe</h3>
+      <dl class="extrato-detail">
+        <div>
+          <dt>PaymentIntent</dt>
+          <dd>{{ transacao.stripe.paymentIntentId || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Charge</dt>
+          <dd>{{ transacao.stripe.chargeId || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Balance Transaction</dt>
+          <dd>{{ transacao.stripe.balanceTransactionId }}</dd>
+        </div>
+      </dl>
+
+      <h3 class="extrato-detail__section-title">Comanda Única</h3>
+      @if (transacao.comandaUnica.vinculado) {
+        <dl class="extrato-detail">
+          <div>
+            <dt>Comanda</dt>
+            <dd>{{ transacao.comandaUnica.numeroComanda }}</dd>
+          </div>
+          @if (transacao.comandaUnica.mesa != null) {
+            <div>
+              <dt>Mesa</dt>
+              <dd>{{ transacao.comandaUnica.mesa }}</dd>
+            </div>
+          }
+          @if (transacao.comandaUnica.cliente) {
+            <div>
+              <dt>Cliente</dt>
+              <dd>{{ transacao.comandaUnica.cliente }}</dd>
+            </div>
+          }
+        </dl>
+      } @else {
+        <p class="field__hint">Sem pedido vinculado.</p>
+      }
+    </div>
+  </div>
+}
+
+@if (selectedPlatformTransacao(); as transacao) {
+  <div class="modal-backdrop" (click)="closePlatformDetail()">
+    <div class="modal-card card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">Detalhes da transação</h2>
+        <button type="button" class="icon-btn" (click)="closePlatformDetail()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <dl class="extrato-detail">
+        <div>
+          <dt>Status</dt>
+          <dd>{{ platformStatusLabel(transacao) }}</dd>
+        </div>
+        <div>
+          <dt>Tipo</dt>
+          <dd>{{ platformTipoLabel(transacao.category) }}</dd>
+        </div>
+        <div>
+          <dt>Tipo Stripe (bruto)</dt>
+          <dd>{{ transacao.stripeType }}</dd>
+        </div>
+        <div>
+          <dt>Direção</dt>
+          <dd>{{ transacao.direction === 'CREDIT' ? 'Entrada' : 'Saída' }}</dd>
+        </div>
+        <div>
+          <dt>Data</dt>
+          <dd>{{ formatDateTime(transacao.createdAt) }}</dd>
+        </div>
+      </dl>
+
+      <dl class="extrato-detail">
+        <div>
+          <dt>Valor</dt>
+          <dd>{{ formatCurrency(transacao.amount) }}</dd>
+        </div>
+        <div>
+          <dt>Taxa</dt>
+          <dd>{{ formatCurrency(transacao.fee) }}</dd>
+        </div>
+        <div>
+          <dt>Valor líquido</dt>
+          <dd>{{ formatCurrency(transacao.net) }}</dd>
+        </div>
+      </dl>
+
+      <h3 class="extrato-detail__section-title">Stripe</h3>
+      <dl class="extrato-detail">
+        <div>
+          <dt>Balance Transaction</dt>
+          <dd>{{ transacao.balanceTransactionId }}</dd>
+        </div>
+        <div>
+          <dt>Origem</dt>
+          <dd>{{ transacao.sourceId || '—' }}</dd>
+        </div>
+      </dl>
+
+      <h3 class="extrato-detail__section-title">Empresa relacionada</h3>
+      @if (transacao.relatedCompanyName) {
+        <dl class="extrato-detail">
+          <div>
+            <dt>Empresa</dt>
+            <dd>{{ transacao.relatedCompanyName }}</dd>
+          </div>
+        </dl>
+      } @else {
+        <p class="field__hint">Sem empresa relacionada (só repasses têm esse vínculo).</p>
+      }
+    </div>
+  </div>
+}

@@ -12,75 +12,107 @@ export interface MenuItem {
   children?: MenuItem[];
 }
 
-// Menu lateral customizável: adicione, remova ou reordene itens aqui e o
-// sidebar e o drawer mobile são atualizados automaticamente. Itens com
-// "children" viram um grupo expansível (submenu) em vez de um link direto.
-export const ADMIN_MENU_ITEMS: MenuItem[] = [
-  { label: 'Dashboard', icon: 'dashboard', route: '/painel/dashboard' },
+// Seção do menu lateral — só um rótulo (sempre visível, não colapsável) agrupando itens
+// relacionados; não afeta roteamento nem permissões, é puramente organização visual. Uma seção
+// sem nenhum item visível para o usuário atual some inteira (ver AdminLayoutComponent#menuSegments).
+export interface MenuSegment {
+  label: string;
+  items: MenuItem[];
+}
+
+// Menu lateral customizável, organizado por segmento: adicione, remova ou reordene itens/seções
+// aqui e o sidebar e o drawer mobile são atualizados automaticamente. Itens com "children" viram
+// um grupo expansível (submenu) em vez de um link direto — só um grupo fica expandido por vez em
+// toda a sidebar (ver AdminLayoutComponent#toggleGroup).
+export const ADMIN_MENU_SEGMENTS: MenuSegment[] = [
   {
-    label: 'Comandas',
-    icon: 'receipt_long',
-    route: '/painel/comandas',
-    roles: ['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER']
+    label: 'Visão Geral',
+    items: [{ label: 'Dashboard', icon: 'dashboard', route: '/painel/dashboard' }]
   },
   {
-    label: 'Mesas',
-    icon: 'table_bar',
-    children: [
+    label: 'Operação',
+    items: [
       {
-        label: 'Cadastro de Mesas',
-        icon: 'table_restaurant',
-        route: '/painel/mesas',
-        roles: ['ADMIN', 'OWNER', 'MANAGER']
+        label: 'Comandas',
+        icon: 'receipt_long',
+        route: '/painel/comandas',
+        roles: ['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER']
+      },
+      { label: 'Pedidos', icon: 'point_of_sale', route: '/painel/pedidos' },
+      {
+        label: 'Serviços Gerais',
+        icon: 'support_agent',
+        children: [
+          {
+            label: 'Serviços',
+            icon: 'room_service',
+            route: '/painel/servicos',
+            roles: ['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER']
+          }
+        ]
+      }
+    ]
+  },
+  {
+    label: 'Cadastros',
+    items: [
+      {
+        label: 'Mesas',
+        icon: 'table_bar',
+        children: [
+          {
+            label: 'Cadastro de Mesas',
+            icon: 'table_restaurant',
+            route: '/painel/mesas',
+            roles: ['ADMIN', 'OWNER', 'MANAGER']
+          },
+          {
+            label: 'Mapa do Salão',
+            icon: 'map',
+            route: '/painel/configuracoes/mapa-salao',
+            roles: ['ADMIN', 'OWNER', 'MANAGER']
+          }
+        ]
+      },
+      { label: 'Cardápio', icon: 'restaurant_menu', route: '/painel/cardapio', roles: ['ADMIN', 'OWNER', 'MANAGER'] },
+      { label: 'Funcionários', icon: 'groups', route: '/painel/funcionarios', roles: ['ADMIN', 'OWNER', 'MANAGER'] }
+    ]
+  },
+  {
+    label: 'Financeiro',
+    items: [
+      { label: 'Financeiro', icon: 'payments', route: '/painel/financeiro' },
+      {
+        label: 'Financeiro Comanda Única',
+        icon: 'account_balance',
+        route: '/painel/financeiro-plataforma',
+        platformAdminOnly: true
       },
       {
-        label: 'Mapa do Salão',
-        icon: 'map',
-        route: '/painel/configuracoes/mapa-salao',
-        roles: ['ADMIN', 'OWNER', 'MANAGER']
+        label: 'Stripe da Plataforma',
+        icon: 'credit_card',
+        route: '/painel/configuracoes/stripe-plataforma',
+        platformAdminOnly: true
       }
     ]
   },
-  { label: 'Cardápio', icon: 'restaurant_menu', route: '/painel/cardapio', roles: ['ADMIN', 'OWNER', 'MANAGER'] },
-  { label: 'Pedidos', icon: 'point_of_sale', route: '/painel/pedidos' },
-  {
-    label: 'Serviços Gerais',
-    icon: 'support_agent',
-    children: [
-      {
-        label: 'Serviços',
-        icon: 'room_service',
-        route: '/painel/servicos',
-        roles: ['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER']
-      }
-    ]
-  },
-  { label: 'Financeiro', icon: 'payments', route: '/painel/financeiro' },
-  {
-    label: 'Financeiro Comanda Única',
-    icon: 'account_balance',
-    route: '/painel/financeiro-plataforma',
-    platformAdminOnly: true
-  },
-  {
-    label: 'Stripe da Plataforma',
-    icon: 'credit_card',
-    route: '/painel/configuracoes/stripe-plataforma',
-    platformAdminOnly: true
-  },
-  { label: 'Funcionários', icon: 'groups', route: '/painel/funcionarios', roles: ['ADMIN', 'OWNER', 'MANAGER'] },
   {
     label: 'Configurações',
-    icon: 'settings',
-    children: [
-      { label: 'Geral', icon: 'tune', route: '/painel/configuracoes' },
-      { label: 'Meu perfil', icon: 'person', route: '/painel/configuracoes/perfil' },
-      { label: 'Redefinir senha', icon: 'lock_reset', route: '/painel/configuracoes/redefinir-senha' },
+    items: [
       {
-        label: 'Pagamentos',
-        icon: 'account_balance_wallet',
-        route: '/painel/configuracoes/pagamentos',
-        roles: ['OWNER', 'ADMIN']
+        label: 'Configurações',
+        icon: 'settings',
+        children: [
+          { label: 'Geral', icon: 'tune', route: '/painel/configuracoes' },
+          { label: 'Meu perfil', icon: 'person', route: '/painel/configuracoes/perfil' },
+          { label: 'Redefinir senha', icon: 'lock_reset', route: '/painel/configuracoes/redefinir-senha' },
+          {
+            label: 'Pagamentos',
+            icon: 'account_balance_wallet',
+            route: '/painel/configuracoes/pagamentos',
+            roles: ['OWNER', 'ADMIN']
+          }
+        ]
       }
     ]
   }

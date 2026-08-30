@@ -99,6 +99,22 @@
   font-size: 1.125rem;
   color: var(--color-text);
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.revenue-section__platform-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-accent);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  padding: 3px 10px;
 }
 
 .revenue-section__totals {
@@ -191,6 +207,55 @@
     font-size: 0.8125rem;
     color-scheme: dark;
   }
+}
+
+.revenue-section__refresh {
+  padding: 8px 18px;
+  font-size: 0.8125rem;
+
+  .material-icons {
+    font-size: 1.125rem;
+  }
+}
+
+.revenue-section__chart-wrapper {
+  position: relative;
+}
+
+.revenue-section__chart-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: var(--radius-md);
+  z-index: 1;
+}
+
+.revenue-section__spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: var(--color-accent);
+  animation: revenue-section-spin 0.7s linear infinite;
+}
+
+@keyframes revenue-section-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// --- Saldo acumulado (conta plataforma) -------------------------------------
+
+.cumulative-balance-section {
+  margin-top: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 // --- Operação -------------------------------------------------------------

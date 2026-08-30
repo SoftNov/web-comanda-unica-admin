@@ -3,7 +3,7 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { AuthService } from '../../../auth/services/auth.service';
 import { AccountsService } from '../../../../shared/services/accounts.service';
 import { resolveHomeRoute } from '../../../../core/guards/home.guard';
-import { ADMIN_MENU_ITEMS, MenuItem } from '../../config/menu.config';
+import { ADMIN_MENU_SEGMENTS, MenuItem, MenuSegment } from '../../config/menu.config';
 import {
   NotificationsService,
   ORDER_QUEUE_NOTIFICATION_PROFILES,
@@ -33,16 +33,24 @@ export class AdminLayoutComponent {
 
   readonly profileCode = computed(() => this.selectedCompany()?.profileCode ?? null);
   readonly isPlatformAdmin = this.authService.isPlatformAdmin;
-  readonly menuItems = computed(() => this.filterMenuByProfile(ADMIN_MENU_ITEMS, this.profileCode(), this.isPlatformAdmin()));
+  // Menu organizado por segmento (ver menu.config.ts) — cada seção some inteira se nenhum item
+  // dela sobrar visível para o perfil/platform admin atual.
+  readonly menuSegments = computed<MenuSegment[]>(() =>
+    ADMIN_MENU_SEGMENTS.map((segment) => ({
+      ...segment,
+      items: this.filterMenuByProfile(segment.items, this.profileCode(), this.isPlatformAdmin())
+    })).filter((segment) => segment.items.length > 0)
+  );
 
   readonly isMobileSidebarOpen = signal(false);
   readonly isSidebarCollapsed = signal(false);
   readonly isCompanyMenuOpen = signal(false);
   readonly isUserMenuOpen = signal(false);
   readonly isNotificationsMenuOpen = signal(false);
-  readonly expandedGroups = signal<ReadonlySet<string>>(
-    new Set(this.menuItems().filter((item) => this.isGroupActive(item)).map((item) => item.label))
-  );
+  // Accordion: só um grupo (Mesas, Serviços Gerais, Configurações etc.) fica expandido por vez em
+  // toda a sidebar — abrir um fecha automaticamente qualquer outro que estivesse aberto (ver
+  // toggleGroup). Começa apontando para o grupo da rota atual, se houver.
+  readonly expandedGroup = signal<string | null>(this.findInitiallyActiveGroupLabel());
 
   // Sino de notificações no topo — pedidos ainda não entregues e serviços gerais ainda não
   // atendidos, atualizados em tempo real (ver NotificationsService). As duas seções só aparecem
@@ -122,7 +130,7 @@ export class AdminLayoutComponent {
   }
 
   isGroupExpanded(item: MenuItem): boolean {
-    return this.expandedGroups().has(item.label);
+    return this.expandedGroup() === item.label;
   }
 
   toggleGroup(item: MenuItem, event: Event): void {
@@ -132,19 +140,23 @@ export class AdminLayoutComponent {
       this.isSidebarCollapsed.set(false);
     }
 
-    this.expandedGroups.update((current) => {
-      const next = new Set(current);
-      if (next.has(item.label)) {
-        next.delete(item.label);
-      } else {
-        next.add(item.label);
-      }
-      return next;
-    });
+    // Alterna o próprio grupo; qualquer outro que estivesse aberto fecha, já que só um label cabe
+    // no signal (ver o comentário de expandedGroup).
+    this.expandedGroup.update((current) => (current === item.label ? null : item.label));
   }
 
   private isGroupActive(item: MenuItem): boolean {
     return (item.children ?? []).some((child) => !!child.route && this.router.url.startsWith(child.route));
+  }
+
+  private findInitiallyActiveGroupLabel(): string | null {
+    for (const segment of ADMIN_MENU_SEGMENTS) {
+      const activeItem = segment.items.find((item) => this.isGroupActive(item));
+      if (activeItem) {
+        return activeItem.label;
+      }
+    }
+    return null;
   }
 
   private filterMenuByProfile(items: MenuItem[], profileCode: string | null, isPlatformAdmin: boolean): MenuItem[] {

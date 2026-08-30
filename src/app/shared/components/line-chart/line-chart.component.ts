@@ -93,13 +93,41 @@ export class LineChartComponent {
   private readonly shortDateFormatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' });
   private readonly fullDateFormatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 
-  readonly maxAmount = computed(() => {
-    const max = Math.max(
-      0,
-      ...this._points().map((point) => point.amount),
-      ...this._comparison().map((point) => point.amount)
-    );
-    return max === 0 ? 1 : max * 1.15;
+  // Domínio [min, max] do eixo Y — inclui 0 sempre (mesmo comportamento de antes quando todos os
+  // valores são ≥0: min fica em 0). Generalizado para séries que também podem ficar negativas (ex.:
+  // saldo acumulado) sem cortar/distorcer o desenho — ver plotted/areaPath/barRects, que usam esse
+  // domínio em vez de só "max".
+  private readonly domain = computed<{ min: number; max: number }>(() => {
+    const values = [0, ...this._points().map((point) => point.amount), ...this._comparison().map((point) => point.amount)];
+    let min = Math.min(...values);
+    let max = Math.max(...values);
+
+    if (min === max) {
+      const margin = min === 0 ? 1 : Math.abs(min) * 0.15;
+      max += margin;
+      min -= min === 0 ? 0 : margin;
+    } else {
+      const margin = (max - min) * 0.15;
+      max += margin;
+      if (min < 0) {
+        min -= margin;
+      }
+    }
+    return { min, max };
+  });
+
+  readonly minAmount = computed(() => this.domain().min);
+  readonly maxAmount = computed(() => this.domain().max);
+
+  // Posição Y da linha de "zero" no domínio atual — null quando o domínio não cruza zero (todo o
+  // domínio ≥0 ou ≤0), caso em que a borda inferior/superior do gráfico já faz esse papel.
+  readonly zeroY = computed<number | null>(() => {
+    const { min, max } = this.domain();
+    if (min >= 0 || max <= 0) {
+      return null;
+    }
+    const heightPx = this.plotHeight();
+    return PADDING.top + heightPx - ((0 - min) / (max - min)) * heightPx;
   });
 
   readonly plotWidth = computed(() => this.viewWidth - PADDING.left - PADDING.right);
@@ -110,12 +138,13 @@ export class LineChartComponent {
     const n = points.length;
     const width = this.plotWidth();
     const heightPx = this.plotHeight();
-    const max = this.maxAmount();
+    const { min, max } = this.domain();
+    const range = max - min || 1;
 
     return points.map((point, index) => ({
       ...point,
       x: PADDING.left + (n <= 1 ? width / 2 : (index / (n - 1)) * width),
-      y: PADDING.top + heightPx - (point.amount / max) * heightPx
+      y: PADDING.top + heightPx - ((point.amount - min) / range) * heightPx
     }));
   });
 
@@ -129,11 +158,12 @@ export class LineChartComponent {
     const comparison = this._comparison();
     const primary = this.plotted();
     const heightPx = this.plotHeight();
-    const max = this.maxAmount();
+    const { min, max } = this.domain();
+    const range = max - min || 1;
     return comparison.map((point, index) => ({
       ...point,
       x: primary[index]?.x ?? PADDING.left,
-      y: PADDING.top + heightPx - (point.amount / max) * heightPx
+      y: PADDING.top + heightPx - ((point.amount - min) / range) * heightPx
     }));
   });
 
@@ -155,21 +185,24 @@ export class LineChartComponent {
     if (pts.length === 0) {
       return '';
     }
-    const baseline = PADDING.top + this.plotHeight();
+    // Preenche até a linha de zero (não até a borda do gráfico) quando o domínio cruza zero — ver
+    // zeroY. Quando não cruza (caso de toda série ≥0 hoje), zeroY é null e a borda inferior já
+    // corresponde exatamente ao zero, mesmo desenho de antes.
+    const baseline = this.zeroY() ?? PADDING.top + this.plotHeight();
     const segments = pts.map((p) => `L${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
     const last = pts[pts.length - 1];
     return `M${pts[0].x.toFixed(2)},${baseline.toFixed(2)} ${segments} L${last.x.toFixed(2)},${baseline.toFixed(2)} Z`;
   });
 
   readonly yTicks = computed<AxisTick[]>(() => {
-    const max = this.maxAmount();
+    const { min, max } = this.domain();
     const heightPx = this.plotHeight();
     const steps = 4;
     return Array.from({ length: steps + 1 }, (_, i) => {
       const fraction = i / steps;
       return {
         y: PADDING.top + heightPx - fraction * heightPx,
-        label: this.compactCurrencyFormatter.format(max * fraction)
+        label: this.compactCurrencyFormatter.format(min + (max - min) * fraction)
       };
     });
   });
@@ -207,24 +240,38 @@ export class LineChartComponent {
     if (n === 0) {
       return [];
     }
-    const baseline = PADDING.top + this.plotHeight();
+    // Baseline das barras é a linha de zero (ver zeroY) — quando o domínio não cruza zero, cai na
+    // borda inferior (série ≥0, mesmo desenho de antes) ou superior (série ≤0).
+    const baseline = this.zeroY() ?? (this.minAmount() >= 0 ? PADDING.top + this.plotHeight() : PADDING.top);
     const slot = n <= 1 ? this.plotWidth() : this.plotWidth() / (n - 1);
     const width = Math.max(3, Math.min(MAX_BAR_WIDTH, slot - BAR_GAP));
 
     return pts.map((point) => {
       const barX = point.x - width / 2;
-      const barY = point.y;
-      const barHeight = Math.max(0, baseline - barY);
+      const top = Math.min(point.y, baseline);
+      const bottom = Math.max(point.y, baseline);
+      const barHeight = bottom - top;
       const radius = Math.min(BAR_RADIUS, width / 2, barHeight);
+      const isPositive = point.y <= baseline;
       const path =
         barHeight <= 0
           ? ''
-          : `M${barX},${baseline} ` +
-            `L${barX},${(barY + radius).toFixed(2)} ` +
-            `A${radius},${radius} 0 0 1 ${(barX + radius).toFixed(2)},${barY.toFixed(2)} ` +
-            `L${(barX + width - radius).toFixed(2)},${barY.toFixed(2)} ` +
-            `A${radius},${radius} 0 0 1 ${(barX + width).toFixed(2)},${(barY + radius).toFixed(2)} ` +
-            `L${(barX + width).toFixed(2)},${baseline} Z`;
+          : isPositive
+            // Valor >= 0: barra sobe do baseline, cantos arredondados no topo.
+            ? `M${barX},${bottom} ` +
+              `L${barX},${(top + radius).toFixed(2)} ` +
+              `A${radius},${radius} 0 0 1 ${(barX + radius).toFixed(2)},${top.toFixed(2)} ` +
+              `L${(barX + width - radius).toFixed(2)},${top.toFixed(2)} ` +
+              `A${radius},${radius} 0 0 1 ${(barX + width).toFixed(2)},${(top + radius).toFixed(2)} ` +
+              `L${(barX + width).toFixed(2)},${bottom} Z`
+            // Valor < 0: barra desce do baseline, cantos arredondados embaixo.
+            : `M${barX},${top} ` +
+              `L${(barX + width).toFixed(2)},${top} ` +
+              `L${(barX + width).toFixed(2)},${(bottom - radius).toFixed(2)} ` +
+              `A${radius},${radius} 0 0 1 ${(barX + width - radius).toFixed(2)},${bottom.toFixed(2)} ` +
+              `L${(barX + radius).toFixed(2)},${bottom.toFixed(2)} ` +
+              `A${radius},${radius} 0 0 1 ${barX},${(bottom - radius).toFixed(2)} Z`;
+      const barY = top;
       return { ...point, barX, barY, width, path };
     });
   });

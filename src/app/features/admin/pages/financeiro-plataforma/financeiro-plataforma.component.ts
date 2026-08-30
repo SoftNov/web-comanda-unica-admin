@@ -7,21 +7,8 @@ import {
   PlatformFeeRulesService,
   UpsertPlatformFeeRuleRequest
 } from '../../../../shared/services/platform-fee-rules.service';
-import { PlatformFinanceService } from '../../../../shared/services/platform-finance.service';
-import { LineChartComponent, LineChartPoint } from '../../../../shared/components/line-chart/line-chart.component';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
-
-interface FinancePreset {
-  label: string;
-  days: number;
-}
-
-const FINANCE_PRESETS: FinancePreset[] = [
-  { label: '7 dias', days: 7 },
-  { label: '30 dias', days: 30 },
-  { label: '90 dias', days: 90 }
-];
 
 const PAGE_SIZE = 10;
 
@@ -38,27 +25,15 @@ interface ApiErrorResponse {
 @Component({
   selector: 'app-admin-financeiro-plataforma',
   standalone: true,
-  imports: [ReactiveFormsModule, RippleDirective, LineChartComponent],
+  imports: [ReactiveFormsModule, RippleDirective],
   templateUrl: './financeiro-plataforma.component.html',
   styleUrl: './financeiro-plataforma.component.scss'
 })
 export class FinanceiroPlataformaComponent {
   private readonly fb = new FormBuilder();
   private readonly platformFeeRulesService = inject(PlatformFeeRulesService);
-  private readonly platformFinanceService = inject(PlatformFinanceService);
   private readonly currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
   private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-
-  // --- Taxas recebidas -------------------------------------------------------------
-  readonly financePresets = FINANCE_PRESETS;
-  readonly feePoints = signal<LineChartPoint[]>([]);
-  readonly totalFeeAmount = signal(0);
-  readonly stripeBalance = signal<number | null>(null);
-  readonly isLoadingFinance = signal(true);
-  readonly financeError = signal<string | null>(null);
-  readonly financeStartDate = signal(this.toIsoDate(this.daysAgo(29)));
-  readonly financeEndDate = signal(this.toIsoDate(new Date()));
-  readonly activeFinancePresetDays = signal<number | null>(30);
 
   // --- Regra padrão -----------------------------------------------------------------
   readonly defaultRule = signal<PlatformFeeRuleResponse | null>(null);
@@ -103,7 +78,6 @@ export class FinanceiroPlataformaComponent {
   readonly removeError = signal<string | null>(null);
 
   constructor() {
-    this.loadFinance();
     this.loadDefaultRule();
     this.loadCompanies(0);
   }
@@ -114,57 +88,6 @@ export class FinanceiroPlataformaComponent {
 
   formatDateTime(value: string | undefined | null): string {
     return value ? this.dateTimeFormatter.format(new Date(value)) : '—';
-  }
-
-  // --- Taxas recebidas -------------------------------------------------------------
-  applyFinancePreset(days: number): void {
-    this.activeFinancePresetDays.set(days);
-    this.financeStartDate.set(this.toIsoDate(this.daysAgo(days - 1)));
-    this.financeEndDate.set(this.toIsoDate(new Date()));
-    this.loadFinance();
-  }
-
-  onFinanceStartDateChange(value: string): void {
-    this.activeFinancePresetDays.set(null);
-    this.financeStartDate.set(value);
-    this.loadFinance();
-  }
-
-  onFinanceEndDateChange(value: string): void {
-    this.activeFinancePresetDays.set(null);
-    this.financeEndDate.set(value);
-    this.loadFinance();
-  }
-
-  private loadFinance(): void {
-    this.isLoadingFinance.set(true);
-    this.financeError.set(null);
-
-    this.platformFinanceService.getFinanceSummary(this.financeStartDate(), this.financeEndDate()).subscribe({
-      next: (summary) => {
-        this.feePoints.set(summary.feeSeries.map((point) => ({ date: point.date, amount: point.amount })));
-        this.totalFeeAmount.set(summary.totalFeeAmount);
-        this.stripeBalance.set(summary.stripeAvailableBalance);
-        this.isLoadingFinance.set(false);
-      },
-      error: () => {
-        this.isLoadingFinance.set(false);
-        this.financeError.set('Não foi possível carregar as taxas recebidas do período.');
-      }
-    });
-  }
-
-  private daysAgo(days: number): Date {
-    const date = new Date();
-    date.setDate(date.getDate() - days);
-    return date;
-  }
-
-  private toIsoDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
   }
 
   // Cálculo ao vivo, sem ida ao backend — cobrança por faixa: até thresholdAmount cobra o

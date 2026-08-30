@@ -27,7 +27,12 @@
   <div class="card revenue-section">
     <div class="revenue-section__header">
       <div class="revenue-section__heading">
-        <h2 class="revenue-section__title">Faturamento</h2>
+        <h2 class="revenue-section__title">
+          Faturamento
+          @if (isPlatformAdmin()) {
+            <span class="revenue-section__platform-badge">conta Comanda Única (plataforma)</span>
+          }
+        </h2>
         <div class="revenue-section__totals">
           <div class="revenue-section__total">
             <span class="revenue-section__total-value">{{ isLoadingRevenue() ? '—' : formatCurrency(revenueTotal()) }}</span>
@@ -41,10 +46,36 @@
           </div>
           <div class="revenue-section__total">
             <span class="revenue-section__total-value">
-              {{ isLoadingStripeBalance() ? '—' : (stripeBalance() != null ? formatCurrency(stripeBalance()) : '—') }}
+              {{ isLoadingStripeBalance() ? '—' : (stripeCurrentBalance() != null ? formatCurrency(stripeCurrentBalance()) : '—') }}
             </span>
-            <span class="revenue-section__total-label">saldo disponível na Stripe</span>
+            <span class="revenue-section__total-label">saldo atual na Stripe</span>
           </div>
+          <div class="revenue-section__total">
+            <span class="revenue-section__total-value">
+              {{ isLoadingStripeBalance() ? '—' : (stripeAvailableBalance() != null ? formatCurrency(stripeAvailableBalance()) : '—') }}
+            </span>
+            <span class="revenue-section__total-label">saldo liberado</span>
+          </div>
+          @if (isPlatformAdmin()) {
+            <div class="revenue-section__total">
+              <span class="revenue-section__total-value">
+                {{ isLoadingRevenue() ? '—' : formatCurrency(financialSummary()?.totalRepasses) }}
+              </span>
+              <span class="revenue-section__total-label">repasses no período</span>
+            </div>
+            <div class="revenue-section__total">
+              <span class="revenue-section__total-value">
+                {{ isLoadingRevenue() ? '—' : formatCurrency(financialSummary()?.totalPayouts) }}
+              </span>
+              <span class="revenue-section__total-label">retiradas no período</span>
+            </div>
+            <div class="revenue-section__total">
+              <span class="revenue-section__total-value">
+                {{ isLoadingRevenue() ? '—' : formatCurrency(totalTarifas()) }}
+              </span>
+              <span class="revenue-section__total-label">tarifas pagas no período</span>
+            </div>
+          }
         </div>
       </div>
 
@@ -80,6 +111,16 @@
               (change)="onRevenueEndDateChange($any($event.target).value)"
             />
           </label>
+          <button
+            type="button"
+            class="btn btn--ghost revenue-section__refresh"
+            [disabled]="isLoadingRevenue()"
+            appRipple
+            (click)="refreshFinancialReport()"
+          >
+            <span class="material-icons" aria-hidden="true">refresh</span>
+            {{ isLoadingRevenue() ? 'Atualizando…' : 'Atualizar' }}
+          </button>
         </div>
       </div>
     </div>
@@ -89,18 +130,36 @@
         <span class="material-icons" aria-hidden="true">error_outline</span>
         {{ revenueError() }}
       </div>
-    } @else if (isLoadingRevenue()) {
+    } @else if (isLoadingRevenue() && revenueSeries().length === 0) {
       <p class="field__hint">Carregando faturamento…</p>
     } @else {
-      <app-line-chart
-        [points]="grossPoints()"
-        [comparisonPoints]="netPoints()"
-        primaryLabel="Faturado"
-        comparisonLabel="Líquido recebido"
-        [height]="260"
-      />
+      <div class="revenue-section__chart-wrapper">
+        @if (isLoadingRevenue()) {
+          <div class="revenue-section__chart-loading" aria-hidden="true">
+            <span class="revenue-section__spinner"></span>
+          </div>
+        }
+        <app-line-chart
+          [points]="grossPoints()"
+          [comparisonPoints]="netPoints()"
+          primaryLabel="Faturado"
+          comparisonLabel="Líquido recebido"
+          [height]="260"
+        />
+      </div>
     }
   </div>
+
+  @if (isPlatformAdmin() && !revenueError()) {
+    <div class="card cumulative-balance-section">
+      <h2 class="revenue-section__title">Saldo acumulado no período</h2>
+      @if (isLoadingRevenue() && revenueSeries().length === 0) {
+        <p class="field__hint">Carregando saldo acumulado…</p>
+      } @else {
+        <app-line-chart [points]="cumulativePoints()" primaryLabel="Saldo acumulado" [height]="180" />
+      }
+    </div>
+  }
 
   <div class="card operation-section">
     <div class="operation-section__header">

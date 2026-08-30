@@ -14,47 +14,53 @@
     </div>
 
     <nav class="admin-sidebar__nav">
-      @for (item of menuItems(); track item.label) {
-        @if (item.children) {
-          <button
-            type="button"
-            class="admin-sidebar__link admin-sidebar__link--group"
-            [class.admin-sidebar__link--expanded]="isGroupExpanded(item)"
-            (click)="toggleGroup(item, $event)"
-          >
-            <span class="material-icons" aria-hidden="true">{{ item.icon }}</span>
-            <span class="admin-sidebar__label">{{ item.label }}</span>
-            <span class="material-icons admin-sidebar__chevron" aria-hidden="true">
-              {{ isGroupExpanded(item) ? 'expand_less' : 'expand_more' }}
-            </span>
-          </button>
+      @for (segment of menuSegments(); track segment.label) {
+        <div class="admin-sidebar__segment">
+          <span class="admin-sidebar__segment-label">{{ segment.label }}</span>
 
-          @if (isGroupExpanded(item)) {
-            <div class="admin-sidebar__submenu">
-              @for (child of item.children; track child.route) {
-                <a
-                  class="admin-sidebar__link admin-sidebar__link--child"
-                  [routerLink]="child.route"
-                  routerLinkActive="admin-sidebar__link--active"
-                  (click)="closeMobileSidebar()"
-                >
-                  <span class="material-icons" aria-hidden="true">{{ child.icon }}</span>
-                  <span class="admin-sidebar__label">{{ child.label }}</span>
-                </a>
+          @for (item of segment.items; track item.label) {
+            @if (item.children) {
+              <button
+                type="button"
+                class="admin-sidebar__link admin-sidebar__link--group"
+                [class.admin-sidebar__link--expanded]="isGroupExpanded(item)"
+                (click)="toggleGroup(item, $event)"
+              >
+                <span class="material-icons" aria-hidden="true">{{ item.icon }}</span>
+                <span class="admin-sidebar__label">{{ item.label }}</span>
+                <span class="material-icons admin-sidebar__chevron" aria-hidden="true">
+                  {{ isGroupExpanded(item) ? 'expand_less' : 'expand_more' }}
+                </span>
+              </button>
+
+              @if (isGroupExpanded(item)) {
+                <div class="admin-sidebar__submenu">
+                  @for (child of item.children; track child.route) {
+                    <a
+                      class="admin-sidebar__link admin-sidebar__link--child"
+                      [routerLink]="child.route"
+                      routerLinkActive="admin-sidebar__link--active"
+                      (click)="closeMobileSidebar()"
+                    >
+                      <span class="material-icons" aria-hidden="true">{{ child.icon }}</span>
+                      <span class="admin-sidebar__label">{{ child.label }}</span>
+                    </a>
+                  }
+                </div>
               }
-            </div>
+            } @else {
+              <a
+                class="admin-sidebar__link"
+                [routerLink]="item.route"
+                routerLinkActive="admin-sidebar__link--active"
+                (click)="closeMobileSidebar()"
+              >
+                <span class="material-icons" aria-hidden="true">{{ item.icon }}</span>
+                <span class="admin-sidebar__label">{{ item.label }}</span>
+              </a>
+            }
           }
-        } @else {
-          <a
-            class="admin-sidebar__link"
-            [routerLink]="item.route"
-            routerLinkActive="admin-sidebar__link--active"
-            (click)="closeMobileSidebar()"
-          >
-            <span class="material-icons" aria-hidden="true">{{ item.icon }}</span>
-            <span class="admin-sidebar__label">{{ item.label }}</span>
-          </a>
-        }
+        </div>
       }
     </nav>
 

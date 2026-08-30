@@ -4572,6 +4572,22 @@ function profileGuard(allowedProfileCodes) {
   };
 }
 
+// src/app/core/guards/profile-or-platform-admin.guard.ts
+function profileOrPlatformAdminGuard(allowedProfileCodes) {
+  return () => {
+    const authService = inject(AuthService);
+    const router = inject(Router);
+    if (authService.isPlatformAdmin()) {
+      return true;
+    }
+    const profileCode = authService.selectedCompany()?.profileCode;
+    if (profileCode && allowedProfileCodes.includes(profileCode)) {
+      return true;
+    }
+    return router.createUrlTree(["/painel/dashboard"]);
+  };
+}
+
 // src/app/app.routes.ts
 var routes = [
   {
@@ -4602,12 +4618,12 @@ var routes = [
   {
     path: "painel",
     canActivate: [authGuard],
-    loadComponent: () => import("./chunk-W2PGEYCI.js").then((m) => m.AdminLayoutComponent),
+    loadComponent: () => import("./chunk-B3RIP74L.js").then((m) => m.AdminLayoutComponent),
     children: [
       { path: "", pathMatch: "full", canActivate: [homeGuard], children: [] },
       {
         path: "dashboard",
-        loadComponent: () => import("./chunk-5HHJGK6J.js").then((m) => m.DashboardComponent),
+        loadComponent: () => import("./chunk-NCSO6RDZ.js").then((m) => m.DashboardComponent),
         title: "Dashboard \u2014 Comanda \xDAnica"
       },
       {
@@ -4641,14 +4657,14 @@ var routes = [
       },
       {
         path: "financeiro",
-        loadComponent: () => import("./chunk-FPKQYBF2.js").then((m) => m.PlaceholderComponent),
-        data: { title: "Financeiro" },
-        title: "Financeiro \u2014 Comanda \xDAnica"
+        canActivate: [profileOrPlatformAdminGuard(["ADMIN", "OWNER", "MANAGER"])],
+        loadComponent: () => import("./chunk-IZK2IHLA.js").then((m) => m.ExtratoFinanceiroComponent),
+        title: "Extrato Financeiro \u2014 Comanda \xDAnica"
       },
       {
         path: "financeiro-plataforma",
         canActivate: [platformAdminGuard],
-        loadComponent: () => import("./chunk-7OFEORB2.js").then((m) => m.FinanceiroPlataformaComponent),
+        loadComponent: () => import("./chunk-5TDY3S4C.js").then((m) => m.FinanceiroPlataformaComponent),
         title: "Financeiro Comanda \xDAnica \u2014 Comanda \xDAnica"
       },
       {

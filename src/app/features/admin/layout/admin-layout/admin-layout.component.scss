@@ -70,7 +70,26 @@ $topbar-height: 68px;
   padding: 16px 12px;
   display: flex;
   flex-direction: column;
+  gap: 18px;
+}
+
+.admin-sidebar__segment {
+  display: flex;
+  flex-direction: column;
   gap: 4px;
+}
+
+.admin-sidebar__segment-label {
+  padding: 0 12px;
+  margin-bottom: 4px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .admin-sidebar__link {
@@ -167,13 +186,18 @@ $topbar-height: 68px;
   .admin-sidebar__label,
   .admin-sidebar__name,
   .admin-sidebar__chevron,
-  .admin-sidebar__submenu {
+  .admin-sidebar__submenu,
+  .admin-sidebar__segment-label {
     display: none;
   }
 
   .admin-sidebar__link,
   .admin-sidebar__collapse-toggle {
     justify-content: center;
+  }
+
+  .admin-sidebar__nav {
+    gap: 4px;
   }
 }
 
@@ -547,12 +571,20 @@ $topbar-height: 68px;
     display: inline;
   }
 
+  .admin-layout--collapsed .admin-sidebar__segment-label {
+    display: block;
+  }
+
   .admin-layout--collapsed .admin-sidebar__chevron {
     display: inline-block;
   }
 
   .admin-layout--collapsed .admin-sidebar__submenu {
     display: flex;
+  }
+
+  .admin-layout--collapsed .admin-sidebar__nav {
+    gap: 18px;
   }
 
   .admin-main,

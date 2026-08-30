@@ -3,8 +3,9 @@ import { Subscription, retry, timer } from 'rxjs';
 import { AuthService } from '../../../auth/services/auth.service';
 import { FloorPlanViewerComponent } from '../../../../shared/components/floor-plan-viewer/floor-plan-viewer.component';
 import { FloorPlanResponse, FloorPlansService } from '../../../../shared/services/floor-plans.service';
-import { DashboardService, DashboardSummaryResponse, RevenuePoint } from '../../../../shared/services/dashboard.service';
+import { DashboardService, DashboardSummaryResponse, RevenuePoint, StripeFinancialSummary } from '../../../../shared/services/dashboard.service';
 import { LineChartComponent, LineChartPoint } from '../../../../shared/components/line-chart/line-chart.component';
+import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { PedidosComponent } from '../pedidos/pedidos.component';
 import { ServicosComponent } from '../servicos/servicos.component';
 
@@ -41,7 +42,7 @@ const REVENUE_PRESETS: RevenuePreset[] = [
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [FloorPlanViewerComponent, LineChartComponent, PedidosComponent, ServicosComponent],
+  imports: [FloorPlanViewerComponent, LineChartComponent, PedidosComponent, ServicosComponent, RippleDirective],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
@@ -53,6 +54,11 @@ export class DashboardComponent implements OnDestroy {
 
   readonly currentUser = this.authService.currentUser;
   readonly selectedCompany = this.authService.selectedCompany;
+  // Platform admin (equipe interna da Comanda Única — ver AuthService.isPlatformAdmin): o backend
+  // detecta isso sozinho a partir do X-User-Id e troca a fonte do relatório financeiro para a
+  // conta Stripe da própria plataforma (ver DashboardApi#getFinancialReport) — aqui só serve para
+  // deixar isso visível na tela, não para decidir qual endpoint chamar.
+  readonly isPlatformAdmin = this.authService.isPlatformAdmin;
   readonly revenuePresets = REVENUE_PRESETS;
 
   // As métricas administrativas (faturamento, comandas, ocupação de mesas, funcionários) só
@@ -103,8 +109,21 @@ export class DashboardComponent implements OnDestroy {
   readonly revenueTotal = computed(() => this.revenueSeries().reduce((total, point) => total + point.amount, 0));
   readonly revenueNetTotal = computed(() => this.revenueSeries().reduce((total, point) => total + (point.netAmount ?? 0), 0));
 
-  // Saldo disponível na conta Stripe do estabelecimento — indicador, não série.
-  readonly stripeBalance = signal<number | null>(null);
+  // Resumo do relatório financeiro (repasses, retiradas, tarifas) — só usado na conta plataforma
+  // (ver isPlatformAdmin no template); para uma empresa comum esses totais não aparecem na tela.
+  readonly financialSummary = signal<StripeFinancialSummary | null>(null);
+  readonly cumulativePoints = computed<LineChartPoint[]>(() =>
+    this.revenueSeries().map((point) => ({ date: point.date, amount: point.cumulativeAmount ?? 0 }))
+  );
+  readonly totalTarifas = computed(() => {
+    const summary = this.financialSummary();
+    return summary ? summary.totalStripeFees + summary.totalPlatformFees : null;
+  });
+
+  // Saldo da conta Stripe do estabelecimento — indicadores, não série. "Atual" é o total que a
+  // Stripe ainda detém (disponível + pendente); "liberado" é só a parte já disponível para saque.
+  readonly stripeCurrentBalance = signal<number | null>(null);
+  readonly stripeAvailableBalance = signal<number | null>(null);
   readonly isLoadingStripeBalance = signal(false);
 
   readonly floorPlans = signal<FloorPlanResponse[]>([]);
@@ -139,8 +158,7 @@ export class DashboardComponent implements OnDestroy {
 
     if (this.isManagementProfile()) {
       this.connectRealtimeSummary();
-      this.loadRevenue();
-      this.loadStripeBalance();
+      this.loadFinancialReport();
     }
     this.loadFloorPlans();
   }
@@ -165,19 +183,25 @@ export class DashboardComponent implements OnDestroy {
     this.activeRevenuePresetDays.set(days);
     this.revenueStartDate.set(this.toIsoDate(this.daysAgo(days - 1)));
     this.revenueEndDate.set(this.toIsoDate(new Date()));
-    this.loadRevenue();
+    this.loadFinancialReport();
   }
 
   onRevenueStartDateChange(value: string): void {
     this.activeRevenuePresetDays.set(null);
     this.revenueStartDate.set(value);
-    this.loadRevenue();
+    this.loadFinancialReport();
   }
 
   onRevenueEndDateChange(value: string): void {
     this.activeRevenuePresetDays.set(null);
     this.revenueEndDate.set(value);
-    this.loadRevenue();
+    this.loadFinancialReport();
+  }
+
+  // Recarrega o gráfico/saldos sob demanda (botão "Atualizar") — mesmo período selecionado, sem
+  // esperar o próximo carregamento automático (não há mais WebSocket alimentando o gráfico).
+  refreshFinancialReport(): void {
+    this.loadFinancialReport();
   }
 
   private connectRealtimeSummary(): void {
@@ -213,7 +237,6 @@ export class DashboardComponent implements OnDestroy {
           this.summary.set(summary);
           this.isLoadingSummary.set(false);
           this.summaryError.set(null);
-          this.patchTodayRevenue(summary.revenueToday);
         },
         error: () => {
           this.isLoadingSummary.set(false);
@@ -222,56 +245,30 @@ export class DashboardComponent implements OnDestroy {
       });
   }
 
-  // Atualiza ao vivo só o ponto de hoje do gráfico de faturamento (via WS), sem reconsultar a
-  // série inteira — o REST (loadRevenue) continua sendo a fonte de verdade ao trocar o período.
-  // Fora do intervalo selecionado, ignora (o gráfico só mostra o período escolhido pelo usuário).
-  private patchTodayRevenue(amount: number): void {
-    const today = this.toIsoDate(new Date());
-    if (today < this.revenueStartDate() || today > this.revenueEndDate()) {
-      return;
-    }
-
-    // Só atualiza o "faturado" de hoje ao vivo (o WS manda o bruto). O "líquido recebido" do dia
-    // se ajusta no próximo carregamento do período — depende da confirmação de taxa pela Stripe.
-    this.revenueSeries.update((points) => {
-      const index = points.findIndex((point) => point.date === today);
-      if (index === -1) {
-        return [...points, { date: today, amount, netAmount: amount }].sort((a, b) => a.date.localeCompare(b.date));
-      }
-      if (points[index].amount === amount) {
-        return points;
-      }
-      const next = [...points];
-      next[index] = { ...next[index], amount };
-      return next;
-    });
-  }
-
-  private loadRevenue(): void {
+  // Gráfico de faturamento + saldos "atual"/"liberado" — direto do relatório financeiro da conta
+  // Stripe Connect do estabelecimento (não mais do WebSocket nem do banco interno). O WebSocket
+  // (ver connectRealtimeSummary) continua alimentando só os indicadores operacionais da aba
+  // "Operação", sem mais tocar no gráfico.
+  private loadFinancialReport(): void {
     this.isLoadingRevenue.set(true);
+    this.isLoadingStripeBalance.set(true);
     this.revenueError.set(null);
 
-    this.dashboardService.getRevenueSeries(this.revenueStartDate(), this.revenueEndDate()).subscribe({
-      next: (points) => {
-        this.revenueSeries.set(points);
+    this.dashboardService.getFinancialReport(this.revenueStartDate(), this.revenueEndDate()).subscribe({
+      next: (report) => {
+        this.revenueSeries.set(report.dailySeries);
+        this.financialSummary.set(report.summary);
         this.isLoadingRevenue.set(false);
+        this.stripeCurrentBalance.set(report.balance.currentAmount);
+        this.stripeAvailableBalance.set(report.balance.availableAmount);
+        this.isLoadingStripeBalance.set(false);
       },
       error: () => {
         this.isLoadingRevenue.set(false);
         this.revenueError.set('Não foi possível carregar o faturamento do período selecionado.');
-      }
-    });
-  }
-
-  private loadStripeBalance(): void {
-    this.isLoadingStripeBalance.set(true);
-    this.dashboardService.getStripeBalance().subscribe({
-      next: (balance) => {
-        this.stripeBalance.set(balance.availableAmount);
-        this.isLoadingStripeBalance.set(false);
-      },
-      error: () => {
-        this.stripeBalance.set(null);
+        this.financialSummary.set(null);
+        this.stripeCurrentBalance.set(null);
+        this.stripeAvailableBalance.set(null);
         this.isLoadingStripeBalance.set(false);
       }
     });
