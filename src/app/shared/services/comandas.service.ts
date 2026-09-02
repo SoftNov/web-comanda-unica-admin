@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -47,6 +47,26 @@ export interface ComandaPaymentResponse {
   paidAt: string;
 }
 
+// PAID/PARTIALLY_REFUNDED/REFUNDED — derivado pelo backend (ver PaymentChargeDisplayStatus),
+// nunca o status bruto do PaymentIntent.
+export type ComandaChargeDisplayStatus = 'PAID' | 'PARTIALLY_REFUNDED' | 'REFUNDED';
+export type RefundReason = 'CUSTOMER_REQUEST' | 'ORDER_CANCELLED' | 'DUPLICATE_CHARGE' | 'OPERATIONAL_ERROR' | 'OTHER';
+export type RefundStatus = 'PROCESSING' | 'SUCCEEDED' | 'FAILED' | 'CANCELED';
+
+export interface PaymentRefundHistoryResponse {
+  id: string;
+  amount: number;
+  reason: RefundReason;
+  description?: string;
+  status: RefundStatus;
+  requestedByUserId?: string;
+  requestedByUserName?: string;
+  stripeRefundId?: string;
+  failureReason?: string;
+  createdAt: string;
+  completedAt?: string;
+}
+
 export interface ComandaChargeFeeResponse {
   id: string;
   customerName?: string;
@@ -58,6 +78,13 @@ export interface ComandaChargeFeeResponse {
   platformFeeAmount?: number;
   netAmount?: number;
   paidAt: string;
+  stripePaymentIntentId?: string;
+  stripeChargeId?: string;
+  status: ComandaChargeDisplayStatus;
+  refundedAmount: number;
+  availableAmount: number;
+  refundable: boolean;
+  refunds: PaymentRefundHistoryResponse[];
 }
 
 export interface ComandaFeesResponse {
@@ -107,6 +134,21 @@ export interface RegisterComandaPaymentRequest {
   method: ManualComandaPaymentMethod;
 }
 
+export interface RefundPaymentRequest {
+  amount: number;
+  reason: RefundReason;
+  description?: string;
+}
+
+export interface RefundPaymentResponse {
+  paymentId: string;
+  refundId: string;
+  stripeRefundId?: string;
+  amount: number;
+  status: RefundStatus;
+  createdAt: string;
+}
+
 export interface ApiErrorResponse {
   titulo?: string;
   mensagem?: string;
@@ -118,6 +160,7 @@ export interface ApiErrorResponse {
 export class ComandasService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}/api/v1/comandas`;
+  private readonly paymentsBaseUrl = `${environment.apiBaseUrl}/api/v1/payments`;
 
   list(params: ComandaListParams): Observable<PageResponse<ComandaResponse>> {
     const httpParams: Record<string, string | number> = {
@@ -141,5 +184,16 @@ export class ComandasService {
 
   registerPayment(id: string, payload: RegisterComandaPaymentRequest): Observable<ComandaResponse> {
     return this.http.post<ComandaResponse>(`${this.baseUrl}/${id}/payments`, payload);
+  }
+
+  // idempotencyKey: gerado uma vez ao abrir o modal de estorno e reaproveitado em qualquer reenvio
+  // (timeout, duplo clique) — ver PaymentApi no backend. Sem isso, um reenvio criaria um segundo
+  // Refund na Stripe.
+  refundPayment(paymentId: string, payload: RefundPaymentRequest, idempotencyKey: string): Observable<RefundPaymentResponse> {
+    return this.http.post<RefundPaymentResponse>(
+      `${this.paymentsBaseUrl}/${paymentId}/refund`,
+      payload,
+      { headers: new HttpHeaders({ 'Idempotency-Key': idempotencyKey }) }
+    );
   }
 }

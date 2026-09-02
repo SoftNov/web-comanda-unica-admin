@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Subscription, retry, timer } from 'rxjs';
+import { EMPTY, Subscription, defer, retry, timer } from 'rxjs';
 import {
   ApiErrorResponse,
   CreateTableServiceRequestRequest,
@@ -168,8 +168,7 @@ export class ServicosComponent implements OnDestroy {
 
   private connectRealtimeRequests(): void {
     const companyId = this.selectedCompany()?.companyId;
-    const token = this.authService.getAccessToken();
-    if (!companyId || !token) {
+    if (!companyId) {
       return;
     }
 
@@ -179,9 +178,19 @@ export class ServicosComponent implements OnDestroy {
 
     // Mesma estratégia de reconexão do dashboard/pedidos (ver DashboardComponent.connectRealtimeSummary):
     // o WebSocket se reconecta sozinho com um pequeno atraso; só expõe erro na tela depois de
-    // algumas tentativas seguidas sem sucesso, resetando a contagem após reconectar.
-    this.requestsSubscription = this.serviceRequestsService
-      .connectRealtime(companyId, token)
+    // algumas tentativas seguidas sem sucesso, resetando a contagem após reconectar. defer(): cada
+    // NOVA tentativa busca o token de novo em vez de reusar o de quando connectRealtimeRequests
+    // foi chamado pela primeira vez — sem isso, um token expirado ficava sendo reenviado pra
+    // sempre nas tentativas seguintes, martelando o backend mesmo depois de um novo login. Sem
+    // token válido, desloga e para de tentar.
+    this.requestsSubscription = defer(() => {
+      const token = this.authService.getAccessToken();
+      if (!token) {
+        this.authService.logout();
+        return EMPTY;
+      }
+      return this.serviceRequestsService.connectRealtime(companyId, token);
+    })
       .pipe(
         retry({
           delay: (_, retryCount) => {

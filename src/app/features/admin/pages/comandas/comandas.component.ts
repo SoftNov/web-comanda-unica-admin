@@ -3,16 +3,20 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   ApiErrorResponse,
+  ComandaChargeFeeResponse,
   ComandaChargeMethod,
   ComandaDisplayStatus,
   ComandaOrderResponse,
   ComandaOrderStatus,
+  ComandaChargeDisplayStatus,
   ComandaPaymentMethod,
   ComandaPaymentType,
   ComandaResponse,
   ComandaStatus,
   ComandasService,
-  ManualComandaPaymentMethod
+  ManualComandaPaymentMethod,
+  RefundReason,
+  RefundStatus
 } from '../../../../shared/services/comandas.service';
 import { RestaurantTableResponse, TablesService } from '../../../../shared/services/tables.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
@@ -40,6 +44,10 @@ export class ComandasComponent {
   private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 
   readonly selectedCompany = this.authService.selectedCompany;
+  // Estorno restrito a OWNER/ADMIN/MANAGER (ver seed de permissão payment.refund no backend,
+  // 02-perfil e acesso.sql) — CASHIER/WAITER não veem o botão "Estornar". Mesmo padrão de
+  // canManageTables em tables.component.ts.
+  readonly canRefund = computed(() => ['OWNER', 'ADMIN', 'MANAGER'].includes(this.selectedCompany()?.profileCode ?? ''));
 
   // --- Listagem/paginação -----------------------------------------------------
   readonly comandas = signal<ComandaResponse[]>([]);
@@ -80,6 +88,22 @@ export class ComandasComponent {
   // --- Finalizar rapidamente (saldo já zerado) ------------------------------------
   readonly finalizingComandaId = signal<string | null>(null);
   readonly finalizeError = signal<string | null>(null);
+
+  // --- Estornar pagamento online (Stripe) -----------------------------------------
+  readonly chargeToRefund = signal<ComandaChargeFeeResponse | null>(null);
+  readonly confirmingRefund = signal(false);
+  readonly isSubmittingRefund = signal(false);
+  readonly refundError = signal<string | null>(null);
+  readonly expandedChargeIds = signal<ReadonlySet<string>>(new Set());
+  readonly refundForm = this.fb.nonNullable.group({
+    type: this.fb.nonNullable.control<'TOTAL' | 'PARTIAL'>('TOTAL'),
+    amount: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
+    reason: this.fb.nonNullable.control<RefundReason>('CUSTOMER_REQUEST', Validators.required),
+    description: this.fb.control<string | null>(null)
+  });
+  // Gerada uma vez ao abrir o modal, reaproveitada em qualquer reenvio (timeout, duplo clique) —
+  // ver ComandasService#refundPayment. Só uma nova chave ao reabrir o modal do zero.
+  private refundIdempotencyKey: string | null = null;
 
   constructor() {
     this.loadTables();
@@ -164,6 +188,84 @@ export class ComandasComponent {
 
   chargeMethodLabel(method: ComandaChargeMethod): string {
     return method === 'PIX' ? 'Pix' : 'Cartão de crédito';
+  }
+
+  chargeStatusLabel(status: ComandaChargeDisplayStatus): string {
+    switch (status) {
+      case 'REFUNDED':
+        return 'Estornado';
+      case 'PARTIALLY_REFUNDED':
+        return 'Parcialmente estornado';
+      default:
+        return 'Pago';
+    }
+  }
+
+  chargeStatusBadgeClass(status: ComandaChargeDisplayStatus): string {
+    switch (status) {
+      case 'REFUNDED':
+        return 'badge--danger';
+      case 'PARTIALLY_REFUNDED':
+        return 'badge--warning';
+      default:
+        return 'badge--success';
+    }
+  }
+
+  refundReasonLabel(reason: RefundReason): string {
+    switch (reason) {
+      case 'CUSTOMER_REQUEST':
+        return 'Solicitação do cliente';
+      case 'ORDER_CANCELLED':
+        return 'Pedido cancelado';
+      case 'DUPLICATE_CHARGE':
+        return 'Cobrança duplicada';
+      case 'OPERATIONAL_ERROR':
+        return 'Erro operacional';
+      default:
+        return 'Outro';
+    }
+  }
+
+  refundStatusLabel(status: RefundStatus): string {
+    switch (status) {
+      case 'SUCCEEDED':
+        return 'Concluído';
+      case 'FAILED':
+        return 'Falhou';
+      case 'CANCELED':
+        return 'Cancelado';
+      default:
+        return 'Processando';
+    }
+  }
+
+  refundStatusBadgeClass(status: RefundStatus): string {
+    switch (status) {
+      case 'SUCCEEDED':
+        return 'badge--success';
+      case 'FAILED':
+      case 'CANCELED':
+        return 'badge--danger';
+      default:
+        return 'badge--muted';
+    }
+  }
+
+  isChargeExpanded(chargeId: string): boolean {
+    return this.expandedChargeIds().has(chargeId);
+  }
+
+  toggleChargeDetails(chargeId: string): void {
+    this.expandedChargeIds.update((current) => {
+      const next = new Set(current);
+      if (next.has(chargeId)) {
+        next.delete(chargeId);
+      } else {
+        next.add(chargeId);
+      }
+      return next;
+    });
   }
 
   // Comanda sem saldo em aberto (já quitada, ou sem pedidos) pode ser encerrada com um clique,
@@ -277,6 +379,8 @@ export class ComandasComponent {
     this.finalizeError.set(null);
     this.statusForm.reset({ status: comanda.status === 'CLOSED' ? 'OPEN' : 'CLOSED' });
     this.paymentForm.reset({ amount: null, method: 'CASH_REGISTER' });
+    this.expandedChargeIds.set(new Set());
+    this.cancelRefundModal();
     this.selectedComanda.set(comanda);
   }
 
@@ -359,6 +463,142 @@ export class ComandasComponent {
           autoDismiss(this.paymentError, null);
         }
       });
+  }
+
+  // --- Estornar pagamento online (Stripe) -----------------------------------------
+  openRefundModal(charge: ComandaChargeFeeResponse): void {
+    if (!charge.refundable) {
+      return;
+    }
+    this.refundError.set(null);
+    this.confirmingRefund.set(false);
+    this.refundIdempotencyKey = crypto.randomUUID();
+    this.refundForm.reset({
+      type: 'TOTAL',
+      amount: charge.availableAmount,
+      reason: 'CUSTOMER_REQUEST',
+      description: null
+    });
+    this.chargeToRefund.set(charge);
+  }
+
+  cancelRefundModal(): void {
+    if (this.isSubmittingRefund()) {
+      return;
+    }
+    this.chargeToRefund.set(null);
+    this.confirmingRefund.set(false);
+    this.refundError.set(null);
+    this.refundIdempotencyKey = null;
+  }
+
+  // "Total" trava o valor no disponível (sempre em dia com o que já foi estornado antes); "Parcial"
+  // libera o campo para o usuário digitar, começando do próprio disponível.
+  onRefundTypeChange(type: 'TOTAL' | 'PARTIAL'): void {
+    const charge = this.chargeToRefund();
+    if (!charge) {
+      return;
+    }
+    this.refundForm.patchValue({ type, amount: type === 'TOTAL' ? charge.availableAmount : this.refundForm.controls.amount.value });
+  }
+
+  askRefundConfirmation(): void {
+    if (this.refundForm.invalid) {
+      this.refundForm.markAllAsTouched();
+      return;
+    }
+    const charge = this.chargeToRefund();
+    const amount = this.refundForm.getRawValue().amount ?? 0;
+    if (!charge) {
+      return;
+    }
+    if (amount <= 0 || amount > charge.availableAmount) {
+      this.refundForm.controls.amount.markAsTouched();
+      this.refundError.set('O valor informado ultrapassa o valor disponível para estorno.');
+      return;
+    }
+    this.refundError.set(null);
+    this.confirmingRefund.set(true);
+  }
+
+  cancelRefundConfirmation(): void {
+    this.confirmingRefund.set(false);
+  }
+
+  confirmRefund(): void {
+    const charge = this.chargeToRefund();
+    if (!charge || this.isSubmittingRefund() || !this.refundIdempotencyKey) {
+      return;
+    }
+
+    const value = this.refundForm.getRawValue();
+    this.isSubmittingRefund.set(true);
+    this.refundError.set(null);
+
+    this.comandasService
+      .refundPayment(
+        charge.id,
+        { amount: value.amount ?? 0, reason: value.reason, description: value.description || undefined },
+        this.refundIdempotencyKey
+      )
+      .subscribe({
+        next: (response) => {
+          this.isSubmittingRefund.set(false);
+          this.applyRefundLocally(charge.id, value.amount ?? 0, value.reason, value.description, response);
+          this.chargeToRefund.set(null);
+          this.confirmingRefund.set(false);
+          this.refundIdempotencyKey = null;
+        },
+        error: (error: HttpErrorResponse) => {
+          this.isSubmittingRefund.set(false);
+          this.confirmingRefund.set(false);
+          this.refundError.set(this.resolveErrorMessage(error));
+        }
+      });
+  }
+
+  // Atualiza só a cobrança estornada (e o resumo de taxas) dentro da comanda já carregada — sem
+  // recarregar a página inteira, seguindo o mesmo padrão de applyUpdatedComanda.
+  private applyRefundLocally(
+    chargeId: string,
+    amount: number,
+    reason: RefundReason,
+    description: string | null | undefined,
+    response: { refundId: string; stripeRefundId?: string; status: RefundStatus; createdAt: string }
+  ): void {
+    const comanda = this.selectedComanda();
+    if (!comanda?.fees) {
+      return;
+    }
+
+    const updatedCharges = comanda.fees.charges.map((current) => {
+      if (current.id !== chargeId) {
+        return current;
+      }
+      const refundedAmount = current.refundedAmount + amount;
+      const availableAmount = Math.max(0, current.amount - refundedAmount);
+      return {
+        ...current,
+        refundedAmount,
+        availableAmount,
+        refundable: availableAmount > 0,
+        status: availableAmount <= 0 ? 'REFUNDED' : 'PARTIALLY_REFUNDED',
+        refunds: [
+          {
+            id: response.refundId,
+            amount,
+            reason,
+            description: description ?? undefined,
+            status: response.status,
+            stripeRefundId: response.stripeRefundId,
+            createdAt: response.createdAt
+          },
+          ...current.refunds
+        ]
+      } as ComandaChargeFeeResponse;
+    });
+
+    this.applyUpdatedComanda({ ...comanda, fees: { ...comanda.fees, charges: updatedCharges } });
   }
 
   private applyUpdatedComanda(updated: ComandaResponse): void {

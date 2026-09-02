@@ -37,17 +37,31 @@
 
 .filters-row {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 16px;
   flex-wrap: wrap;
 
   .field {
     min-width: 160px;
+    margin-top: 0;
   }
 }
 
-.filters-row__reset {
-  align-self: center;
+// Botões de ação do filtro (Abertura/Atualizar/Limpar), num wrapper .field com rótulo invisível —
+// mesma estrutura label+control dos campos Status/Mesa ao lado, pra que align-items:flex-end (ver
+// .filters-row) alinhe os botões pela mesma linha de base do <select>, não pela base do próprio
+// botão (mais baixo que o input, o que os deixava visualmente "flutuando" alguns pixels acima).
+.filters-row__actions {
+  min-width: 0;
+
+  .field__label {
+    visibility: hidden;
+  }
+
+  .field__control {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
 }
 
 // --- Tabela -----------------------------------------------------------------
@@ -345,17 +359,161 @@ select.field__input {
   }
 }
 
-.comanda-fees__deduction dd {
+// --- Estorno de pagamento -------------------------------------------------------
+.btn--danger {
+  background: #f87171;
+  color: #2a0a0a;
+
+  &:hover {
+    filter: brightness(1.08);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.icon-btn--danger:hover {
+  background: rgba(248, 113, 113, 0.14);
   color: #f87171;
 }
 
-.comanda-fees__net {
+// Um card por cobrança online — layout escolhido no lugar de mais uma tabela densa porque a ação
+// de estornar precisa ser óbvia à primeira vista, não uma linha a mais entre 10 colunas.
+.payment-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.payment-card {
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-card);
+}
+
+// Borda de destaque quando há saldo estornável — o card em si já sinaliza "tem ação pendente
+// aqui", sem precisar caçar o botão dentro da tabela.
+.payment-card--refundable {
+  border-color: rgba(248, 113, 113, 0.4);
+}
+
+.payment-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.payment-card__method {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--color-text);
+
+  .material-icons {
+    font-size: 18px;
+    color: var(--color-text-muted);
+  }
+}
+
+.payment-card__meta {
+  margin: 4px 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.payment-card__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin: 12px 0 0;
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
   dt {
-    color: var(--color-success);
+    font-size: 0.6875rem;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
   }
 
   dd {
-    color: var(--color-success);
-    font-size: 1.125rem;
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+}
+
+.payment-card__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.charge-details {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.refund-history {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    font-size: 0.8125rem;
+    color: var(--color-text-muted);
+  }
+}
+
+.refund-history__description {
+  width: 100%;
+  font-style: italic;
+}
+
+.refund-history__description--error {
+  color: #f87171;
+  font-style: normal;
+}
+
+.refund-type-options {
+  display: flex;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+.refund-type-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  cursor: pointer;
+
+  input[type='radio'] {
+    cursor: pointer;
   }
 }

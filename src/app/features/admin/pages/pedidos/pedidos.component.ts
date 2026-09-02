@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
-import { Subscription, retry, timer } from 'rxjs';
+import { EMPTY, Subscription, defer, retry, timer } from 'rxjs';
 import {
   ApiErrorResponse,
   KitchenSector,
@@ -181,8 +181,7 @@ export class PedidosComponent implements OnDestroy {
 
   private connectRealtimeQueue(): void {
     const companyId = this.selectedCompany()?.companyId;
-    const token = this.authService.getAccessToken();
-    if (!companyId || !token) {
+    if (!companyId) {
       return;
     }
 
@@ -192,9 +191,21 @@ export class PedidosComponent implements OnDestroy {
 
     // Mesma estratégia de reconexão do dashboard (ver DashboardComponent.connectRealtimeSummary):
     // o WebSocket se reconecta sozinho com um pequeno atraso; só expõe erro na tela depois de
-    // algumas tentativas seguidas sem sucesso, resetando a contagem após reconectar.
-    this.queueSubscription = this.orderQueueService
-      .connectRealtime(companyId, token, this.sectorFilter() || undefined)
+    // algumas tentativas seguidas sem sucesso, resetando a contagem após reconectar. A conexão em
+    // si fica dentro de um defer(): cada NOVA tentativa (inicial ou de retry) busca o token de
+    // novo em vez de reusar o de quando connectRealtimeQueue foi chamado pela primeira vez — sem
+    // isso, um token expirado no meio da conexão ficava sendo reenviado pra sempre nas tentativas
+    // seguintes (o WebSocketSubject reabre com a MESMA config), martelando o backend com um JWT
+    // morto mesmo depois de um novo login. Sem token válido, desloga e para de tentar (EMPTY
+    // completa o retry em vez de agendar outra tentativa).
+    this.queueSubscription = defer(() => {
+      const token = this.authService.getAccessToken();
+      if (!token) {
+        this.authService.logout();
+        return EMPTY;
+      }
+      return this.orderQueueService.connectRealtime(companyId, token, this.sectorFilter() || undefined);
+    })
       .pipe(
         retry({
           delay: (_, retryCount) => {

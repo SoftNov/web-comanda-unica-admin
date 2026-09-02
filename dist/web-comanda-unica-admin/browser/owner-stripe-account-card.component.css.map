@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["src/app/features/admin/pages/settings/stripe/owner/components/owner-stripe-account-card.component.scss"],
-  "sourcesContent": [".stripe-card {\n  padding: 32px;\n}\n\n.step-heading {\n  margin-top: 0;\n}\n\n.stripe-account__list {\n  margin: 20px 0 0;\n}\n\n.stripe-account__row {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 16px;\n  padding: 10px 0;\n  border-bottom: 1px solid var(--color-border);\n\n  &:last-child {\n    border-bottom: none;\n  }\n\n  dt {\n    font-size: 0.8125rem;\n    color: var(--color-text-muted);\n  }\n\n  dd {\n    margin: 0;\n    font-size: 0.875rem;\n    color: var(--color-text);\n    font-weight: 600;\n\n    code {\n      font-weight: 400;\n      letter-spacing: 0.02em;\n    }\n  }\n}\n\n.step-actions {\n  margin-top: 24px;\n}\n"],
-  "mappings": ";AAAA,CAAA;AACE,WAAA;;AAGF,CAAA;AACE,cAAA;;AAGF,CAAA;AACE,UAAA,KAAA,EAAA;;AAGF,CAAA;AACE,WAAA;AACA,eAAA;AACA,mBAAA;AACA,OAAA;AACA,WAAA,KAAA;AACA,iBAAA,IAAA,MAAA,IAAA;;AAEA,CARF,mBAQE;AACE,iBAAA;;AAGF,CAZF,oBAYE;AACE,aAAA;AACA,SAAA,IAAA;;AAGF,CAjBF,oBAiBE;AACE,UAAA;AACA,aAAA;AACA,SAAA,IAAA;AACA,eAAA;;AAEA,CAvBJ,oBAuBI,GAAA;AACE,eAAA;AACA,kBAAA;;AAKN,CAAA;AACE,cAAA;;",
-  "names": []
-}

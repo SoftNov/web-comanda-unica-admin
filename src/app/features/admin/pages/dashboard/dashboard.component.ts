@@ -1,5 +1,5 @@
 import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
-import { Subscription, retry, timer } from 'rxjs';
+import { EMPTY, Subscription, defer, retry, timer } from 'rxjs';
 import { AuthService } from '../../../auth/services/auth.service';
 import { FloorPlanViewerComponent } from '../../../../shared/components/floor-plan-viewer/floor-plan-viewer.component';
 import { FloorPlanResponse, FloorPlansService } from '../../../../shared/services/floor-plans.service';
@@ -206,8 +206,7 @@ export class DashboardComponent implements OnDestroy {
 
   private connectRealtimeSummary(): void {
     const companyId = this.selectedCompany()?.companyId;
-    const token = this.authService.getAccessToken();
-    if (!companyId || !token) {
+    if (!companyId) {
       return;
     }
 
@@ -217,9 +216,18 @@ export class DashboardComponent implements OnDestroy {
     // O WebSocket já se reconecta sozinho (retry com um pequeno atraso) se a conexão cair — não
     // precisa de um fallback por REST em paralelo. Depois de algumas tentativas seguidas sem
     // sucesso, expõe o erro na tela (mas continua tentando em segundo plano, resetando a contagem
-    // após uma reconexão bem-sucedida).
-    this.summarySubscription = this.dashboardService
-      .connectRealtime(companyId, token)
+    // após uma reconexão bem-sucedida). defer(): cada NOVA tentativa busca o token de novo em vez
+    // de reusar o de quando connectRealtimeSummary foi chamado pela primeira vez — sem isso, um
+    // token expirado ficava sendo reenviado pra sempre nas tentativas seguintes, martelando o
+    // backend mesmo depois de um novo login. Sem token válido, desloga e para de tentar.
+    this.summarySubscription = defer(() => {
+      const token = this.authService.getAccessToken();
+      if (!token) {
+        this.authService.logout();
+        return EMPTY;
+      }
+      return this.dashboardService.connectRealtime(companyId, token);
+    })
       .pipe(
         retry({
           delay: (_, retryCount) => {
