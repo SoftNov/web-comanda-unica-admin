@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ExtratoStatusFiltro, ExtratoTipo } from './extrato.service';
+import { ExtratoExportJobResponse, ExtratoStatusFiltro, ExtratoTipo } from './extrato.service';
 
 // Direção da movimentação — espelha MovementDirection do backend. Derivada só do sinal do amount:
 // não depende da categoria (ex.: um application_fee pode ser CREDIT, um payout é sempre DEBIT).
@@ -85,11 +85,20 @@ export class PlatformExtratoService {
   }
 
   // Sem cursor/limit — a exportação sempre traz todas as transações do período filtrado.
-  exportCsv(filtros: Omit<PlatformExtratoFiltros, 'cursor' | 'limit'> = {}): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/export`, {
-      params: this.toHttpParams(filtros),
-      responseType: 'blob'
-    });
+  // Assíncrona: responde na hora com um jobId e processa em segundo plano (fila
+  // tarefa.extrato.exportacao.csv.queue) — evita segurar a requisição HTTP durante a varredura
+  // completa da Stripe. Acompanhar com getExportJob.
+  exportCsvAsync(filtros: Omit<PlatformExtratoFiltros, 'cursor' | 'limit'> = {}): Observable<ExtratoExportJobResponse> {
+    return this.http.post<ExtratoExportJobResponse>(
+      `${this.baseUrl}/export/async`,
+      null,
+      { params: this.toHttpParams(filtros) }
+    );
+  }
+
+  // Polling do job criado por exportCsvAsync.
+  getExportJob(jobId: string): Observable<ExtratoExportJobResponse> {
+    return this.http.get<ExtratoExportJobResponse>(`${this.baseUrl}/export/${jobId}`);
   }
 
   private toHttpParams(filtros: PlatformExtratoFiltros): Record<string, string> {

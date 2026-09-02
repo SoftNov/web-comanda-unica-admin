@@ -4658,7 +4658,7 @@ var routes = [
       {
         path: "financeiro",
         canActivate: [profileOrPlatformAdminGuard(["ADMIN", "OWNER", "MANAGER"])],
-        loadComponent: () => import("./chunk-IZK2IHLA.js").then((m) => m.ExtratoFinanceiroComponent),
+        loadComponent: () => import("./chunk-PYYVX5XB.js").then((m) => m.ExtratoFinanceiroComponent),
         title: "Extrato Financeiro \u2014 Comanda \xDAnica"
       },
       {

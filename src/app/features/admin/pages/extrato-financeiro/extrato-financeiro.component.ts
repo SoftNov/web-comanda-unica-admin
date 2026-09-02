@@ -1,7 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { Observable } from 'rxjs';
 import { AuthService } from '../../../auth/services/auth.service';
 import {
   ExtratoComandaUnicaRef,
+  ExtratoExportJobResponse,
   ExtratoResumo,
   ExtratoService,
   ExtratoStatusFiltro,
@@ -361,13 +363,20 @@ export class ExtratoFinanceiroComponent {
   }
 
   // --- Exportação --------------------------------------------------------------
+  //
+  // Assíncrona (fila tarefa.extrato.exportacao.csv.queue): dispara o job via POST .../export/async
+  // e faz polling em GET .../export/{jobId} até status DONE/FAILED, em vez de segurar a requisição
+  // HTTP durante a varredura completa da Stripe (era o que o GET .../export síncrono fazia).
+
+  private static readonly EXPORT_POLL_INTERVAL_MS = 2000;
+  private static readonly EXPORT_POLL_MAX_ATTEMPTS = 60; // ~2min
 
   exportCsv(): void {
     if (this.platformMode()) {
       this.isExporting.set(true);
       this.exportError.set(null);
       this.platformExtratoService
-        .exportCsv({
+        .exportCsvAsync({
           startDate: this.startDate(),
           endDate: this.endDate(),
           type: this.typeFilter() || undefined,
@@ -375,14 +384,8 @@ export class ExtratoFinanceiroComponent {
           search: this.searchTerm().trim() || undefined
         })
         .subscribe({
-          next: (blob) => {
-            this.downloadBlob(blob, 'extrato-plataforma.csv');
-            this.isExporting.set(false);
-          },
-          error: () => {
-            this.exportError.set('Não foi possível exportar o extrato.');
-            this.isExporting.set(false);
-          }
+          next: (job) => this.pollExportJob((jobId) => this.platformExtratoService.getExportJob(jobId), job.jobId),
+          error: () => this.onExportError()
         });
       return;
     }
@@ -394,7 +397,7 @@ export class ExtratoFinanceiroComponent {
     this.isExporting.set(true);
     this.exportError.set(null);
     this.extratoService
-      .exportCsv(companyId, {
+      .exportCsvAsync(companyId, {
         startDate: this.startDate(),
         endDate: this.endDate(),
         type: this.typeFilter() || undefined,
@@ -402,15 +405,49 @@ export class ExtratoFinanceiroComponent {
         search: this.searchTerm().trim() || undefined
       })
       .subscribe({
-        next: (blob) => {
-          this.downloadBlob(blob, 'extrato-financeiro.csv');
-          this.isExporting.set(false);
-        },
-        error: () => {
-          this.exportError.set('Não foi possível exportar o extrato.');
-          this.isExporting.set(false);
-        }
+        next: (job) => this.pollExportJob((jobId) => this.extratoService.getExportJob(companyId, jobId), job.jobId),
+        error: () => this.onExportError()
       });
+  }
+
+  private pollExportJob(
+    fetchJob: (jobId: string) => Observable<ExtratoExportJobResponse>,
+    jobId: string,
+    attempt = 0
+  ): void {
+    if (attempt >= ExtratoFinanceiroComponent.EXPORT_POLL_MAX_ATTEMPTS) {
+      this.exportError.set('A exportação está demorando mais que o esperado. Tente novamente em instantes.');
+      this.isExporting.set(false);
+      return;
+    }
+
+    fetchJob(jobId).subscribe({
+      next: (job) => {
+        if (job.status === 'DONE') {
+          if (job.downloadUrl) {
+            window.open(job.downloadUrl, '_blank');
+          }
+          this.isExporting.set(false);
+          return;
+        }
+        if (job.status === 'FAILED') {
+          this.exportError.set(job.error ?? 'Não foi possível exportar o extrato.');
+          this.isExporting.set(false);
+          return;
+        }
+        // PENDING/PROCESSING — tenta de novo depois do intervalo.
+        setTimeout(
+          () => this.pollExportJob(fetchJob, jobId, attempt + 1),
+          ExtratoFinanceiroComponent.EXPORT_POLL_INTERVAL_MS
+        );
+      },
+      error: () => this.onExportError()
+    });
+  }
+
+  private onExportError(): void {
+    this.exportError.set('Não foi possível exportar o extrato.');
+    this.isExporting.set(false);
   }
 
   // -------------------------------------------------------------------------
@@ -500,15 +537,6 @@ export class ExtratoFinanceiroComponent {
           this.isLoadingMore.set(false);
         }
       });
-  }
-
-  private downloadBlob(blob: Blob, filename: string): void {
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = filename;
-    anchor.click();
-    URL.revokeObjectURL(url);
   }
 
   private daysAgo(days: number): Date {

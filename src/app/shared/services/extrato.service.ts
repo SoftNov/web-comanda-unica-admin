@@ -93,6 +93,18 @@ export interface ExtratoFiltros {
   limit?: number;
 }
 
+// Espelha ExtratoExportJobStatus no backend — ciclo de vida do job assíncrono de exportação.
+export type ExtratoExportJobStatus = 'PENDING' | 'PROCESSING' | 'DONE' | 'FAILED';
+
+// Espelha ExtratoExportJobResponse no backend. downloadUrl só vem preenchido quando
+// status == DONE; error só quando status == FAILED.
+export interface ExtratoExportJobResponse {
+  jobId: string;
+  status: ExtratoExportJobStatus;
+  downloadUrl: string | null;
+  error: string | null;
+}
+
 // Extrato financeiro da conta Stripe Connect de um estabelecimento (ver
 // GET /api/v1/companies/{companyId}/extrato no backend) — a Stripe é a fonte oficial dos valores;
 // o banco da Comanda Única só enriquece com dados de negócio (comanda/mesa/cliente).
@@ -106,11 +118,20 @@ export class ExtratoService {
   }
 
   // Sem cursor/limit — a exportação sempre traz todas as transações do período filtrado.
-  exportCsv(companyId: string, filtros: Omit<ExtratoFiltros, 'cursor' | 'limit'> = {}): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/${companyId}/extrato/export`, {
-      params: this.toHttpParams(filtros),
-      responseType: 'blob'
-    });
+  // Assíncrona: responde na hora com um jobId e processa em segundo plano (fila
+  // tarefa.extrato.exportacao.csv.queue) — evita segurar a requisição HTTP durante a varredura
+  // completa da Stripe. Acompanhar com getExportJob.
+  exportCsvAsync(companyId: string, filtros: Omit<ExtratoFiltros, 'cursor' | 'limit'> = {}): Observable<ExtratoExportJobResponse> {
+    return this.http.post<ExtratoExportJobResponse>(
+      `${this.baseUrl}/${companyId}/extrato/export/async`,
+      null,
+      { params: this.toHttpParams(filtros) }
+    );
+  }
+
+  // Polling do job criado por exportCsvAsync.
+  getExportJob(companyId: string, jobId: string): Observable<ExtratoExportJobResponse> {
+    return this.http.get<ExtratoExportJobResponse>(`${this.baseUrl}/${companyId}/extrato/export/${jobId}`);
   }
 
   private toHttpParams(filtros: ExtratoFiltros): Record<string, string> {
