@@ -393,6 +393,14 @@
   }
 }
 
+.extrato-detail__wide {
+  grid-column: 1 / -1;
+
+  dd {
+    word-break: normal;
+  }
+}
+
 .extrato-detail__section-title {
   font-size: 0.8125rem;
   text-transform: uppercase;

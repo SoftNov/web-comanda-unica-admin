@@ -123,6 +123,13 @@
             <p class="table-item__name">{{ table.name }}</p>
           }
 
+          @if (table.operationalStatus === 'RESERVED' && table.reservedUntil) {
+            <p class="table-item__reserved">
+              <span class="material-icons" aria-hidden="true">event_seat</span>
+              Reservada até {{ formatShortDateTime(table.reservedUntil) }}
+            </p>
+          }
+
           <dl class="table-item__meta">
             <div>
               <dt>Setor</dt>

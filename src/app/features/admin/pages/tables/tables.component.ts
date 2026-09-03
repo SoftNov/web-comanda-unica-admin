@@ -146,7 +146,13 @@ export class TablesComponent {
     this.activeTab.set(tab);
   }
 
+  private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+
   // --- Mesas: apresentação --------------------------------------------------
+  formatShortDateTime(value: string | null | undefined): string {
+    return value ? this.dateTimeFormatter.format(new Date(value)) : '—';
+  }
+
   tableStatusLabel(table: RestaurantTableResponse): string {
     if (table.status === 'INACTIVE') {
       return 'Inativa';

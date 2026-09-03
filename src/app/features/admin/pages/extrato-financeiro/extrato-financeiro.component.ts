@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { Observable } from 'rxjs';
 import { AuthService } from '../../../auth/services/auth.service';
 import {
@@ -83,7 +84,7 @@ const PAGE_SIZE = 20;
 @Component({
   selector: 'app-extrato-financeiro',
   standalone: true,
-  imports: [RippleDirective],
+  imports: [RippleDirective, RouterLink],
   templateUrl: './extrato-financeiro.component.html',
   styleUrl: './extrato-financeiro.component.scss'
 })
@@ -231,6 +232,12 @@ export class ExtratoFinanceiroComponent {
       || tipo === 'TRANSFER'
       || tipo === 'DISPUTE'
       || tipo === 'ADJUSTMENT';
+  }
+
+  // Só pagamentos/estornos ficam vinculados a uma comanda (ver ExtratoComandaUnicaRef no backend) —
+  // as demais categorias (payout, taxa, ajuste…) são lançamentos da conta Stripe, sem comanda.
+  podeAbrirComanda(transacao: ExtratoTransacao): boolean {
+    return transacao.comandaUnica.vinculado && !!transacao.comandaUnica.comandaId;
   }
 
   comandaResumo(ref: ExtratoComandaUnicaRef): string {

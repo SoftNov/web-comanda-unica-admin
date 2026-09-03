@@ -132,6 +132,19 @@
   margin: 0;
 }
 
+.table-item__reserved {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8125rem;
+  color: var(--color-danger, #dc2626);
+  margin: 0;
+
+  .material-icons {
+    font-size: 16px;
+  }
+}
+
 .table-item__meta {
   display: flex;
   flex-direction: column;

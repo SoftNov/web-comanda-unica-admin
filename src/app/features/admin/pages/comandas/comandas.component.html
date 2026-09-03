@@ -54,6 +54,16 @@
   </div>
 </div>
 
+@if (openingFromLink()) {
+  <p class="field__hint">Abrindo a comanda indicada pelo link…</p>
+}
+@if (openFromLinkError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ openFromLinkError() }}
+  </div>
+}
+
 @if (isLoadingList()) {
   <p class="field__hint">Carregando comandas…</p>
 } @else if (listError()) {

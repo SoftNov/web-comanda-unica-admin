@@ -40,6 +40,12 @@ export const ADMIN_MENU_SEGMENTS: MenuSegment[] = [
       },
       { label: 'Pedidos', icon: 'point_of_sale', route: '/painel/pedidos' },
       {
+        label: 'Reservas',
+        icon: 'event_seat',
+        route: '/painel/reservas',
+        roles: ['OWNER', 'ADMIN', 'MANAGER', 'WAITER']
+      },
+      {
         label: 'Serviços Gerais',
         icon: 'support_agent',
         children: [

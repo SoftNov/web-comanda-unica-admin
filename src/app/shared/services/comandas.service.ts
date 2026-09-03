@@ -187,6 +187,12 @@ export class ComandasService {
     return this.http.get<PageResponse<ComandaResponse>>(this.baseUrl, { params: httpParams });
   }
 
+  // Consulta de uma comanda isolada — usada, por exemplo, quando o extrato financeiro abre a
+  // comanda vinculada a um pagamento (deep link /painel/comandas?comanda=<id>).
+  getById(id: string): Observable<ComandaResponse> {
+    return this.http.get<ComandaResponse>(`${this.baseUrl}/${id}`);
+  }
+
   updateStatus(id: string, payload: UpdateComandaStatusRequest): Observable<ComandaResponse> {
     return this.http.patch<ComandaResponse>(`${this.baseUrl}/${id}/status`, payload);
   }

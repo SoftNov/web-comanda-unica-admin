@@ -360,6 +360,10 @@
       </div>
 
       <dl class="extrato-detail">
+        <div class="extrato-detail__wide">
+          <dt>Do que se trata</dt>
+          <dd>{{ transacao.descricao || tipoLabel(transacao.tipo) }}</dd>
+        </div>
         <div>
           <dt>Status</dt>
           <dd>{{ statusLabel(transacao) }}</dd>
@@ -414,10 +418,6 @@
       <h3 class="extrato-detail__section-title">Comanda Única</h3>
       @if (transacao.comandaUnica.vinculado) {
         <dl class="extrato-detail">
-          <div>
-            <dt>Comanda</dt>
-            <dd>{{ transacao.comandaUnica.numeroComanda }}</dd>
-          </div>
           @if (transacao.comandaUnica.mesa != null) {
             <div>
               <dt>Mesa</dt>
@@ -431,8 +431,19 @@
             </div>
           }
         </dl>
+        @if (podeAbrirComanda(transacao)) {
+          <a
+            class="btn btn--ghost btn--sm"
+            [routerLink]="['/painel/comandas']"
+            [queryParams]="{ comanda: transacao.comandaUnica.comandaId }"
+            (click)="closeDetail()"
+          >
+            <span class="material-icons" aria-hidden="true">open_in_new</span>
+            Abrir a comanda paga
+          </a>
+        }
       } @else {
-        <p class="field__hint">Sem pedido vinculado.</p>
+        <p class="field__hint">Este lançamento não está vinculado a uma comanda.</p>
       }
     </div>
   </div>

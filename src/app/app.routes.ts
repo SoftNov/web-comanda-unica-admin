@@ -68,6 +68,12 @@ export const routes: Routes = [
         title: 'Pedidos — Comanda Única'
       },
       {
+        path: 'reservas',
+        canActivate: [profileGuard(['OWNER', 'ADMIN', 'MANAGER', 'WAITER'])],
+        loadComponent: () => import('./features/admin/pages/reservas/reservas.component').then((m) => m.ReservasComponent),
+        title: 'Reservas — Comanda Única'
+      },
+      {
         path: 'servicos',
         canActivate: [profileGuard(['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'])],
         loadComponent: () => import('./features/admin/pages/servicos/servicos.component').then((m) => m.ServicosComponent),

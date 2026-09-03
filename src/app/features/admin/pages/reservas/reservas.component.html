@@ -1,0 +1,212 @@
+<div class="page-header page-header--row">
+  <div>
+    <h1 class="page-title">Reservas</h1>
+    <p class="page-subtitle">
+      Reserve mesas com um horário limite. Enquanto a reserva está ativa, a mesa não aceita pedidos pelo QR Code —
+      libere quando o grupo chegar ou deixe expirar sozinha no horário.
+    </p>
+  </div>
+
+  <div class="page-header__actions">
+    <button type="button" class="btn btn--ghost" appRipple (click)="refresh()" [disabled]="isLoading()">
+      <span class="material-icons" aria-hidden="true">refresh</span>
+      Atualizar
+    </button>
+    <button type="button" class="btn btn--primary" appRipple (click)="openCreateModal()">
+      <span class="material-icons" aria-hidden="true">add</span>
+      Nova reserva
+    </button>
+  </div>
+</div>
+
+@if (actionError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ actionError() }}
+  </div>
+}
+
+@if (isLoading()) {
+  <p class="field__hint">Carregando reservas…</p>
+} @else if (listError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ listError() }}
+  </div>
+} @else {
+  <section class="reservas-section">
+    <h2 class="reservas-section__title">Reservas ativas <span class="badge badge--muted">{{ activeReservations().length }}</span></h2>
+
+    @if (activeReservations().length === 0) {
+      <p class="field__hint">Nenhuma reserva ativa no momento.</p>
+    } @else {
+      <div class="reservas-grid">
+        @for (reservation of activeReservations(); track reservation.id) {
+          <div class="reserva-card card" [class.reserva-card--overdue]="isOverdue(reservation)">
+            <div class="reserva-card__header">
+              <span class="reserva-card__table">
+                <span class="material-icons" aria-hidden="true">event_seat</span>
+                Mesa {{ reservation.tableNumber }}{{ reservation.tableName ? ' — ' + reservation.tableName : '' }}
+              </span>
+              <span class="badge" [class.badge--danger]="isOverdue(reservation)" [class.badge--success]="!isOverdue(reservation)">
+                {{ isOverdue(reservation) ? 'Atrasada' : 'Ativa' }}
+              </span>
+            </div>
+
+            <p class="reserva-card__hold">
+              <span class="material-icons" aria-hidden="true">schedule</span>
+              Segura até <strong>{{ formatDateTime(reservation.holdUntil) }}</strong>
+              <span class="reserva-card__countdown">· {{ holdCountdown(reservation) }}</span>
+            </p>
+
+            @if (reservation.guestName || reservation.guestPhone) {
+              <p class="reserva-card__guest">
+                <span class="material-icons" aria-hidden="true">person</span>
+                {{ reservation.guestName || 'Sem nome' }}{{ reservation.guestPhone ? ' · ' + reservation.guestPhone : '' }}
+              </p>
+            }
+
+            @if (reservation.notes) {
+              <p class="reserva-card__notes">
+                <span class="material-icons" aria-hidden="true">sticky_note_2</span>
+                {{ reservation.notes }}
+              </p>
+            }
+
+            <p class="reserva-card__meta">Criada por {{ reservation.createdByUserName || '—' }}</p>
+
+            <div class="reserva-card__actions">
+              <button
+                type="button"
+                class="btn btn--primary btn--sm"
+                appRipple
+                [disabled]="resolvingId() === reservation.id"
+                (click)="resolve(reservation, 'HONORED')"
+              >
+                {{ resolvingId() === reservation.id ? 'Liberando…' : 'Liberar mesa' }}
+              </button>
+              <button
+                type="button"
+                class="btn btn--ghost btn--sm"
+                [disabled]="resolvingId() === reservation.id"
+                (click)="resolve(reservation, 'RELEASED')"
+              >
+                Cancelar reserva
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="reservas-section">
+    <button type="button" class="reservas-section__toggle" (click)="toggleResolved()">
+      <span class="material-icons" aria-hidden="true">{{ showResolved() ? 'expand_less' : 'expand_more' }}</span>
+      Resolvidas nas últimas 24h
+    </button>
+
+    @if (showResolved()) {
+      @if (resolvedReservations().length === 0) {
+        <p class="field__hint">Nenhuma reserva resolvida nas últimas 24h.</p>
+      } @else {
+        <ul class="reservas-resolved">
+          @for (reservation of resolvedReservations(); track reservation.id) {
+            <li class="reservas-resolved__item">
+              <span class="reservas-resolved__table">Mesa {{ reservation.tableNumber }}</span>
+              <span class="badge badge--muted">{{ statusLabel(reservation.status) }}</span>
+              <span class="reservas-resolved__info">
+                {{ reservation.guestName || 'Sem nome' }} · segurava até {{ formatDateTime(reservation.holdUntil) }}
+              </span>
+              <span class="reservas-resolved__when">{{ formatDateTime(reservation.resolvedAt) }}</span>
+            </li>
+          }
+        </ul>
+      }
+    }
+  </section>
+}
+
+@if (isCreateModalOpen()) {
+  <div class="modal-backdrop" (click)="closeCreateModal()">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">Nova reserva</h2>
+        <button type="button" class="icon-btn" (click)="closeCreateModal()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <form (submit)="$event.preventDefault(); submitCreate()" novalidate [formGroup]="createForm">
+        <div class="field">
+          <label class="field__label" for="reserva-table">Mesa</label>
+          <div class="field__control">
+            <select
+              id="reserva-table"
+              class="field__input"
+              formControlName="tableId"
+              [class.field__input--invalid]="createForm.controls.tableId.invalid && createForm.controls.tableId.touched"
+            >
+              <option value="" disabled>Selecione a mesa</option>
+              @for (table of tables(); track table.id) {
+                <option [value]="table.id">Mesa {{ table.number }}{{ table.name ? ' — ' + table.name : '' }}</option>
+              }
+            </select>
+          </div>
+          @if (createForm.controls.tableId.invalid && createForm.controls.tableId.touched) {
+            <span class="field__error">Selecione a mesa.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="reserva-hold">Segurar até</label>
+          <div class="field__control">
+            <input
+              id="reserva-hold"
+              type="datetime-local"
+              class="field__input"
+              formControlName="holdUntil"
+              [class.field__input--invalid]="createForm.controls.holdUntil.invalid && createForm.controls.holdUntil.touched"
+            />
+          </div>
+          <span class="field__hint">Máximo de 24 horas a partir de agora. Depois desse horário, sem comanda aberta, a reserva expira.</span>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="reserva-guest">Nome do responsável (opcional)</label>
+          <div class="field__control">
+            <input id="reserva-guest" type="text" class="field__input" formControlName="guestName" maxlength="150" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="reserva-phone">Telefone (opcional)</label>
+          <div class="field__control">
+            <input id="reserva-phone" type="tel" class="field__input" formControlName="guestPhone" maxlength="30" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="reserva-notes">Observação (opcional)</label>
+          <div class="field__control">
+            <textarea id="reserva-notes" class="field__input" rows="2" formControlName="notes" maxlength="1000"></textarea>
+          </div>
+        </div>
+
+        @if (createError()) {
+          <div class="form-alert form-alert--error" role="alert">
+            <span class="material-icons" aria-hidden="true">error_outline</span>
+            {{ createError() }}
+          </div>
+        }
+
+        <div class="step-actions">
+          <button type="submit" class="btn btn--primary" appRipple [disabled]="isSubmittingCreate()">
+            {{ isSubmittingCreate() ? 'Reservando…' : 'Reservar mesa' }}
+          </button>
+          <button type="button" class="btn btn--ghost" (click)="closeCreateModal()">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

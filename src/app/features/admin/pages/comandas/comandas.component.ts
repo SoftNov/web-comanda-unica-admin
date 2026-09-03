@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   ApiErrorResponse,
   ComandaChargeFeeResponse,
@@ -39,6 +40,8 @@ export class ComandasComponent {
   private readonly comandasService = inject(ComandasService);
   private readonly tablesService = inject(TablesService);
   private readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   private readonly currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
   private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
@@ -105,9 +108,36 @@ export class ComandasComponent {
   // ver ComandasService#refundPayment. Só uma nova chave ao reabrir o modal do zero.
   private refundIdempotencyKey: string | null = null;
 
+  // Comanda aberta por deep link (?comanda=<id>) — ex.: link do extrato financeiro para a comanda
+  // paga. Carregada isoladamente (não depende de estar na página atual da listagem).
+  readonly openingFromLink = signal(false);
+  readonly openFromLinkError = signal<string | null>(null);
+
   constructor() {
     this.loadTables();
     this.loadComandas(0);
+
+    const comandaIdFromLink = this.route.snapshot.queryParamMap.get('comanda');
+    if (comandaIdFromLink) {
+      this.openComandaFromLink(comandaIdFromLink);
+    }
+  }
+
+  private openComandaFromLink(comandaId: string): void {
+    this.openingFromLink.set(true);
+    this.openFromLinkError.set(null);
+    this.comandasService.getById(comandaId).subscribe({
+      next: (comanda) => {
+        this.openingFromLink.set(false);
+        this.openDetail(comanda);
+      },
+      error: () => {
+        this.openingFromLink.set(false);
+        this.openFromLinkError.set('Não foi possível abrir a comanda indicada pelo link.');
+      }
+    });
+    // Remove o parâmetro da URL para não reabrir o modal a cada refresh/navegação.
+    this.router.navigate([], { relativeTo: this.route, queryParams: {}, replaceUrl: true });
   }
 
   // --- Apresentação -------------------------------------------------------------

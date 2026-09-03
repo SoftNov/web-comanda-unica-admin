@@ -26,6 +26,8 @@ export interface RestaurantTableResponse {
   status: TableStatus;
   operationalStatus: TableOperationalStatus;
   cleaningSince?: string;
+  // Horário limite da reserva ativa (quando operationalStatus === 'RESERVED'); ausente caso contrário.
+  reservedUntil?: string;
   allowQr: boolean;
   publicToken: string;
   publicUrl: string;
