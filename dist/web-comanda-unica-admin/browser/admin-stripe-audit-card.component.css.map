@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/admin/pages/settings/stripe/admin/components/admin-stripe-audit-card.component.scss"],
+  "sourcesContent": [".stripe-card {\n  padding: 32px;\n}\n\n.step-heading {\n  margin-top: 0;\n  font-size: 1.0625rem;\n  color: var(--color-text);\n}\n\n.stripe-audit__item {\n  display: flex;\n  flex-direction: column;\n  gap: 4px;\n  margin-top: 16px;\n}\n\n.stripe-status__label {\n  font-size: 0.75rem;\n  text-transform: uppercase;\n  letter-spacing: 0.04em;\n  color: var(--color-text-muted);\n}\n\n.stripe-audit__value {\n  font-size: 0.9375rem;\n  color: var(--color-text);\n}\n\n.field__hint {\n  margin-top: 16px;\n  font-size: 0.8125rem;\n  color: var(--color-text-muted);\n}\n"],
+  "mappings": ";AAAA,CAAA;AACE,WAAA;;AAGF,CAAA;AACE,cAAA;AACA,aAAA;AACA,SAAA,IAAA;;AAGF,CAAA;AACE,WAAA;AACA,kBAAA;AACA,OAAA;AACA,cAAA;;AAGF,CAAA;AACE,aAAA;AACA,kBAAA;AACA,kBAAA;AACA,SAAA,IAAA;;AAGF,CAAA;AACE,aAAA;AACA,SAAA,IAAA;;AAGF,CAAA;AACE,cAAA;AACA,aAAA;AACA,SAAA,IAAA;;",
+  "names": []
+}

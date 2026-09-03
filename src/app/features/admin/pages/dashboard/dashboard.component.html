@@ -218,6 +218,11 @@
         <span class="stat-card__label">Itens no carrinho</span>
         <span class="stat-card__value">{{ isLoadingSummary() ? '—' : summary()?.openCartItemsCount }}</span>
       </div>
+      <div class="stat-card">
+        <span class="material-icons stat-card__icon" aria-hidden="true">hourglass_top</span>
+        <span class="stat-card__label">Taxa da Comanda Única pendente</span>
+        <span class="stat-card__value">{{ isLoadingSummary() ? '—' : formatCurrency(summary()?.pendingFeeBalance) }}</span>
+      </div>
     </div>
   </div>
 }

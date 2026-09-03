@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/admin/pages/settings/stripe/admin/components/admin-stripe-connect-card.component.scss"],
+  "sourcesContent": [".stripe-card {\n  padding: 32px;\n}\n\n.step-heading {\n  margin-top: 0;\n  font-size: 1.0625rem;\n  color: var(--color-text);\n}\n\n.stripe-card__description {\n  margin-top: 4px;\n  margin-bottom: 24px;\n  font-size: 0.9375rem;\n  color: var(--color-text-muted);\n\n  strong {\n    color: var(--color-text);\n  }\n}\n\n.stripe-connect__subheading {\n  margin: 20px 0 12px;\n  font-size: 0.8125rem;\n  text-transform: uppercase;\n  letter-spacing: 0.04em;\n  color: var(--color-text-muted);\n}\n\n.field__row--checkboxes {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 16px;\n}\n\n.step-actions {\n  margin-top: 24px;\n}\n"],
+  "mappings": ";AAAA,CAAA;AACE,WAAA;;AAGF,CAAA;AACE,cAAA;AACA,aAAA;AACA,SAAA,IAAA;;AAGF,CAAA;AACE,cAAA;AACA,iBAAA;AACA,aAAA;AACA,SAAA,IAAA;;AAEA,CANF,yBAME;AACE,SAAA,IAAA;;AAIJ,CAAA;AACE,UAAA,KAAA,EAAA;AACA,aAAA;AACA,kBAAA;AACA,kBAAA;AACA,SAAA,IAAA;;AAGF,CAAA;AACE,WAAA;AACA,aAAA;AACA,OAAA;;AAGF,CAAA;AACE,cAAA;;",
+  "names": []
+}

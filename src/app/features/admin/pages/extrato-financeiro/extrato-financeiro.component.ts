@@ -175,24 +175,62 @@ export class ExtratoFinanceiroComponent {
   }
 
   // "status" é sobre liberação de saldo na Stripe (quando o dinheiro fica disponível para saque) —
-  // não sobre o pagamento em si. Um pagamento pode estar concluído (ver pagamentoConfirmado,
-  // confrontado com a nossa base) e ainda assim ter o saldo pendente de liberação. Por isso o texto
-  // exibido prioriza pagamentoConfirmado — é o que corresponde ao "Concluído" do Dashboard da Stripe.
+  // não sobre o pagamento/estorno em si. Um pagamento pode estar concluído (ver pagamentoConfirmado,
+  // confrontado com a nossa base) e ainda assim ter o saldo pendente de liberação; o mesmo vale para
+  // um estorno já efetivado (ver estornoConfirmado). Por isso o texto exibido prioriza essas
+  // confirmações — é o que corresponde ao "Concluído" do Dashboard da própria Stripe.
   statusLabel(transacao: ExtratoTransacao): string {
     if (transacao.pagamentoConfirmado) {
       return transacao.status === 'AVAILABLE' ? 'Pago' : 'Pago (saldo pendente)';
+    }
+    if (transacao.estornoConfirmado) {
+      return transacao.status === 'AVAILABLE' ? 'Estornado' : 'Estornado (saldo pendente)';
+    }
+    if (this.isLedgerOnlyType(transacao.tipo)) {
+      return transacao.status === 'AVAILABLE' ? 'Concluído' : 'Concluído (saldo pendente)';
     }
     return transacao.status === 'AVAILABLE' ? 'Disponível' : 'Pendente';
   }
 
   isStatusPending(transacao: ExtratoTransacao): boolean {
-    return !transacao.pagamentoConfirmado && transacao.status === 'PENDING';
+    return !transacao.pagamentoConfirmado
+      && !transacao.estornoConfirmado
+      && !this.isLedgerOnlyType(transacao.tipo)
+      && transacao.status === 'PENDING';
   }
 
   // Extrato da plataforma não tem o conceito de "pagamento confirmado" (não é uma cobrança de
-  // estabelecimento) — só reflete a liberação de saldo, igual ao "status" acima.
+  // estabelecimento) — mas o mesmo raciocínio de isLedgerOnlyType abaixo se aplica: repasse, taxa,
+  // estorno de taxa, payout etc. são lançamentos que só existem na Stripe depois de já terem
+  // acontecido — "status" ali é só sobre liberação de saldo, nunca sobre o evento ainda não ter
+  // se concretizado.
   platformStatusLabel(transacao: PlatformExtratoTransacao): string {
+    if (this.isLedgerOnlyType(transacao.category)) {
+      return transacao.status === 'AVAILABLE' ? 'Concluído' : 'Concluído (saldo pendente)';
+    }
     return transacao.status === 'AVAILABLE' ? 'Disponível' : 'Pendente';
+  }
+
+  isPlatformStatusPending(transacao: PlatformExtratoTransacao): boolean {
+    return !this.isLedgerOnlyType(transacao.category) && transacao.status === 'PENDING';
+  }
+
+  // Categorias que só aparecem no extrato depois de já terem se efetivado na Stripe — uma cobrança
+  // que falhou ou foi cancelada nunca chega a gerar Balance Transaction (ver ExtratoStatus no
+  // backend), e o mesmo vale com ainda mais força para repasse/taxa/estorno de taxa/payout/
+  // transferência/disputa/ajuste: não existe um estado intermediário "ainda não aconteceu" para
+  // essas categorias, então "Pendente" (que aqui é só sobre liberação de saldo) fica confuso —
+  // parece que o lançamento ainda não terminou. CHARGE/PAYMENT/REFUND/PAYMENT_REFUND ficam de fora
+  // porque esses têm um gap real de consistência eventual com a NOSSA base (ver pagamentoConfirmado/
+  // estornoConfirmado) que as demais categorias não têm.
+  private isLedgerOnlyType(tipo: ExtratoTipo): boolean {
+    return tipo === 'APPLICATION_FEE'
+      || tipo === 'APPLICATION_FEE_REFUND'
+      || tipo === 'STRIPE_FEE'
+      || tipo === 'PAYOUT'
+      || tipo === 'TRANSFER'
+      || tipo === 'DISPUTE'
+      || tipo === 'ADJUSTMENT';
   }
 
   comandaResumo(ref: ExtratoComandaUnicaRef): string {

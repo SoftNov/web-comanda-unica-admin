@@ -17,6 +17,9 @@ export interface DashboardSummaryResponse {
   ordersValueToday: number;
   openCartItemsCount: number;
   revenueToday: number;
+  // Saldo de taxas da Comanda Única pendentes de liquidação (pagamentos em dinheiro ainda não
+  // repassados via cobrança Stripe) — ver PendingPlatformFeeRepository no backend.
+  pendingFeeBalance: number;
   generatedAt: string;
 }
 

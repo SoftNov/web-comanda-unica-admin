@@ -1,1 +1,0 @@
-import{a as t}from"./chunk-67WQ3MXX.js";import{e as o}from"./chunk-6UCX65NY.js";import{ca as e}from"./chunk-AA7CTIAK.js";function c(r){return"/painel/dashboard"}var d=()=>{let r=e(t),n=e(o),i=r.selectedCompany()?.profileCode??null;return n.createUrlTree([c(i)])};export{c as a,d as b};

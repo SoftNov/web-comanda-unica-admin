@@ -1,1 +1,0 @@
-import{a}from"./chunk-EHQVCVBX.js";import"./chunk-WF4O7MYS.js";import"./chunk-6ZDOQZU5.js";import"./chunk-OVP27M7H.js";import"./chunk-OJVH2X5I.js";import"./chunk-FOZ7KJMV.js";import"./chunk-FETJW2BI.js";import"./chunk-67WQ3MXX.js";import"./chunk-WBB6UU65.js";import"./chunk-VVJTA7VW.js";import"./chunk-6UCX65NY.js";import"./chunk-AA7CTIAK.js";export{a as ServicosComponent};

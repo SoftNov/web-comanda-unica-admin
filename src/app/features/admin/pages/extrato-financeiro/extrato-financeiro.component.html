@@ -284,7 +284,7 @@
                   <td class="extrato-table__number">{{ formatCurrency(transacao.fee) }}</td>
                   <td class="extrato-table__number">{{ formatCurrency(transacao.net) }}</td>
                   <td>
-                    <span class="extrato-status" [class.extrato-status--pending]="transacao.status === 'PENDING'">
+                    <span class="extrato-status" [class.extrato-status--pending]="isPlatformStatusPending(transacao)">
                       {{ platformStatusLabel(transacao) }}
                     </span>
                   </td>

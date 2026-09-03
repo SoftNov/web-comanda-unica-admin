@@ -45,6 +45,9 @@ export interface ComandaPaymentResponse {
   registeredByUserName?: string;
   amount: number;
   paidAt: string;
+  // Taxa da Comanda Única gerada por este pagamento fora da Stripe — nulo para pagamentos online
+  // (a taxa já sai direto da cobrança Stripe, ver ComandaChargeFeeResponse.platformFeeAmount).
+  pendingFeeAmount?: number;
 }
 
 // PAID/PARTIALLY_REFUNDED/REFUNDED — derivado pelo backend (ver PaymentChargeDisplayStatus),
@@ -76,6 +79,9 @@ export interface ComandaChargeFeeResponse {
   // Nulos enquanto o Stripe não confirmou a repartição (webhook), ou em cobranças antigas.
   stripeFeeAmount?: number;
   platformFeeAmount?: number;
+  // Parcela de platformFeeAmount que é taxa PENDENTE de pagamentos manuais anteriores, liquidada
+  // junto nesta cobrança — nulo/zero quando esta cobrança não reservou nenhuma taxa pendente.
+  pendingFeeAmountIncluded?: number;
   netAmount?: number;
   paidAt: string;
   stripePaymentIntentId?: string;
@@ -93,6 +99,9 @@ export interface ComandaFeesResponse {
   platformFeeAmount: number;
   netToEstablishmentAmount: number;
   hasPendingBreakdown: boolean;
+  // Soma das taxas de pagamento manual (dinheiro) ainda não liquidadas — pode existir mesmo sem
+  // nenhuma cobrança online (comanda paga só em dinheiro).
+  pendingFeeAmount: number;
   charges: ComandaChargeFeeResponse[];
 }
 

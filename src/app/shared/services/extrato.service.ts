@@ -59,6 +59,9 @@ export interface ExtratoTransacao {
   // payment_charge.status == SUCCEEDED na nossa base — reflete o mesmo "Concluído" que aparece no
   // Dashboard da própria Stripe para a cobrança, independente do prazo de liberação do saldo.
   pagamentoConfirmado: boolean;
+  // Mesma ideia acima, mas para estornos (payment_refund.status == SUCCEEDED) — só se aplica a
+  // REFUND/PAYMENT_REFUND. Ver statusLabel no componente.
+  estornoConfirmado: boolean;
   data: string;
   descricao: string | null;
   valorBruto: number;
