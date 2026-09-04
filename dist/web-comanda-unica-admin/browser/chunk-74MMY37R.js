@@ -1,7 +1,7 @@
 import {
   FooterComponent,
   HeaderComponent
-} from "./chunk-QCZ43G67.js";
+} from "./chunk-KNI6Y6JX.js";
 import {
   RouterLink
 } from "./chunk-EVJN5Z2J.js";
@@ -63,4 +63,4 @@ var LegalLayoutComponent = class _LegalLayoutComponent {
 export {
   LegalLayoutComponent
 };
-//# sourceMappingURL=chunk-YZDH5HKQ.js.map
+//# sourceMappingURL=chunk-74MMY37R.js.map

@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   ApiErrorResponse,
   CreateReservationRequest,
+  ReservationHistoryStatus,
   ReservationResolution,
   ReservationsService,
   ReservationStatus,
@@ -12,7 +13,7 @@ import {
 import { RestaurantTableResponse, TablesService } from '../../../../shared/services/tables.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
-import { formatCPF, maskCPF, onlyDigits } from '../../../../shared/utils/br-format.util';
+import { formatCPF, formatCellphone, maskCPF, onlyDigits } from '../../../../shared/utils/br-format.util';
 import { cpfValidator } from '../../../../shared/validators/br-document.validator';
 import {
   apiDateTime,
@@ -34,6 +35,18 @@ const STATUS_LABELS: Record<ReservationStatus, string> = {
   RELEASED: 'Cancelada'
 };
 
+// Opções do filtro de status do histórico — ACTIVE fica de fora (essa tela é só para reservas
+// já resolvidas; a ativa tem sua própria seção acima).
+const HISTORY_STATUS_OPTIONS: { value: ReservationHistoryStatus | ''; label: string }[] = [
+  { value: '', label: 'Todos os status' },
+  { value: 'SEATED', label: STATUS_LABELS.SEATED },
+  { value: 'HONORED', label: STATUS_LABELS.HONORED },
+  { value: 'EXPIRED', label: STATUS_LABELS.EXPIRED },
+  { value: 'RELEASED', label: STATUS_LABELS.RELEASED }
+];
+
+const HISTORY_PAGE_SIZE = 10;
+
 @Component({
   selector: 'app-admin-reservas',
   standalone: true,
@@ -53,20 +66,143 @@ export class ReservasComponent implements OnDestroy {
   readonly listError = signal<string | null>(null);
   readonly actionError = signal<string | null>(null);
   readonly resolvingId = signal<string | null>(null);
-  readonly showResolved = signal(false);
 
   // now() reavaliado a cada refresh — usado para marcar reservas atrasadas (holdUntil já passou,
   // mas o scheduler ainda não rodou).
   readonly now = signal(Date.now());
 
   readonly activeReservations = computed(() =>
-    this.reservations().filter((r) => r.status === 'ACTIVE')
-  );
-  readonly resolvedReservations = computed(() =>
     this.reservations()
-      .filter((r) => r.status !== 'ACTIVE')
-      .sort((a, b) => (b.resolvedAt ?? '').localeCompare(a.resolvedAt ?? ''))
+      .filter((r) => r.status === 'ACTIVE')
+      // Atrasadas primeiro (mais urgente), depois por horário de expiração mais próximo.
+      .sort((a, b) => {
+        const overdueDiff = Number(this.isOverdue(b)) - Number(this.isOverdue(a));
+        return overdueDiff !== 0 ? overdueDiff : apiDateTime(a.holdUntil) - apiDateTime(b.holdUntil);
+      })
   );
+  // --- Paginação das ativas (client-side — a API devolve a lista inteira) --------
+  readonly activePageSize = 6;
+  readonly activePage = signal(0);
+
+  readonly activeTotalPages = computed(() => Math.max(1, Math.ceil(this.activeReservations().length / this.activePageSize)));
+
+  readonly pagedActiveReservations = computed(() => {
+    const page = Math.min(this.activePage(), this.activeTotalPages() - 1);
+    const start = page * this.activePageSize;
+    return this.activeReservations().slice(start, start + this.activePageSize);
+  });
+
+  previousActivePage(): void {
+    this.activePage.update((p) => Math.max(0, p - 1));
+  }
+
+  nextActivePage(): void {
+    this.activePage.update((p) => Math.min(this.activeTotalPages() - 1, p + 1));
+  }
+
+  // --- Histórico (paginado e filtrável no servidor — GET .../history) -----------
+  readonly historyStatusOptions = HISTORY_STATUS_OPTIONS;
+
+  readonly showHistory = signal(false);
+  private historyLoadedOnce = false;
+
+  // Filtros — só entram na busca ao clicar "Buscar" (applyHistoryFilters), não a cada tecla.
+  readonly historyStartDate = signal('');
+  readonly historyEndDate = signal('');
+  readonly historyStatus = signal<ReservationHistoryStatus | ''>('');
+  readonly historySearch = signal('');
+
+  readonly historyResults = signal<TableReservationResponse[]>([]);
+  readonly historyPage = signal(0);
+  readonly historyTotalPages = signal(1);
+  readonly historyTotalElements = signal(0);
+  readonly historyLoading = signal(false);
+  readonly historyError = signal<string | null>(null);
+
+  toggleHistory(): void {
+    this.showHistory.update((v) => !v);
+    if (this.showHistory() && !this.historyLoadedOnce) {
+      this.historyLoadedOnce = true;
+      this.loadHistory();
+    }
+  }
+
+  onHistoryStartDateChange(value: string): void {
+    this.historyStartDate.set(value);
+  }
+
+  onHistoryEndDateChange(value: string): void {
+    this.historyEndDate.set(value);
+  }
+
+  onHistoryStatusChange(value: string): void {
+    this.historyStatus.set(value as ReservationHistoryStatus | '');
+  }
+
+  onHistorySearchChange(value: string): void {
+    this.historySearch.set(value);
+  }
+
+  applyHistoryFilters(): void {
+    this.historyPage.set(0);
+    this.loadHistory();
+  }
+
+  clearHistoryFilters(): void {
+    this.historyStartDate.set('');
+    this.historyEndDate.set('');
+    this.historyStatus.set('');
+    this.historySearch.set('');
+    this.historyPage.set(0);
+    this.loadHistory();
+  }
+
+  previousHistoryPage(): void {
+    if (this.historyPage() === 0) {
+      return;
+    }
+    this.historyPage.update((p) => p - 1);
+    this.loadHistory();
+  }
+
+  nextHistoryPage(): void {
+    if (this.historyPage() >= this.historyTotalPages() - 1) {
+      return;
+    }
+    this.historyPage.update((p) => p + 1);
+    this.loadHistory();
+  }
+
+  private loadHistory(): void {
+    this.historyLoading.set(true);
+    this.historyError.set(null);
+
+    this.reservationsService
+      .history({
+        // Filtro é por dia inteiro no horário de Brasília, convertido para o UTC que a API espera.
+        startDate: this.historyStartDate() ? brDateTimeLocalToApi(`${this.historyStartDate()}T00:00`) : undefined,
+        endDate: this.historyEndDate() ? brDateTimeLocalToApi(`${this.historyEndDate()}T23:59`) : undefined,
+        status: this.historyStatus() || undefined,
+        search: this.historySearch().trim() || undefined,
+        page: this.historyPage(),
+        size: HISTORY_PAGE_SIZE,
+        sortBy: 'resolvedAt',
+        sortDirection: 'DESC'
+      })
+      .subscribe({
+        next: (response) => {
+          this.historyResults.set(response.content);
+          this.historyTotalPages.set(Math.max(1, response.totalPages));
+          this.historyTotalElements.set(response.totalElements);
+          this.historyLoading.set(false);
+        },
+        error: () => {
+          this.historyResults.set([]);
+          this.historyLoading.set(false);
+          this.historyError.set('Não foi possível carregar o histórico de reservas.');
+        }
+      });
+  }
 
   // --- Nova reserva (modal) -----------------------------------------------------
   readonly tables = signal<RestaurantTableResponse[]>([]);
@@ -128,11 +264,6 @@ export class ReservasComponent implements OnDestroy {
     this.load();
   }
 
-  toggleResolved(): void {
-    this.showResolved.update((v) => !v);
-    this.load();
-  }
-
   private load(silent = false): void {
     if (!silent) {
       this.isLoading.set(true);
@@ -140,7 +271,7 @@ export class ReservasComponent implements OnDestroy {
     this.listError.set(null);
     this.now.set(Date.now());
 
-    this.reservationsService.list(this.showResolved()).subscribe({
+    this.reservationsService.list().subscribe({
       next: (list) => {
         this.reservations.set(list);
         this.isLoading.set(false);
@@ -197,6 +328,11 @@ export class ReservasComponent implements OnDestroy {
   onCpfInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.createForm.controls.guestDocument.setValue(formatCPF(input.value));
+  }
+
+  onPhoneInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.createForm.controls.guestPhone.setValue(formatCellphone(input.value));
   }
 
   maskDocument(value: string | null | undefined): string {

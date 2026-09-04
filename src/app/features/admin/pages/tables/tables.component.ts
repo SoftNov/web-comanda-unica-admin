@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, forkJoin, map } from 'rxjs';
 import {
   ApiErrorResponse,
   CreateTableRequest,
@@ -99,6 +99,9 @@ export class TablesComponent {
   readonly qrImageUrl = signal<string | null>(null);
   readonly isLoadingQr = signal(false);
   readonly qrError = signal<string | null>(null);
+
+  readonly isPrintingAllQr = signal(false);
+  readonly printAllQrError = signal<string | null>(null);
 
   readonly tableForm = this.fb.nonNullable.group({
     sectorId: ['', Validators.required],
@@ -493,6 +496,128 @@ export class TablesComponent {
       error: () => {
         printWindow.close();
         this.qrError.set('Não foi possível carregar o QR Code para impressão.');
+      }
+    });
+  }
+
+  // Imprime, numa única janela (uma mesa por página, com quebra de página no CSS de impressão),
+  // o QR Code de todas as mesas ATIVAS da empresa — não só as da página atual da listagem, que é
+  // paginada (ver PAGE_SIZE). Mesas INACTIVE ficam de fora: não estão em uso, não faz sentido
+  // imprimir a plaquinha delas.
+  printAllQrCodes(): void {
+    // A janela precisa ser aberta de forma síncrona, ainda dentro do gesto de clique do usuário
+    // (mesmo motivo de printQrCode) — o conteúdo é preenchido depois, quando as chamadas
+    // assíncronas (lista de mesas + um PNG por mesa) terminarem.
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      this.printAllQrError.set('Não foi possível abrir a janela de impressão. Verifique o bloqueador de pop-ups.');
+      autoDismiss(this.printAllQrError, null);
+      return;
+    }
+    printWindow.document.title = 'QR Codes — Mesas';
+    printWindow.document.body.innerHTML =
+      '<p style="font-family: sans-serif; text-align: center; margin-top: 40vh;">Carregando QR Codes…</p>';
+
+    this.isPrintingAllQr.set(true);
+    this.printAllQrError.set(null);
+
+    this.tablesService.list({ status: 'ACTIVE', page: 0, size: 500, sortBy: 'number', sortDirection: 'ASC' }).subscribe({
+      next: (response) => {
+        const tables = response.content;
+        if (tables.length === 0) {
+          this.isPrintingAllQr.set(false);
+          printWindow.close();
+          this.printAllQrError.set('Nenhuma mesa ativa encontrada para imprimir.');
+          autoDismiss(this.printAllQrError, null);
+          return;
+        }
+
+        forkJoin(
+          tables.map((table) =>
+            this.tablesService.getQrCodePng(table.id).pipe(map((blob) => ({ table, url: URL.createObjectURL(blob) })))
+          )
+        ).subscribe({
+          next: (items) => {
+            this.isPrintingAllQr.set(false);
+            this.renderAllQrPrintDocument(printWindow, items);
+          },
+          error: () => {
+            this.isPrintingAllQr.set(false);
+            printWindow.close();
+            this.printAllQrError.set('Não foi possível carregar os QR Codes para impressão.');
+            autoDismiss(this.printAllQrError, null);
+          }
+        });
+      },
+      error: () => {
+        this.isPrintingAllQr.set(false);
+        printWindow.close();
+        this.printAllQrError.set('Não foi possível carregar a lista de mesas.');
+        autoDismiss(this.printAllQrError, null);
+      }
+    });
+  }
+
+  private renderAllQrPrintDocument(printWindow: Window, items: { table: RestaurantTableResponse; url: string }[]): void {
+    const doc = printWindow.document;
+    doc.open();
+    doc.write(
+      '<!doctype html><html><head><title>QR Codes — Mesas</title><style>' +
+        '* { box-sizing: border-box; } body { margin: 0; font-family: sans-serif; color: #111; } ' +
+        '.qr-page { display: flex; flex-direction: column; align-items: center; justify-content: center; ' +
+        'height: 100vh; padding: 24px; page-break-after: always; text-align: center; } ' +
+        '.qr-page:last-child { page-break-after: auto; } ' +
+        '.qr-page img { max-width: 80%; max-height: 65vh; } ' +
+        '.qr-page h2 { margin: 20px 0 4px; font-size: 1.5rem; } ' +
+        '.qr-page p { margin: 0; color: #555; }' +
+        '</style></head><body></body></html>'
+    );
+    doc.close();
+
+    items.forEach(({ table, url }) => {
+      const page = doc.createElement('div');
+      page.className = 'qr-page';
+
+      const img = doc.createElement('img');
+      img.src = url;
+      page.appendChild(img);
+
+      const title = doc.createElement('h2');
+      title.textContent = `Mesa ${table.number}${table.name ? ' — ' + table.name : ''}`;
+      page.appendChild(title);
+
+      const subtitle = doc.createElement('p');
+      subtitle.textContent = table.sectorName;
+      page.appendChild(subtitle);
+
+      doc.body.appendChild(page);
+    });
+
+    this.printWhenImagesReady(printWindow);
+  }
+
+  // Só chama print() depois que todo mundo carregou — chamar cedo demais imprime páginas em
+  // branco (imagem ainda não decodificada).
+  private printWhenImagesReady(printWindow: Window): void {
+    const images = Array.from(printWindow.document.images);
+    if (images.length === 0) {
+      printWindow.print();
+      return;
+    }
+
+    let remaining = images.length;
+    const onSettled = () => {
+      remaining--;
+      if (remaining === 0) {
+        printWindow.print();
+      }
+    };
+    images.forEach((image) => {
+      if (image.complete) {
+        onSettled();
+      } else {
+        image.addEventListener('load', onSettled, { once: true });
+        image.addEventListener('error', onSettled, { once: true });
       }
     });
   }

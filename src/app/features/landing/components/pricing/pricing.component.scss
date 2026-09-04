@@ -46,6 +46,47 @@
   }
 }
 
+.pricing__fees {
+  margin-top: 32px;
+  padding: 20px 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: left;
+  background: var(--color-bg-elevated);
+}
+
+.pricing__fees-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.pricing__fees-list {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 0.9375rem;
+    color: var(--color-text);
+  }
+
+  strong {
+    color: var(--color-accent-hover);
+  }
+}
+
+.pricing__fees-hint {
+  margin-top: 12px;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
 .pricing__cta {
   width: 100%;
   margin-top: 36px;

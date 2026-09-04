@@ -29,7 +29,8 @@
   width: 30px;
   height: 30px;
   border-radius: 8px;
-  background: var(--gradient-accent);
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 .footer__tagline {

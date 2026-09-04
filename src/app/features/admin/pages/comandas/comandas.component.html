@@ -102,7 +102,12 @@
           }
           @for (comanda of comandas(); track comanda.id) {
             <tr>
-              <td>Mesa {{ comanda.tableNumber }}{{ comanda.tableName ? ' — ' + comanda.tableName : '' }}</td>
+              <td>
+                Mesa {{ comanda.tableNumber }}{{ comanda.tableName ? ' — ' + comanda.tableName : '' }}
+                @if (comanda.guestName) {
+                  <span class="comanda-guest-hint">Reserva de {{ comanda.guestName }}</span>
+                }
+              </td>
               <td>
                 <span class="badge" [class]="displayStatusBadgeClass(comanda.displayStatus)">
                   {{ displayStatusLabel(comanda.displayStatus) }}
@@ -155,9 +160,14 @@
   <div class="modal-backdrop">
     <div class="modal-card modal-card--lg card" (click)="$event.stopPropagation()">
       <div class="modal-card__header">
-        <h2 class="step-heading">
-          Comanda — Mesa {{ comanda.tableNumber }}{{ comanda.tableName ? ' — ' + comanda.tableName : '' }}
-        </h2>
+        <div>
+          <h2 class="step-heading">
+            Comanda — Mesa {{ comanda.tableNumber }}{{ comanda.tableName ? ' — ' + comanda.tableName : '' }}
+          </h2>
+          @if (comanda.guestName) {
+            <p class="comanda-guest-hint">Aberta pela reserva de {{ comanda.guestName }}</p>
+          }
+        </div>
         <button type="button" class="icon-btn" (click)="closeDetail()" aria-label="Fechar">
           <span class="material-icons" aria-hidden="true">close</span>
         </button>

@@ -29,6 +29,15 @@
   color: var(--color-text-muted);
 }
 
+// Nome do responsável pela reserva que abriu a comanda (ver ComandaResponse#guestName) — subtítulo
+// discreto tanto na linha da tabela quanto no cabeçalho do modal de detalhe.
+.comanda-guest-hint {
+  display: block;
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
 // --- Filtros ------------------------------------------------------------
 .filters-card {
   padding: 20px;

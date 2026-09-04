@@ -8,7 +8,7 @@
       @if (selectedCompany()?.logoUrl) {
         <img class="admin-sidebar__logo admin-sidebar__logo--img" [src]="selectedCompany()?.logoUrl" alt="">
       } @else {
-        <span class="admin-sidebar__logo">CU</span>
+        <img class="admin-sidebar__logo admin-sidebar__logo--img" src="/assets/images/logo-mark.png" alt="">
       }
       <span class="admin-sidebar__name">{{ selectedCompany()?.companyName ?? 'Comanda Única' }}</span>
     </div>

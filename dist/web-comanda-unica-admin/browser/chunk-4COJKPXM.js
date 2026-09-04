@@ -1,6 +1,6 @@
 import {
   AuthShellComponent
-} from "./chunk-SF3TG6FN.js";
+} from "./chunk-IW6PKVMX.js";
 import {
   RippleDirective
 } from "./chunk-P26S26B7.js";
@@ -154,4 +154,4 @@ var ActivateAccountComponent = class _ActivateAccountComponent {
 export {
   ActivateAccountComponent
 };
-//# sourceMappingURL=chunk-C2FXYXIH.js.map
+//# sourceMappingURL=chunk-4COJKPXM.js.map

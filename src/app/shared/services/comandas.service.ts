@@ -110,6 +110,9 @@ export interface ComandaResponse {
   tableId: string;
   tableNumber: number;
   tableName?: string;
+  // Nome do responsável pela reserva que originou esta comanda (check-in por CPF no QR Code) —
+  // ausente quando aberta pelo fluxo normal de checkout, sem reserva envolvida.
+  guestName?: string;
   status: ComandaStatus;
   displayStatus: ComandaDisplayStatus;
   totalOrdersAmount: number;

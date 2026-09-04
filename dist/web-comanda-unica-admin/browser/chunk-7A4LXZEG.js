@@ -42,7 +42,9 @@ import {
   computed,
   debounceTime,
   distinctUntilChanged,
+  forkJoin,
   inject,
+  map,
   signal,
   ɵsetClassDebugInfo,
   ɵɵStandaloneFeature,
@@ -104,92 +106,122 @@ var TableSectorsService = class _TableSectorsService {
 // src/app/features/admin/pages/tables/tables.component.ts
 var _forTrack0 = ($index, $item) => $item.id;
 var _forTrack1 = ($index, $item) => $item.value;
-function TablesComponent_Conditional_6_Conditional_0_Template(rf, ctx) {
+function TablesComponent_Conditional_7_Conditional_4_Template(rf, ctx) {
   if (rf & 1) {
-    const _r1 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "button", 7);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_6_Conditional_0_Template_button_click_0_listener() {
-      \u0275\u0275restoreView(_r1);
+    const _r3 = \u0275\u0275getCurrentView();
+    \u0275\u0275elementStart(0, "button", 11);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_7_Conditional_4_Template_button_click_0_listener() {
+      \u0275\u0275restoreView(_r3);
       const ctx_r1 = \u0275\u0275nextContext(2);
       return \u0275\u0275resetView(ctx_r1.openCreateTableModal());
     });
-    \u0275\u0275elementStart(1, "span", 8);
+    \u0275\u0275elementStart(1, "span", 9);
     \u0275\u0275text(2, "add");
     \u0275\u0275elementEnd();
     \u0275\u0275text(3, " Nova mesa ");
     \u0275\u0275elementEnd();
   }
 }
-function TablesComponent_Conditional_6_Template(rf, ctx) {
+function TablesComponent_Conditional_7_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275template(0, TablesComponent_Conditional_6_Conditional_0_Template, 4, 0, "button", 6);
+    const _r1 = \u0275\u0275getCurrentView();
+    \u0275\u0275elementStart(0, "button", 8);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_7_Template_button_click_0_listener() {
+      \u0275\u0275restoreView(_r1);
+      const ctx_r1 = \u0275\u0275nextContext();
+      return \u0275\u0275resetView(ctx_r1.printAllQrCodes());
+    });
+    \u0275\u0275elementStart(1, "span", 9);
+    \u0275\u0275text(2, "print");
+    \u0275\u0275elementEnd();
+    \u0275\u0275text(3);
+    \u0275\u0275elementEnd();
+    \u0275\u0275template(4, TablesComponent_Conditional_7_Conditional_4_Template, 4, 0, "button", 10);
   }
   if (rf & 2) {
     const ctx_r1 = \u0275\u0275nextContext();
-    \u0275\u0275conditional(ctx_r1.canManageTables() ? 0 : -1);
+    \u0275\u0275property("disabled", ctx_r1.isPrintingAllQr());
+    \u0275\u0275advance(3);
+    \u0275\u0275textInterpolate1(" ", ctx_r1.isPrintingAllQr() ? "Preparando\u2026" : "Imprimir QR Codes", " ");
+    \u0275\u0275advance();
+    \u0275\u0275conditional(ctx_r1.canManageTables() ? 4 : -1);
   }
 }
-function TablesComponent_Conditional_7_Conditional_0_Template(rf, ctx) {
+function TablesComponent_Conditional_8_Conditional_0_Template(rf, ctx) {
   if (rf & 1) {
-    const _r3 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "button", 7);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_7_Conditional_0_Template_button_click_0_listener() {
-      \u0275\u0275restoreView(_r3);
+    const _r4 = \u0275\u0275getCurrentView();
+    \u0275\u0275elementStart(0, "button", 11);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_8_Conditional_0_Template_button_click_0_listener() {
+      \u0275\u0275restoreView(_r4);
       const ctx_r1 = \u0275\u0275nextContext(2);
       return \u0275\u0275resetView(ctx_r1.openCreateSectorModal());
     });
-    \u0275\u0275elementStart(1, "span", 8);
+    \u0275\u0275elementStart(1, "span", 9);
     \u0275\u0275text(2, "add");
     \u0275\u0275elementEnd();
     \u0275\u0275text(3, " Novo setor ");
     \u0275\u0275elementEnd();
   }
 }
-function TablesComponent_Conditional_7_Template(rf, ctx) {
+function TablesComponent_Conditional_8_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275template(0, TablesComponent_Conditional_7_Conditional_0_Template, 4, 0, "button", 6);
+    \u0275\u0275template(0, TablesComponent_Conditional_8_Conditional_0_Template, 4, 0, "button", 10);
   }
   if (rf & 2) {
     const ctx_r1 = \u0275\u0275nextContext();
     \u0275\u0275conditional(ctx_r1.canManageSectors() ? 0 : -1);
   }
 }
-function TablesComponent_Conditional_13_For_10_Template(rf, ctx) {
+function TablesComponent_Conditional_14_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "option", 16);
+    \u0275\u0275elementStart(0, "div", 6)(1, "span", 9);
+    \u0275\u0275text(2, "error_outline");
+    \u0275\u0275elementEnd();
+    \u0275\u0275text(3);
+    \u0275\u0275elementEnd();
+  }
+  if (rf & 2) {
+    const ctx_r1 = \u0275\u0275nextContext();
+    \u0275\u0275advance(3);
+    \u0275\u0275textInterpolate1(" ", ctx_r1.printAllQrError(), " ");
+  }
+}
+function TablesComponent_Conditional_15_For_10_Template(rf, ctx) {
+  if (rf & 1) {
+    \u0275\u0275elementStart(0, "option", 19);
     \u0275\u0275text(1);
     \u0275\u0275elementEnd();
   }
   if (rf & 2) {
-    const sector_r5 = ctx.$implicit;
-    \u0275\u0275property("value", sector_r5.id);
+    const sector_r6 = ctx.$implicit;
+    \u0275\u0275property("value", sector_r6.id);
     \u0275\u0275advance();
-    \u0275\u0275textInterpolate(sector_r5.name);
+    \u0275\u0275textInterpolate(sector_r6.name);
   }
 }
-function TablesComponent_Conditional_13_For_28_Template(rf, ctx) {
+function TablesComponent_Conditional_15_For_28_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "option", 16);
+    \u0275\u0275elementStart(0, "option", 19);
     \u0275\u0275text(1);
     \u0275\u0275elementEnd();
   }
   if (rf & 2) {
-    const option_r6 = ctx.$implicit;
-    \u0275\u0275property("value", option_r6.value);
+    const option_r7 = ctx.$implicit;
+    \u0275\u0275property("value", option_r7.value);
     \u0275\u0275advance();
-    \u0275\u0275textInterpolate(option_r6.label);
+    \u0275\u0275textInterpolate(option_r7.label);
   }
 }
-function TablesComponent_Conditional_13_Conditional_45_Template(rf, ctx) {
+function TablesComponent_Conditional_15_Conditional_45_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "p", 31);
+    \u0275\u0275elementStart(0, "p", 34);
     \u0275\u0275text(1, "Carregando mesas\u2026");
     \u0275\u0275elementEnd();
   }
 }
-function TablesComponent_Conditional_13_Conditional_46_Template(rf, ctx) {
+function TablesComponent_Conditional_15_Conditional_46_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "div", 32)(1, "span", 8);
+    \u0275\u0275elementStart(0, "div", 6)(1, "span", 9);
     \u0275\u0275text(2, "error_outline");
     \u0275\u0275elementEnd();
     \u0275\u0275text(3);
@@ -201,9 +233,9 @@ function TablesComponent_Conditional_13_Conditional_46_Template(rf, ctx) {
     \u0275\u0275textInterpolate1(" ", ctx_r1.listError(), " ");
   }
 }
-function TablesComponent_Conditional_13_Conditional_47_Conditional_0_Template(rf, ctx) {
+function TablesComponent_Conditional_15_Conditional_47_Conditional_0_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "div", 32)(1, "span", 8);
+    \u0275\u0275elementStart(0, "div", 6)(1, "span", 9);
     \u0275\u0275text(2, "error_outline");
     \u0275\u0275elementEnd();
     \u0275\u0275text(3);
@@ -215,115 +247,115 @@ function TablesComponent_Conditional_13_Conditional_47_Conditional_0_Template(rf
     \u0275\u0275textInterpolate1(" ", ctx_r1.markCleanedError(), " ");
   }
 }
-function TablesComponent_Conditional_13_Conditional_47_Conditional_2_Template(rf, ctx) {
+function TablesComponent_Conditional_15_Conditional_47_Conditional_2_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "p", 31);
+    \u0275\u0275elementStart(0, "p", 34);
     \u0275\u0275text(1, "Nenhuma mesa encontrada.");
     \u0275\u0275elementEnd();
   }
 }
-function TablesComponent_Conditional_13_Conditional_47_For_4_Conditional_8_Template(rf, ctx) {
+function TablesComponent_Conditional_15_Conditional_47_For_4_Conditional_8_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "p", 42);
+    \u0275\u0275elementStart(0, "p", 44);
     \u0275\u0275text(1);
     \u0275\u0275elementEnd();
   }
   if (rf & 2) {
-    const table_r9 = \u0275\u0275nextContext().$implicit;
+    const table_r10 = \u0275\u0275nextContext().$implicit;
     \u0275\u0275advance();
-    \u0275\u0275textInterpolate(table_r9.name);
+    \u0275\u0275textInterpolate(table_r10.name);
   }
 }
-function TablesComponent_Conditional_13_Conditional_47_For_4_Conditional_9_Template(rf, ctx) {
+function TablesComponent_Conditional_15_Conditional_47_For_4_Conditional_9_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "p", 43)(1, "span", 8);
+    \u0275\u0275elementStart(0, "p", 45)(1, "span", 9);
     \u0275\u0275text(2, "event_seat");
     \u0275\u0275elementEnd();
     \u0275\u0275text(3);
     \u0275\u0275elementEnd();
   }
   if (rf & 2) {
-    const table_r9 = \u0275\u0275nextContext().$implicit;
+    const table_r10 = \u0275\u0275nextContext().$implicit;
     const ctx_r1 = \u0275\u0275nextContext(3);
     \u0275\u0275advance(3);
-    \u0275\u0275textInterpolate1(" Reservada at\xE9 ", ctx_r1.formatShortDateTime(table_r9.reservedUntil), " ");
+    \u0275\u0275textInterpolate1(" Reservada at\xE9 ", ctx_r1.formatShortDateTime(table_r10.reservedUntil), " ");
   }
 }
-function TablesComponent_Conditional_13_Conditional_47_For_4_Conditional_39_Template(rf, ctx) {
+function TablesComponent_Conditional_15_Conditional_47_For_4_Conditional_39_Template(rf, ctx) {
   if (rf & 1) {
-    const _r10 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "button", 51);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_13_Conditional_47_For_4_Conditional_39_Template_button_click_0_listener() {
-      \u0275\u0275restoreView(_r10);
-      const table_r9 = \u0275\u0275nextContext().$implicit;
+    const _r11 = \u0275\u0275getCurrentView();
+    \u0275\u0275elementStart(0, "button", 53);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Conditional_47_For_4_Conditional_39_Template_button_click_0_listener() {
+      \u0275\u0275restoreView(_r11);
+      const table_r10 = \u0275\u0275nextContext().$implicit;
       const ctx_r1 = \u0275\u0275nextContext(3);
-      return \u0275\u0275resetView(ctx_r1.markCleaned(table_r9));
+      return \u0275\u0275resetView(ctx_r1.markCleaned(table_r10));
     });
-    \u0275\u0275elementStart(1, "span", 8);
+    \u0275\u0275elementStart(1, "span", 9);
     \u0275\u0275text(2, "cleaning_services");
     \u0275\u0275elementEnd()();
   }
   if (rf & 2) {
-    const table_r9 = \u0275\u0275nextContext().$implicit;
+    const table_r10 = \u0275\u0275nextContext().$implicit;
     const ctx_r1 = \u0275\u0275nextContext(3);
-    \u0275\u0275property("disabled", ctx_r1.markingCleanedTableId() === table_r9.id);
+    \u0275\u0275property("disabled", ctx_r1.markingCleanedTableId() === table_r10.id);
   }
 }
-function TablesComponent_Conditional_13_Conditional_47_For_4_Conditional_40_Template(rf, ctx) {
+function TablesComponent_Conditional_15_Conditional_47_For_4_Conditional_40_Template(rf, ctx) {
   if (rf & 1) {
-    const _r11 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "button", 52);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_13_Conditional_47_For_4_Conditional_40_Template_button_click_0_listener() {
-      \u0275\u0275restoreView(_r11);
-      const table_r9 = \u0275\u0275nextContext().$implicit;
+    const _r12 = \u0275\u0275getCurrentView();
+    \u0275\u0275elementStart(0, "button", 54);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Conditional_47_For_4_Conditional_40_Template_button_click_0_listener() {
+      \u0275\u0275restoreView(_r12);
+      const table_r10 = \u0275\u0275nextContext().$implicit;
       const ctx_r1 = \u0275\u0275nextContext(3);
-      return \u0275\u0275resetView(ctx_r1.requestRegenerateQr(table_r9));
+      return \u0275\u0275resetView(ctx_r1.requestRegenerateQr(table_r10));
     });
-    \u0275\u0275elementStart(1, "span", 8);
+    \u0275\u0275elementStart(1, "span", 9);
     \u0275\u0275text(2, "autorenew");
     \u0275\u0275elementEnd()();
-    \u0275\u0275elementStart(3, "button", 53);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_13_Conditional_47_For_4_Conditional_40_Template_button_click_3_listener() {
-      \u0275\u0275restoreView(_r11);
-      const table_r9 = \u0275\u0275nextContext().$implicit;
+    \u0275\u0275elementStart(3, "button", 55);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Conditional_47_For_4_Conditional_40_Template_button_click_3_listener() {
+      \u0275\u0275restoreView(_r12);
+      const table_r10 = \u0275\u0275nextContext().$implicit;
       const ctx_r1 = \u0275\u0275nextContext(3);
-      return \u0275\u0275resetView(ctx_r1.openEditTableModal(table_r9));
+      return \u0275\u0275resetView(ctx_r1.openEditTableModal(table_r10));
     });
-    \u0275\u0275elementStart(4, "span", 8);
+    \u0275\u0275elementStart(4, "span", 9);
     \u0275\u0275text(5, "edit");
     \u0275\u0275elementEnd()();
-    \u0275\u0275elementStart(6, "button", 25);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_13_Conditional_47_For_4_Conditional_40_Template_button_click_6_listener() {
-      \u0275\u0275restoreView(_r11);
-      const table_r9 = \u0275\u0275nextContext().$implicit;
+    \u0275\u0275elementStart(6, "button", 28);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Conditional_47_For_4_Conditional_40_Template_button_click_6_listener() {
+      \u0275\u0275restoreView(_r12);
+      const table_r10 = \u0275\u0275nextContext().$implicit;
       const ctx_r1 = \u0275\u0275nextContext(3);
-      return \u0275\u0275resetView(ctx_r1.toggleTableStatus(table_r9));
+      return \u0275\u0275resetView(ctx_r1.toggleTableStatus(table_r10));
     });
-    \u0275\u0275elementStart(7, "span", 8);
+    \u0275\u0275elementStart(7, "span", 9);
     \u0275\u0275text(8);
     \u0275\u0275elementEnd()();
   }
   if (rf & 2) {
-    const table_r9 = \u0275\u0275nextContext().$implicit;
+    const table_r10 = \u0275\u0275nextContext().$implicit;
     \u0275\u0275advance(6);
-    \u0275\u0275property("title", table_r9.status === "ACTIVE" ? "Desativar" : "Ativar");
+    \u0275\u0275property("title", table_r10.status === "ACTIVE" ? "Desativar" : "Ativar");
     \u0275\u0275advance(2);
-    \u0275\u0275textInterpolate(table_r9.status === "ACTIVE" ? "toggle_on" : "toggle_off");
+    \u0275\u0275textInterpolate(table_r10.status === "ACTIVE" ? "toggle_on" : "toggle_off");
   }
 }
-function TablesComponent_Conditional_13_Conditional_47_For_4_Template(rf, ctx) {
+function TablesComponent_Conditional_15_Conditional_47_For_4_Template(rf, ctx) {
   if (rf & 1) {
-    const _r8 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 34)(1, "div", 39)(2, "div", 40)(3, "span", 8);
+    const _r9 = \u0275\u0275getCurrentView();
+    \u0275\u0275elementStart(0, "div", 36)(1, "div", 41)(2, "div", 42)(3, "span", 9);
     \u0275\u0275text(4, "table_bar");
     \u0275\u0275elementEnd();
     \u0275\u0275text(5);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(6, "span", 41);
+    \u0275\u0275elementStart(6, "span", 43);
     \u0275\u0275text(7);
     \u0275\u0275elementEnd()();
-    \u0275\u0275template(8, TablesComponent_Conditional_13_Conditional_47_For_4_Conditional_8_Template, 2, 1, "p", 42)(9, TablesComponent_Conditional_13_Conditional_47_For_4_Conditional_9_Template, 4, 1, "p", 43);
-    \u0275\u0275elementStart(10, "dl", 44)(11, "div")(12, "dt");
+    \u0275\u0275template(8, TablesComponent_Conditional_15_Conditional_47_For_4_Conditional_8_Template, 2, 1, "p", 44)(9, TablesComponent_Conditional_15_Conditional_47_For_4_Conditional_9_Template, 4, 1, "p", 45);
+    \u0275\u0275elementStart(10, "dl", 46)(11, "div")(12, "dt");
     \u0275\u0275text(13, "Setor");
     \u0275\u0275elementEnd();
     \u0275\u0275elementStart(14, "dd");
@@ -341,100 +373,100 @@ function TablesComponent_Conditional_13_Conditional_47_For_4_Template(rf, ctx) {
     \u0275\u0275elementStart(24, "dd");
     \u0275\u0275text(25);
     \u0275\u0275elementEnd()()();
-    \u0275\u0275elementStart(26, "div", 45)(27, "button", 46);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_13_Conditional_47_For_4_Template_button_click_27_listener() {
-      const table_r9 = \u0275\u0275restoreView(_r8).$implicit;
+    \u0275\u0275elementStart(26, "div", 47)(27, "button", 48);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Conditional_47_For_4_Template_button_click_27_listener() {
+      const table_r10 = \u0275\u0275restoreView(_r9).$implicit;
       const ctx_r1 = \u0275\u0275nextContext(3);
-      return \u0275\u0275resetView(ctx_r1.openQrModal(table_r9));
+      return \u0275\u0275resetView(ctx_r1.openQrModal(table_r10));
     });
-    \u0275\u0275elementStart(28, "span", 8);
+    \u0275\u0275elementStart(28, "span", 9);
     \u0275\u0275text(29, "qr_code_2");
     \u0275\u0275elementEnd()();
-    \u0275\u0275elementStart(30, "button", 47);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_13_Conditional_47_For_4_Template_button_click_30_listener() {
-      const table_r9 = \u0275\u0275restoreView(_r8).$implicit;
+    \u0275\u0275elementStart(30, "button", 49);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Conditional_47_For_4_Template_button_click_30_listener() {
+      const table_r10 = \u0275\u0275restoreView(_r9).$implicit;
       const ctx_r1 = \u0275\u0275nextContext(3);
-      return \u0275\u0275resetView(ctx_r1.downloadQrCode(table_r9, "png"));
+      return \u0275\u0275resetView(ctx_r1.downloadQrCode(table_r10, "png"));
     });
-    \u0275\u0275elementStart(31, "span", 8);
+    \u0275\u0275elementStart(31, "span", 9);
     \u0275\u0275text(32, "image");
     \u0275\u0275elementEnd()();
-    \u0275\u0275elementStart(33, "button", 48);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_13_Conditional_47_For_4_Template_button_click_33_listener() {
-      const table_r9 = \u0275\u0275restoreView(_r8).$implicit;
+    \u0275\u0275elementStart(33, "button", 50);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Conditional_47_For_4_Template_button_click_33_listener() {
+      const table_r10 = \u0275\u0275restoreView(_r9).$implicit;
       const ctx_r1 = \u0275\u0275nextContext(3);
-      return \u0275\u0275resetView(ctx_r1.downloadQrCode(table_r9, "pdf"));
+      return \u0275\u0275resetView(ctx_r1.downloadQrCode(table_r10, "pdf"));
     });
-    \u0275\u0275elementStart(34, "span", 8);
+    \u0275\u0275elementStart(34, "span", 9);
     \u0275\u0275text(35, "picture_as_pdf");
     \u0275\u0275elementEnd()();
-    \u0275\u0275elementStart(36, "button", 49);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_13_Conditional_47_For_4_Template_button_click_36_listener() {
-      const table_r9 = \u0275\u0275restoreView(_r8).$implicit;
+    \u0275\u0275elementStart(36, "button", 51);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Conditional_47_For_4_Template_button_click_36_listener() {
+      const table_r10 = \u0275\u0275restoreView(_r9).$implicit;
       const ctx_r1 = \u0275\u0275nextContext(3);
-      return \u0275\u0275resetView(ctx_r1.printQrCode(table_r9));
+      return \u0275\u0275resetView(ctx_r1.printQrCode(table_r10));
     });
-    \u0275\u0275elementStart(37, "span", 8);
+    \u0275\u0275elementStart(37, "span", 9);
     \u0275\u0275text(38, "print");
     \u0275\u0275elementEnd()();
-    \u0275\u0275template(39, TablesComponent_Conditional_13_Conditional_47_For_4_Conditional_39_Template, 3, 1, "button", 50)(40, TablesComponent_Conditional_13_Conditional_47_For_4_Conditional_40_Template, 9, 2);
+    \u0275\u0275template(39, TablesComponent_Conditional_15_Conditional_47_For_4_Conditional_39_Template, 3, 1, "button", 52)(40, TablesComponent_Conditional_15_Conditional_47_For_4_Conditional_40_Template, 9, 2);
     \u0275\u0275elementEnd()();
   }
   if (rf & 2) {
-    const table_r9 = ctx.$implicit;
+    const table_r10 = ctx.$implicit;
     const ctx_r1 = \u0275\u0275nextContext(3);
     \u0275\u0275advance(5);
-    \u0275\u0275textInterpolate1(" Mesa ", table_r9.number, " ");
+    \u0275\u0275textInterpolate1(" Mesa ", table_r10.number, " ");
     \u0275\u0275advance();
-    \u0275\u0275classMap(ctx_r1.tableStatusBadgeClass(table_r9));
+    \u0275\u0275classMap(ctx_r1.tableStatusBadgeClass(table_r10));
     \u0275\u0275advance();
-    \u0275\u0275textInterpolate(ctx_r1.tableStatusLabel(table_r9));
+    \u0275\u0275textInterpolate(ctx_r1.tableStatusLabel(table_r10));
     \u0275\u0275advance();
-    \u0275\u0275conditional(table_r9.name ? 8 : -1);
+    \u0275\u0275conditional(table_r10.name ? 8 : -1);
     \u0275\u0275advance();
-    \u0275\u0275conditional(table_r9.operationalStatus === "RESERVED" && table_r9.reservedUntil ? 9 : -1);
+    \u0275\u0275conditional(table_r10.operationalStatus === "RESERVED" && table_r10.reservedUntil ? 9 : -1);
     \u0275\u0275advance(6);
-    \u0275\u0275textInterpolate(table_r9.sectorName);
+    \u0275\u0275textInterpolate(table_r10.sectorName);
     \u0275\u0275advance(5);
-    \u0275\u0275textInterpolate1("", table_r9.capacity, " pessoa(s)");
+    \u0275\u0275textInterpolate1("", table_r10.capacity, " pessoa(s)");
     \u0275\u0275advance(5);
-    \u0275\u0275textInterpolate(table_r9.allowQr ? "Sim" : "N\xE3o");
+    \u0275\u0275textInterpolate(table_r10.allowQr ? "Sim" : "N\xE3o");
     \u0275\u0275advance(14);
-    \u0275\u0275conditional(table_r9.operationalStatus === "CLEANING" ? 39 : -1);
+    \u0275\u0275conditional(table_r10.operationalStatus === "CLEANING" ? 39 : -1);
     \u0275\u0275advance();
     \u0275\u0275conditional(ctx_r1.canManageTables() ? 40 : -1);
   }
 }
-function TablesComponent_Conditional_13_Conditional_47_Template(rf, ctx) {
+function TablesComponent_Conditional_15_Conditional_47_Template(rf, ctx) {
   if (rf & 1) {
-    const _r7 = \u0275\u0275getCurrentView();
-    \u0275\u0275template(0, TablesComponent_Conditional_13_Conditional_47_Conditional_0_Template, 4, 1, "div", 32);
-    \u0275\u0275elementStart(1, "div", 33);
-    \u0275\u0275template(2, TablesComponent_Conditional_13_Conditional_47_Conditional_2_Template, 2, 0, "p", 31);
-    \u0275\u0275repeaterCreate(3, TablesComponent_Conditional_13_Conditional_47_For_4_Template, 41, 11, "div", 34, _forTrack0);
+    const _r8 = \u0275\u0275getCurrentView();
+    \u0275\u0275template(0, TablesComponent_Conditional_15_Conditional_47_Conditional_0_Template, 4, 1, "div", 6);
+    \u0275\u0275elementStart(1, "div", 35);
+    \u0275\u0275template(2, TablesComponent_Conditional_15_Conditional_47_Conditional_2_Template, 2, 0, "p", 34);
+    \u0275\u0275repeaterCreate(3, TablesComponent_Conditional_15_Conditional_47_For_4_Template, 41, 11, "div", 36, _forTrack0);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(5, "div", 35)(6, "div", 36)(7, "span", 37);
+    \u0275\u0275elementStart(5, "div", 37)(6, "div", 38)(7, "span", 39);
     \u0275\u0275text(8);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(9, "div", 38)(10, "button", 29);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_13_Conditional_47_Template_button_click_10_listener() {
-      \u0275\u0275restoreView(_r7);
+    \u0275\u0275elementStart(9, "div", 40)(10, "button", 32);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Conditional_47_Template_button_click_10_listener() {
+      \u0275\u0275restoreView(_r8);
       const ctx_r1 = \u0275\u0275nextContext(2);
       return \u0275\u0275resetView(ctx_r1.previousPage());
     });
-    \u0275\u0275elementStart(11, "span", 8);
+    \u0275\u0275elementStart(11, "span", 9);
     \u0275\u0275text(12, "chevron_left");
     \u0275\u0275elementEnd();
     \u0275\u0275text(13, " Anterior ");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(14, "button", 29);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_13_Conditional_47_Template_button_click_14_listener() {
-      \u0275\u0275restoreView(_r7);
+    \u0275\u0275elementStart(14, "button", 32);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Conditional_47_Template_button_click_14_listener() {
+      \u0275\u0275restoreView(_r8);
       const ctx_r1 = \u0275\u0275nextContext(2);
       return \u0275\u0275resetView(ctx_r1.nextPage());
     });
     \u0275\u0275text(15, " Pr\xF3xima ");
-    \u0275\u0275elementStart(16, "span", 8);
+    \u0275\u0275elementStart(16, "span", 9);
     \u0275\u0275text(17, "chevron_right");
     \u0275\u0275elementEnd()()()()();
   }
@@ -453,94 +485,94 @@ function TablesComponent_Conditional_13_Conditional_47_Template(rf, ctx) {
     \u0275\u0275property("disabled", ctx_r1.isLast());
   }
 }
-function TablesComponent_Conditional_13_Template(rf, ctx) {
+function TablesComponent_Conditional_15_Template(rf, ctx) {
   if (rf & 1) {
-    const _r4 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 9)(1, "div", 10)(2, "div", 11)(3, "label", 12);
+    const _r5 = \u0275\u0275getCurrentView();
+    \u0275\u0275elementStart(0, "div", 12)(1, "div", 13)(2, "div", 14)(3, "label", 15);
     \u0275\u0275text(4, "Setor");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(5, "div", 13)(6, "select", 14);
-    \u0275\u0275listener("change", function TablesComponent_Conditional_13_Template_select_change_6_listener($event) {
-      \u0275\u0275restoreView(_r4);
+    \u0275\u0275elementStart(5, "div", 16)(6, "select", 17);
+    \u0275\u0275listener("change", function TablesComponent_Conditional_15_Template_select_change_6_listener($event) {
+      \u0275\u0275restoreView(_r5);
       const ctx_r1 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r1.setSectorFilter($event.target.value));
     });
-    \u0275\u0275elementStart(7, "option", 15);
+    \u0275\u0275elementStart(7, "option", 18);
     \u0275\u0275text(8, "Todos");
     \u0275\u0275elementEnd();
-    \u0275\u0275repeaterCreate(9, TablesComponent_Conditional_13_For_10_Template, 2, 2, "option", 16, _forTrack0);
+    \u0275\u0275repeaterCreate(9, TablesComponent_Conditional_15_For_10_Template, 2, 2, "option", 19, _forTrack0);
     \u0275\u0275elementEnd()()();
-    \u0275\u0275elementStart(11, "div", 11)(12, "label", 17);
+    \u0275\u0275elementStart(11, "div", 14)(12, "label", 20);
     \u0275\u0275text(13, "Status");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(14, "div", 13)(15, "select", 18);
-    \u0275\u0275listener("change", function TablesComponent_Conditional_13_Template_select_change_15_listener($event) {
-      \u0275\u0275restoreView(_r4);
+    \u0275\u0275elementStart(14, "div", 16)(15, "select", 21);
+    \u0275\u0275listener("change", function TablesComponent_Conditional_15_Template_select_change_15_listener($event) {
+      \u0275\u0275restoreView(_r5);
       const ctx_r1 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r1.setStatusFilter($event.target.value));
     });
-    \u0275\u0275elementStart(16, "option", 19);
+    \u0275\u0275elementStart(16, "option", 22);
     \u0275\u0275text(17, "Todas");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(18, "option", 20);
+    \u0275\u0275elementStart(18, "option", 23);
     \u0275\u0275text(19, "Ativas");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(20, "option", 21);
+    \u0275\u0275elementStart(20, "option", 24);
     \u0275\u0275text(21, "Inativas");
     \u0275\u0275elementEnd()()()();
-    \u0275\u0275elementStart(22, "div", 11)(23, "label", 22);
+    \u0275\u0275elementStart(22, "div", 14)(23, "label", 25);
     \u0275\u0275text(24, "Ordenar por");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(25, "div", 23)(26, "select", 24);
-    \u0275\u0275listener("change", function TablesComponent_Conditional_13_Template_select_change_26_listener($event) {
-      \u0275\u0275restoreView(_r4);
+    \u0275\u0275elementStart(25, "div", 26)(26, "select", 27);
+    \u0275\u0275listener("change", function TablesComponent_Conditional_15_Template_select_change_26_listener($event) {
+      \u0275\u0275restoreView(_r5);
       const ctx_r1 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r1.setSortBy($event.target.value));
     });
-    \u0275\u0275repeaterCreate(27, TablesComponent_Conditional_13_For_28_Template, 2, 2, "option", 16, _forTrack1);
+    \u0275\u0275repeaterCreate(27, TablesComponent_Conditional_15_For_28_Template, 2, 2, "option", 19, _forTrack1);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(29, "button", 25);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_13_Template_button_click_29_listener() {
-      \u0275\u0275restoreView(_r4);
+    \u0275\u0275elementStart(29, "button", 28);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Template_button_click_29_listener() {
+      \u0275\u0275restoreView(_r5);
       const ctx_r1 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r1.toggleSortDirection());
     });
-    \u0275\u0275elementStart(30, "span", 8);
+    \u0275\u0275elementStart(30, "span", 9);
     \u0275\u0275text(31);
     \u0275\u0275elementEnd()()()();
-    \u0275\u0275elementStart(32, "div", 26)(33, "label", 27);
+    \u0275\u0275elementStart(32, "div", 29)(33, "label", 30);
     \u0275\u0275text(34, "Buscar por n\xFAmero ou nome");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(35, "div", 13)(36, "input", 28);
-    \u0275\u0275listener("input", function TablesComponent_Conditional_13_Template_input_input_36_listener($event) {
-      \u0275\u0275restoreView(_r4);
+    \u0275\u0275elementStart(35, "div", 16)(36, "input", 31);
+    \u0275\u0275listener("input", function TablesComponent_Conditional_15_Template_input_input_36_listener($event) {
+      \u0275\u0275restoreView(_r5);
       const ctx_r1 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r1.onSearchInput($event));
     });
     \u0275\u0275elementEnd()()();
-    \u0275\u0275elementStart(37, "button", 29);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_13_Template_button_click_37_listener() {
-      \u0275\u0275restoreView(_r4);
+    \u0275\u0275elementStart(37, "button", 32);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Template_button_click_37_listener() {
+      \u0275\u0275restoreView(_r5);
       const ctx_r1 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r1.refreshTables());
     });
-    \u0275\u0275elementStart(38, "span", 8);
+    \u0275\u0275elementStart(38, "span", 9);
     \u0275\u0275text(39, "refresh");
     \u0275\u0275elementEnd();
     \u0275\u0275text(40, " Atualizar ");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(41, "button", 30);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_13_Template_button_click_41_listener() {
-      \u0275\u0275restoreView(_r4);
+    \u0275\u0275elementStart(41, "button", 33);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Template_button_click_41_listener() {
+      \u0275\u0275restoreView(_r5);
       const ctx_r1 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r1.resetFilters());
     });
-    \u0275\u0275elementStart(42, "span", 8);
+    \u0275\u0275elementStart(42, "span", 9);
     \u0275\u0275text(43, "filter_alt_off");
     \u0275\u0275elementEnd();
     \u0275\u0275text(44, " Limpar filtros ");
     \u0275\u0275elementEnd()()();
-    \u0275\u0275template(45, TablesComponent_Conditional_13_Conditional_45_Template, 2, 0, "p", 31)(46, TablesComponent_Conditional_13_Conditional_46_Template, 4, 1, "div", 32)(47, TablesComponent_Conditional_13_Conditional_47_Template, 18, 6);
+    \u0275\u0275template(45, TablesComponent_Conditional_15_Conditional_45_Template, 2, 0, "p", 34)(46, TablesComponent_Conditional_15_Conditional_46_Template, 4, 1, "div", 6)(47, TablesComponent_Conditional_15_Conditional_47_Template, 18, 6);
   }
   if (rf & 2) {
     const ctx_r1 = \u0275\u0275nextContext();
@@ -566,16 +598,16 @@ function TablesComponent_Conditional_13_Template(rf, ctx) {
     \u0275\u0275conditional(ctx_r1.isLoadingList() ? 45 : ctx_r1.listError() ? 46 : 47);
   }
 }
-function TablesComponent_Conditional_14_Conditional_0_Template(rf, ctx) {
+function TablesComponent_Conditional_16_Conditional_0_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "p", 31);
+    \u0275\u0275elementStart(0, "p", 34);
     \u0275\u0275text(1, "Carregando setores\u2026");
     \u0275\u0275elementEnd();
   }
 }
-function TablesComponent_Conditional_14_Conditional_1_Template(rf, ctx) {
+function TablesComponent_Conditional_16_Conditional_1_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "div", 32)(1, "span", 8);
+    \u0275\u0275elementStart(0, "div", 6)(1, "span", 9);
     \u0275\u0275text(2, "error_outline");
     \u0275\u0275elementEnd();
     \u0275\u0275text(3);
@@ -587,16 +619,16 @@ function TablesComponent_Conditional_14_Conditional_1_Template(rf, ctx) {
     \u0275\u0275textInterpolate1(" ", ctx_r1.sectorsError(), " ");
   }
 }
-function TablesComponent_Conditional_14_Conditional_2_Conditional_11_Template(rf, ctx) {
+function TablesComponent_Conditional_16_Conditional_2_Conditional_11_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "th", 57);
+    \u0275\u0275elementStart(0, "th", 59);
     \u0275\u0275text(1, "A\xE7\xF5es");
     \u0275\u0275elementEnd();
   }
 }
-function TablesComponent_Conditional_14_Conditional_2_Conditional_13_Template(rf, ctx) {
+function TablesComponent_Conditional_16_Conditional_2_Conditional_13_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "tr")(1, "td", 58);
+    \u0275\u0275elementStart(0, "tr")(1, "td", 60);
     \u0275\u0275text(2, "Nenhum setor cadastrado.");
     \u0275\u0275elementEnd()();
   }
@@ -606,32 +638,32 @@ function TablesComponent_Conditional_14_Conditional_2_Conditional_13_Template(rf
     \u0275\u0275attribute("colspan", ctx_r1.canManageSectors() ? 4 : 3);
   }
 }
-function TablesComponent_Conditional_14_Conditional_2_For_15_Conditional_8_Template(rf, ctx) {
+function TablesComponent_Conditional_16_Conditional_2_For_15_Conditional_8_Template(rf, ctx) {
   if (rf & 1) {
-    const _r12 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "td", 57)(1, "button", 53);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_14_Conditional_2_For_15_Conditional_8_Template_button_click_1_listener() {
-      \u0275\u0275restoreView(_r12);
-      const sector_r13 = \u0275\u0275nextContext().$implicit;
+    const _r13 = \u0275\u0275getCurrentView();
+    \u0275\u0275elementStart(0, "td", 59)(1, "button", 55);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_16_Conditional_2_For_15_Conditional_8_Template_button_click_1_listener() {
+      \u0275\u0275restoreView(_r13);
+      const sector_r14 = \u0275\u0275nextContext().$implicit;
       const ctx_r1 = \u0275\u0275nextContext(3);
-      return \u0275\u0275resetView(ctx_r1.openEditSectorModal(sector_r13));
+      return \u0275\u0275resetView(ctx_r1.openEditSectorModal(sector_r14));
     });
-    \u0275\u0275elementStart(2, "span", 8);
+    \u0275\u0275elementStart(2, "span", 9);
     \u0275\u0275text(3, "edit");
     \u0275\u0275elementEnd()();
-    \u0275\u0275elementStart(4, "button", 59);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_14_Conditional_2_For_15_Conditional_8_Template_button_click_4_listener() {
-      \u0275\u0275restoreView(_r12);
-      const sector_r13 = \u0275\u0275nextContext().$implicit;
+    \u0275\u0275elementStart(4, "button", 61);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_16_Conditional_2_For_15_Conditional_8_Template_button_click_4_listener() {
+      \u0275\u0275restoreView(_r13);
+      const sector_r14 = \u0275\u0275nextContext().$implicit;
       const ctx_r1 = \u0275\u0275nextContext(3);
-      return \u0275\u0275resetView(ctx_r1.requestDeleteSector(sector_r13));
+      return \u0275\u0275resetView(ctx_r1.requestDeleteSector(sector_r14));
     });
-    \u0275\u0275elementStart(5, "span", 8);
+    \u0275\u0275elementStart(5, "span", 9);
     \u0275\u0275text(6, "delete_outline");
     \u0275\u0275elementEnd()()();
   }
 }
-function TablesComponent_Conditional_14_Conditional_2_For_15_Template(rf, ctx) {
+function TablesComponent_Conditional_16_Conditional_2_For_15_Template(rf, ctx) {
   if (rf & 1) {
     \u0275\u0275elementStart(0, "tr")(1, "td");
     \u0275\u0275text(2);
@@ -639,30 +671,30 @@ function TablesComponent_Conditional_14_Conditional_2_For_15_Template(rf, ctx) {
     \u0275\u0275elementStart(3, "td");
     \u0275\u0275text(4);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(5, "td")(6, "span", 41);
+    \u0275\u0275elementStart(5, "td")(6, "span", 43);
     \u0275\u0275text(7);
     \u0275\u0275elementEnd()();
-    \u0275\u0275template(8, TablesComponent_Conditional_14_Conditional_2_For_15_Conditional_8_Template, 7, 0, "td", 57);
+    \u0275\u0275template(8, TablesComponent_Conditional_16_Conditional_2_For_15_Conditional_8_Template, 7, 0, "td", 59);
     \u0275\u0275elementEnd();
   }
   if (rf & 2) {
-    const sector_r13 = ctx.$implicit;
+    const sector_r14 = ctx.$implicit;
     const ctx_r1 = \u0275\u0275nextContext(3);
     \u0275\u0275advance(2);
-    \u0275\u0275textInterpolate(sector_r13.name);
+    \u0275\u0275textInterpolate(sector_r14.name);
     \u0275\u0275advance(2);
-    \u0275\u0275textInterpolate(sector_r13.displayOrder);
+    \u0275\u0275textInterpolate(sector_r14.displayOrder);
     \u0275\u0275advance(2);
-    \u0275\u0275classProp("badge--success", sector_r13.active)("badge--muted", !sector_r13.active);
+    \u0275\u0275classProp("badge--success", sector_r14.active)("badge--muted", !sector_r14.active);
     \u0275\u0275advance();
-    \u0275\u0275textInterpolate1(" ", sector_r13.active ? "Ativo" : "Inativo", " ");
+    \u0275\u0275textInterpolate1(" ", sector_r14.active ? "Ativo" : "Inativo", " ");
     \u0275\u0275advance();
     \u0275\u0275conditional(ctx_r1.canManageSectors() ? 8 : -1);
   }
 }
-function TablesComponent_Conditional_14_Conditional_2_Template(rf, ctx) {
+function TablesComponent_Conditional_16_Conditional_2_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "div", 54)(1, "div", 55)(2, "table", 56)(3, "thead")(4, "tr")(5, "th");
+    \u0275\u0275elementStart(0, "div", 56)(1, "div", 57)(2, "table", 58)(3, "thead")(4, "tr")(5, "th");
     \u0275\u0275text(6, "Setor");
     \u0275\u0275elementEnd();
     \u0275\u0275elementStart(7, "th");
@@ -671,11 +703,11 @@ function TablesComponent_Conditional_14_Conditional_2_Template(rf, ctx) {
     \u0275\u0275elementStart(9, "th");
     \u0275\u0275text(10, "Status");
     \u0275\u0275elementEnd();
-    \u0275\u0275template(11, TablesComponent_Conditional_14_Conditional_2_Conditional_11_Template, 2, 0, "th", 57);
+    \u0275\u0275template(11, TablesComponent_Conditional_16_Conditional_2_Conditional_11_Template, 2, 0, "th", 59);
     \u0275\u0275elementEnd()();
     \u0275\u0275elementStart(12, "tbody");
-    \u0275\u0275template(13, TablesComponent_Conditional_14_Conditional_2_Conditional_13_Template, 3, 1, "tr");
-    \u0275\u0275repeaterCreate(14, TablesComponent_Conditional_14_Conditional_2_For_15_Template, 9, 8, "tr", null, _forTrack0);
+    \u0275\u0275template(13, TablesComponent_Conditional_16_Conditional_2_Conditional_13_Template, 3, 1, "tr");
+    \u0275\u0275repeaterCreate(14, TablesComponent_Conditional_16_Conditional_2_For_15_Template, 9, 8, "tr", null, _forTrack0);
     \u0275\u0275elementEnd()()()();
   }
   if (rf & 2) {
@@ -688,68 +720,68 @@ function TablesComponent_Conditional_14_Conditional_2_Template(rf, ctx) {
     \u0275\u0275repeater(ctx_r1.sectors());
   }
 }
-function TablesComponent_Conditional_14_Template(rf, ctx) {
+function TablesComponent_Conditional_16_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275template(0, TablesComponent_Conditional_14_Conditional_0_Template, 2, 0, "p", 31)(1, TablesComponent_Conditional_14_Conditional_1_Template, 4, 1, "div", 32)(2, TablesComponent_Conditional_14_Conditional_2_Template, 16, 2, "div", 54);
+    \u0275\u0275template(0, TablesComponent_Conditional_16_Conditional_0_Template, 2, 0, "p", 34)(1, TablesComponent_Conditional_16_Conditional_1_Template, 4, 1, "div", 6)(2, TablesComponent_Conditional_16_Conditional_2_Template, 16, 2, "div", 56);
   }
   if (rf & 2) {
     const ctx_r1 = \u0275\u0275nextContext();
     \u0275\u0275conditional(ctx_r1.isLoadingSectors() ? 0 : ctx_r1.sectorsError() ? 1 : 2);
   }
 }
-function TablesComponent_Conditional_15_Conditional_15_Template(rf, ctx) {
+function TablesComponent_Conditional_17_Conditional_15_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "span", 68);
+    \u0275\u0275elementStart(0, "span", 70);
     \u0275\u0275text(1, "Informe o n\xFAmero da mesa.");
     \u0275\u0275elementEnd();
   }
 }
-function TablesComponent_Conditional_15_For_29_Template(rf, ctx) {
+function TablesComponent_Conditional_17_For_29_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "option", 16);
+    \u0275\u0275elementStart(0, "option", 19);
     \u0275\u0275text(1);
     \u0275\u0275elementEnd();
   }
   if (rf & 2) {
-    const sector_r15 = ctx.$implicit;
-    \u0275\u0275property("value", sector_r15.id);
+    const sector_r16 = ctx.$implicit;
+    \u0275\u0275property("value", sector_r16.id);
     \u0275\u0275advance();
-    \u0275\u0275textInterpolate(sector_r15.name);
+    \u0275\u0275textInterpolate(sector_r16.name);
   }
 }
-function TablesComponent_Conditional_15_Conditional_30_Template(rf, ctx) {
+function TablesComponent_Conditional_17_Conditional_30_Template(rf, ctx) {
   if (rf & 1) {
-    const _r16 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "button", 87);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Conditional_30_Template_button_click_0_listener() {
-      \u0275\u0275restoreView(_r16);
+    const _r17 = \u0275\u0275getCurrentView();
+    \u0275\u0275elementStart(0, "button", 89);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_17_Conditional_30_Template_button_click_0_listener() {
+      \u0275\u0275restoreView(_r17);
       const ctx_r1 = \u0275\u0275nextContext(2);
       return \u0275\u0275resetView(ctx_r1.openCreateSectorModal(true));
     });
-    \u0275\u0275elementStart(1, "span", 8);
+    \u0275\u0275elementStart(1, "span", 9);
     \u0275\u0275text(2, "add");
     \u0275\u0275elementEnd();
     \u0275\u0275text(3, " Novo ");
     \u0275\u0275elementEnd();
   }
 }
-function TablesComponent_Conditional_15_Conditional_31_Template(rf, ctx) {
+function TablesComponent_Conditional_17_Conditional_31_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "span", 68);
+    \u0275\u0275elementStart(0, "span", 70);
     \u0275\u0275text(1, "Selecione um setor.");
     \u0275\u0275elementEnd();
   }
 }
-function TablesComponent_Conditional_15_Conditional_38_Template(rf, ctx) {
+function TablesComponent_Conditional_17_Conditional_38_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "span", 68);
+    \u0275\u0275elementStart(0, "span", 70);
     \u0275\u0275text(1, "Informe a capacidade da mesa.");
     \u0275\u0275elementEnd();
   }
 }
-function TablesComponent_Conditional_15_Conditional_57_Template(rf, ctx) {
+function TablesComponent_Conditional_17_Conditional_57_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "div", 32)(1, "span", 8);
+    \u0275\u0275elementStart(0, "div", 6)(1, "span", 9);
     \u0275\u0275text(2, "error_outline");
     \u0275\u0275elementEnd();
     \u0275\u0275text(3);
@@ -761,93 +793,93 @@ function TablesComponent_Conditional_15_Conditional_57_Template(rf, ctx) {
     \u0275\u0275textInterpolate1(" ", ctx_r1.tableFormError(), " ");
   }
 }
-function TablesComponent_Conditional_15_Template(rf, ctx) {
+function TablesComponent_Conditional_17_Template(rf, ctx) {
   if (rf & 1) {
-    const _r14 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 5)(1, "div", 60);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Template_div_click_1_listener($event) {
-      \u0275\u0275restoreView(_r14);
+    const _r15 = \u0275\u0275getCurrentView();
+    \u0275\u0275elementStart(0, "div", 7)(1, "div", 62);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_17_Template_div_click_1_listener($event) {
+      \u0275\u0275restoreView(_r15);
       return \u0275\u0275resetView($event.stopPropagation());
     });
-    \u0275\u0275elementStart(2, "div", 61)(3, "h2", 62);
+    \u0275\u0275elementStart(2, "div", 63)(3, "h2", 64);
     \u0275\u0275text(4);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(5, "button", 63);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Template_button_click_5_listener() {
-      \u0275\u0275restoreView(_r14);
+    \u0275\u0275elementStart(5, "button", 65);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_17_Template_button_click_5_listener() {
+      \u0275\u0275restoreView(_r15);
       const ctx_r1 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r1.closeTableModal());
     });
-    \u0275\u0275elementStart(6, "span", 8);
+    \u0275\u0275elementStart(6, "span", 9);
     \u0275\u0275text(7, "close");
     \u0275\u0275elementEnd()()();
-    \u0275\u0275elementStart(8, "form", 64);
-    \u0275\u0275listener("submit", function TablesComponent_Conditional_15_Template_form_submit_8_listener($event) {
-      \u0275\u0275restoreView(_r14);
+    \u0275\u0275elementStart(8, "form", 66);
+    \u0275\u0275listener("submit", function TablesComponent_Conditional_17_Template_form_submit_8_listener($event) {
+      \u0275\u0275restoreView(_r15);
       const ctx_r1 = \u0275\u0275nextContext();
       $event.preventDefault();
       return \u0275\u0275resetView(ctx_r1.submitTable());
     });
-    \u0275\u0275elementStart(9, "div", 65)(10, "div", 11)(11, "label", 66);
+    \u0275\u0275elementStart(9, "div", 67)(10, "div", 14)(11, "label", 68);
     \u0275\u0275text(12, "N\xFAmero da mesa");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(13, "div", 13);
-    \u0275\u0275element(14, "input", 67);
+    \u0275\u0275elementStart(13, "div", 16);
+    \u0275\u0275element(14, "input", 69);
     \u0275\u0275elementEnd();
-    \u0275\u0275template(15, TablesComponent_Conditional_15_Conditional_15_Template, 2, 0, "span", 68);
+    \u0275\u0275template(15, TablesComponent_Conditional_17_Conditional_15_Template, 2, 0, "span", 70);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(16, "div", 11)(17, "label", 69);
+    \u0275\u0275elementStart(16, "div", 14)(17, "label", 71);
     \u0275\u0275text(18, "Nome/Apelido");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(19, "div", 13);
-    \u0275\u0275element(20, "input", 70);
+    \u0275\u0275elementStart(19, "div", 16);
+    \u0275\u0275element(20, "input", 72);
     \u0275\u0275elementEnd()()();
-    \u0275\u0275elementStart(21, "div", 11)(22, "label", 71);
+    \u0275\u0275elementStart(21, "div", 14)(22, "label", 73);
     \u0275\u0275text(23, "Setor");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(24, "div", 72)(25, "select", 73)(26, "option", 74);
+    \u0275\u0275elementStart(24, "div", 74)(25, "select", 75)(26, "option", 76);
     \u0275\u0275text(27, "Selecione um setor");
     \u0275\u0275elementEnd();
-    \u0275\u0275repeaterCreate(28, TablesComponent_Conditional_15_For_29_Template, 2, 2, "option", 16, _forTrack0);
+    \u0275\u0275repeaterCreate(28, TablesComponent_Conditional_17_For_29_Template, 2, 2, "option", 19, _forTrack0);
     \u0275\u0275elementEnd();
-    \u0275\u0275template(30, TablesComponent_Conditional_15_Conditional_30_Template, 4, 0, "button", 75);
+    \u0275\u0275template(30, TablesComponent_Conditional_17_Conditional_30_Template, 4, 0, "button", 77);
     \u0275\u0275elementEnd();
-    \u0275\u0275template(31, TablesComponent_Conditional_15_Conditional_31_Template, 2, 0, "span", 68);
+    \u0275\u0275template(31, TablesComponent_Conditional_17_Conditional_31_Template, 2, 0, "span", 70);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(32, "div", 65)(33, "div", 11)(34, "label", 76);
+    \u0275\u0275elementStart(32, "div", 67)(33, "div", 14)(34, "label", 78);
     \u0275\u0275text(35, "Capacidade");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(36, "div", 13);
-    \u0275\u0275element(37, "input", 77);
+    \u0275\u0275elementStart(36, "div", 16);
+    \u0275\u0275element(37, "input", 79);
     \u0275\u0275elementEnd();
-    \u0275\u0275template(38, TablesComponent_Conditional_15_Conditional_38_Template, 2, 0, "span", 68);
+    \u0275\u0275template(38, TablesComponent_Conditional_17_Conditional_38_Template, 2, 0, "span", 70);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(39, "div", 11)(40, "label", 78);
+    \u0275\u0275elementStart(39, "div", 14)(40, "label", 80);
     \u0275\u0275text(41, "Status inicial");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(42, "div", 13)(43, "select", 79)(44, "option", 20);
+    \u0275\u0275elementStart(42, "div", 16)(43, "select", 81)(44, "option", 23);
     \u0275\u0275text(45, "Ativa");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(46, "option", 21);
+    \u0275\u0275elementStart(46, "option", 24);
     \u0275\u0275text(47, "Inativa");
     \u0275\u0275elementEnd()()()()();
-    \u0275\u0275elementStart(48, "div", 65)(49, "label", 80);
-    \u0275\u0275element(50, "input", 81);
+    \u0275\u0275elementStart(48, "div", 67)(49, "label", 82);
+    \u0275\u0275element(50, "input", 83);
     \u0275\u0275text(51, " Permite QR Code");
     \u0275\u0275elementEnd()();
-    \u0275\u0275elementStart(52, "div", 11)(53, "label", 82);
+    \u0275\u0275elementStart(52, "div", 14)(53, "label", 84);
     \u0275\u0275text(54, "Observa\xE7\xF5es");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(55, "div", 13);
-    \u0275\u0275element(56, "textarea", 83);
+    \u0275\u0275elementStart(55, "div", 16);
+    \u0275\u0275element(56, "textarea", 85);
     \u0275\u0275elementEnd()();
-    \u0275\u0275template(57, TablesComponent_Conditional_15_Conditional_57_Template, 4, 1, "div", 32);
-    \u0275\u0275elementStart(58, "div", 84)(59, "button", 85);
+    \u0275\u0275template(57, TablesComponent_Conditional_17_Conditional_57_Template, 4, 1, "div", 6);
+    \u0275\u0275elementStart(58, "div", 86)(59, "button", 87);
     \u0275\u0275text(60);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(61, "button", 86);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_15_Template_button_click_61_listener() {
-      \u0275\u0275restoreView(_r14);
+    \u0275\u0275elementStart(61, "button", 88);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_17_Template_button_click_61_listener() {
+      \u0275\u0275restoreView(_r15);
       const ctx_r1 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r1.closeTableModal());
     });
@@ -884,16 +916,16 @@ function TablesComponent_Conditional_15_Template(rf, ctx) {
     \u0275\u0275textInterpolate1(" ", ctx_r1.isSubmittingTable() ? "Salvando\u2026" : "Salvar", " ");
   }
 }
-function TablesComponent_Conditional_16_Conditional_14_Template(rf, ctx) {
+function TablesComponent_Conditional_18_Conditional_14_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "span", 68);
+    \u0275\u0275elementStart(0, "span", 70);
     \u0275\u0275text(1, "Informe um nome entre 2 e 100 caracteres.");
     \u0275\u0275elementEnd();
   }
 }
-function TablesComponent_Conditional_16_Conditional_24_Template(rf, ctx) {
+function TablesComponent_Conditional_18_Conditional_24_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "div", 32)(1, "span", 8);
+    \u0275\u0275elementStart(0, "div", 6)(1, "span", 9);
     \u0275\u0275text(2, "error_outline");
     \u0275\u0275elementEnd();
     \u0275\u0275text(3);
@@ -905,58 +937,58 @@ function TablesComponent_Conditional_16_Conditional_24_Template(rf, ctx) {
     \u0275\u0275textInterpolate1(" ", ctx_r1.sectorFormError(), " ");
   }
 }
-function TablesComponent_Conditional_16_Template(rf, ctx) {
+function TablesComponent_Conditional_18_Template(rf, ctx) {
   if (rf & 1) {
-    const _r17 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 5)(1, "div", 88);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_16_Template_div_click_1_listener($event) {
-      \u0275\u0275restoreView(_r17);
+    const _r18 = \u0275\u0275getCurrentView();
+    \u0275\u0275elementStart(0, "div", 7)(1, "div", 90);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_18_Template_div_click_1_listener($event) {
+      \u0275\u0275restoreView(_r18);
       return \u0275\u0275resetView($event.stopPropagation());
     });
-    \u0275\u0275elementStart(2, "div", 61)(3, "h2", 62);
+    \u0275\u0275elementStart(2, "div", 63)(3, "h2", 64);
     \u0275\u0275text(4);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(5, "button", 63);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_16_Template_button_click_5_listener() {
-      \u0275\u0275restoreView(_r17);
+    \u0275\u0275elementStart(5, "button", 65);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_18_Template_button_click_5_listener() {
+      \u0275\u0275restoreView(_r18);
       const ctx_r1 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r1.closeSectorModal());
     });
-    \u0275\u0275elementStart(6, "span", 8);
+    \u0275\u0275elementStart(6, "span", 9);
     \u0275\u0275text(7, "close");
     \u0275\u0275elementEnd()()();
-    \u0275\u0275elementStart(8, "form", 64);
-    \u0275\u0275listener("submit", function TablesComponent_Conditional_16_Template_form_submit_8_listener($event) {
-      \u0275\u0275restoreView(_r17);
+    \u0275\u0275elementStart(8, "form", 66);
+    \u0275\u0275listener("submit", function TablesComponent_Conditional_18_Template_form_submit_8_listener($event) {
+      \u0275\u0275restoreView(_r18);
       const ctx_r1 = \u0275\u0275nextContext();
       $event.preventDefault();
       return \u0275\u0275resetView(ctx_r1.submitSector());
     });
-    \u0275\u0275elementStart(9, "div", 11)(10, "label", 89);
+    \u0275\u0275elementStart(9, "div", 14)(10, "label", 91);
     \u0275\u0275text(11, "Nome");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(12, "div", 13);
-    \u0275\u0275element(13, "input", 90);
+    \u0275\u0275elementStart(12, "div", 16);
+    \u0275\u0275element(13, "input", 92);
     \u0275\u0275elementEnd();
-    \u0275\u0275template(14, TablesComponent_Conditional_16_Conditional_14_Template, 2, 0, "span", 68);
+    \u0275\u0275template(14, TablesComponent_Conditional_18_Conditional_14_Template, 2, 0, "span", 70);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(15, "div", 11)(16, "label", 91);
+    \u0275\u0275elementStart(15, "div", 14)(16, "label", 93);
     \u0275\u0275text(17, "Ordem de exibi\xE7\xE3o");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(18, "div", 13);
-    \u0275\u0275element(19, "input", 92);
+    \u0275\u0275elementStart(18, "div", 16);
+    \u0275\u0275element(19, "input", 94);
     \u0275\u0275elementEnd()();
-    \u0275\u0275elementStart(20, "div", 65)(21, "label", 80);
-    \u0275\u0275element(22, "input", 93);
+    \u0275\u0275elementStart(20, "div", 67)(21, "label", 82);
+    \u0275\u0275element(22, "input", 95);
     \u0275\u0275text(23, " Ativo");
     \u0275\u0275elementEnd()();
-    \u0275\u0275template(24, TablesComponent_Conditional_16_Conditional_24_Template, 4, 1, "div", 32);
-    \u0275\u0275elementStart(25, "div", 84)(26, "button", 85);
+    \u0275\u0275template(24, TablesComponent_Conditional_18_Conditional_24_Template, 4, 1, "div", 6);
+    \u0275\u0275elementStart(25, "div", 86)(26, "button", 87);
     \u0275\u0275text(27);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(28, "button", 86);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_16_Template_button_click_28_listener() {
-      \u0275\u0275restoreView(_r17);
+    \u0275\u0275elementStart(28, "button", 88);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_18_Template_button_click_28_listener() {
+      \u0275\u0275restoreView(_r18);
       const ctx_r1 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r1.closeSectorModal());
     });
@@ -981,9 +1013,9 @@ function TablesComponent_Conditional_16_Template(rf, ctx) {
     \u0275\u0275textInterpolate1(" ", ctx_r1.isSubmittingSector() ? "Salvando\u2026" : "Salvar", " ");
   }
 }
-function TablesComponent_Conditional_17_Conditional_9_Template(rf, ctx) {
+function TablesComponent_Conditional_19_Conditional_9_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "div", 32)(1, "span", 8);
+    \u0275\u0275elementStart(0, "div", 6)(1, "span", 9);
     \u0275\u0275text(2, "error_outline");
     \u0275\u0275elementEnd();
     \u0275\u0275text(3);
@@ -995,36 +1027,36 @@ function TablesComponent_Conditional_17_Conditional_9_Template(rf, ctx) {
     \u0275\u0275textInterpolate1(" ", ctx_r1.regenerateQrError(), " ");
   }
 }
-function TablesComponent_Conditional_17_Template(rf, ctx) {
+function TablesComponent_Conditional_19_Template(rf, ctx) {
   if (rf & 1) {
-    const _r18 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 5)(1, "div", 88);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_17_Template_div_click_1_listener($event) {
-      \u0275\u0275restoreView(_r18);
+    const _r19 = \u0275\u0275getCurrentView();
+    \u0275\u0275elementStart(0, "div", 7)(1, "div", 90);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_19_Template_div_click_1_listener($event) {
+      \u0275\u0275restoreView(_r19);
       return \u0275\u0275resetView($event.stopPropagation());
     });
-    \u0275\u0275elementStart(2, "h2", 62);
+    \u0275\u0275elementStart(2, "h2", 64);
     \u0275\u0275text(3, "Regenerar QR Code");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(4, "p", 31);
+    \u0275\u0275elementStart(4, "p", 34);
     \u0275\u0275text(5, " O QR Code atual da ");
     \u0275\u0275elementStart(6, "strong");
     \u0275\u0275text(7);
     \u0275\u0275elementEnd();
     \u0275\u0275text(8, " deixar\xE1 de funcionar imediatamente. Voc\xEA precisar\xE1 imprimir e substituir o QR Code f\xEDsico da mesa. ");
     \u0275\u0275elementEnd();
-    \u0275\u0275template(9, TablesComponent_Conditional_17_Conditional_9_Template, 4, 1, "div", 32);
-    \u0275\u0275elementStart(10, "div", 84)(11, "button", 94);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_17_Template_button_click_11_listener() {
-      \u0275\u0275restoreView(_r18);
+    \u0275\u0275template(9, TablesComponent_Conditional_19_Conditional_9_Template, 4, 1, "div", 6);
+    \u0275\u0275elementStart(10, "div", 86)(11, "button", 96);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_19_Template_button_click_11_listener() {
+      \u0275\u0275restoreView(_r19);
       const ctx_r1 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r1.confirmRegenerateQr());
     });
     \u0275\u0275text(12);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(13, "button", 86);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_17_Template_button_click_13_listener() {
-      \u0275\u0275restoreView(_r18);
+    \u0275\u0275elementStart(13, "button", 88);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_19_Template_button_click_13_listener() {
+      \u0275\u0275restoreView(_r19);
       const ctx_r1 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r1.cancelRegenerateQr());
     });
@@ -1043,9 +1075,9 @@ function TablesComponent_Conditional_17_Template(rf, ctx) {
     \u0275\u0275textInterpolate1(" ", ctx_r1.isRegeneratingQr() ? "Regenerando\u2026" : "Regenerar", " ");
   }
 }
-function TablesComponent_Conditional_18_Conditional_9_Template(rf, ctx) {
+function TablesComponent_Conditional_20_Conditional_9_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "div", 32)(1, "span", 8);
+    \u0275\u0275elementStart(0, "div", 6)(1, "span", 9);
     \u0275\u0275text(2, "error_outline");
     \u0275\u0275elementEnd();
     \u0275\u0275text(3);
@@ -1057,36 +1089,36 @@ function TablesComponent_Conditional_18_Conditional_9_Template(rf, ctx) {
     \u0275\u0275textInterpolate1(" ", ctx_r1.deleteSectorError(), " ");
   }
 }
-function TablesComponent_Conditional_18_Template(rf, ctx) {
+function TablesComponent_Conditional_20_Template(rf, ctx) {
   if (rf & 1) {
-    const _r19 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 5)(1, "div", 88);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_18_Template_div_click_1_listener($event) {
-      \u0275\u0275restoreView(_r19);
+    const _r20 = \u0275\u0275getCurrentView();
+    \u0275\u0275elementStart(0, "div", 7)(1, "div", 90);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_20_Template_div_click_1_listener($event) {
+      \u0275\u0275restoreView(_r20);
       return \u0275\u0275resetView($event.stopPropagation());
     });
-    \u0275\u0275elementStart(2, "h2", 62);
+    \u0275\u0275elementStart(2, "h2", 64);
     \u0275\u0275text(3, "Excluir setor");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(4, "p", 31);
+    \u0275\u0275elementStart(4, "p", 34);
     \u0275\u0275text(5, " Tem certeza que deseja excluir ");
     \u0275\u0275elementStart(6, "strong");
     \u0275\u0275text(7);
     \u0275\u0275elementEnd();
     \u0275\u0275text(8, "? Esta a\xE7\xE3o n\xE3o pode ser desfeita. ");
     \u0275\u0275elementEnd();
-    \u0275\u0275template(9, TablesComponent_Conditional_18_Conditional_9_Template, 4, 1, "div", 32);
-    \u0275\u0275elementStart(10, "div", 84)(11, "button", 94);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_18_Template_button_click_11_listener() {
-      \u0275\u0275restoreView(_r19);
+    \u0275\u0275template(9, TablesComponent_Conditional_20_Conditional_9_Template, 4, 1, "div", 6);
+    \u0275\u0275elementStart(10, "div", 86)(11, "button", 96);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_20_Template_button_click_11_listener() {
+      \u0275\u0275restoreView(_r20);
       const ctx_r1 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r1.confirmDeleteSector());
     });
     \u0275\u0275text(12);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(13, "button", 86);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_18_Template_button_click_13_listener() {
-      \u0275\u0275restoreView(_r19);
+    \u0275\u0275elementStart(13, "button", 88);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_20_Template_button_click_13_listener() {
+      \u0275\u0275restoreView(_r20);
       const ctx_r1 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r1.cancelDeleteSector());
     });
@@ -1105,16 +1137,16 @@ function TablesComponent_Conditional_18_Template(rf, ctx) {
     \u0275\u0275textInterpolate1(" ", ctx_r1.isDeletingSector() ? "Excluindo\u2026" : "Excluir", " ");
   }
 }
-function TablesComponent_Conditional_19_Conditional_8_Template(rf, ctx) {
+function TablesComponent_Conditional_21_Conditional_8_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "p", 31);
+    \u0275\u0275elementStart(0, "p", 34);
     \u0275\u0275text(1, "Carregando QR Code\u2026");
     \u0275\u0275elementEnd();
   }
 }
-function TablesComponent_Conditional_19_Conditional_9_Template(rf, ctx) {
+function TablesComponent_Conditional_21_Conditional_9_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "div", 32)(1, "span", 8);
+    \u0275\u0275elementStart(0, "div", 6)(1, "span", 9);
     \u0275\u0275text(2, "error_outline");
     \u0275\u0275elementEnd();
     \u0275\u0275text(3);
@@ -1126,26 +1158,26 @@ function TablesComponent_Conditional_19_Conditional_9_Template(rf, ctx) {
     \u0275\u0275textInterpolate1(" ", ctx_r1.qrError(), " ");
   }
 }
-function TablesComponent_Conditional_19_Conditional_10_Conditional_0_Template(rf, ctx) {
+function TablesComponent_Conditional_21_Conditional_10_Conditional_0_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "div", 95);
-    \u0275\u0275element(1, "img", 96);
+    \u0275\u0275elementStart(0, "div", 97);
+    \u0275\u0275element(1, "img", 98);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(2, "p", 31);
+    \u0275\u0275elementStart(2, "p", 34);
     \u0275\u0275text(3);
     \u0275\u0275elementEnd();
   }
   if (rf & 2) {
-    const table_r21 = \u0275\u0275nextContext(2);
+    const table_r22 = \u0275\u0275nextContext(2);
     \u0275\u0275advance();
-    \u0275\u0275property("src", ctx, \u0275\u0275sanitizeUrl)("alt", "QR Code da Mesa " + table_r21.number);
+    \u0275\u0275property("src", ctx, \u0275\u0275sanitizeUrl)("alt", "QR Code da Mesa " + table_r22.number);
     \u0275\u0275advance(2);
-    \u0275\u0275textInterpolate(table_r21.publicUrl);
+    \u0275\u0275textInterpolate(table_r22.publicUrl);
   }
 }
-function TablesComponent_Conditional_19_Conditional_10_Template(rf, ctx) {
+function TablesComponent_Conditional_21_Conditional_10_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275template(0, TablesComponent_Conditional_19_Conditional_10_Conditional_0_Template, 4, 3);
+    \u0275\u0275template(0, TablesComponent_Conditional_21_Conditional_10_Conditional_0_Template, 4, 3);
   }
   if (rf & 2) {
     let tmp_3_0;
@@ -1153,56 +1185,56 @@ function TablesComponent_Conditional_19_Conditional_10_Template(rf, ctx) {
     \u0275\u0275conditional((tmp_3_0 = ctx_r1.qrImageUrl()) ? 0 : -1, tmp_3_0);
   }
 }
-function TablesComponent_Conditional_19_Template(rf, ctx) {
+function TablesComponent_Conditional_21_Template(rf, ctx) {
   if (rf & 1) {
-    const _r20 = \u0275\u0275getCurrentView();
-    \u0275\u0275elementStart(0, "div", 5)(1, "div", 88);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_19_Template_div_click_1_listener($event) {
-      \u0275\u0275restoreView(_r20);
+    const _r21 = \u0275\u0275getCurrentView();
+    \u0275\u0275elementStart(0, "div", 7)(1, "div", 90);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_21_Template_div_click_1_listener($event) {
+      \u0275\u0275restoreView(_r21);
       return \u0275\u0275resetView($event.stopPropagation());
     });
-    \u0275\u0275elementStart(2, "div", 61)(3, "h2", 62);
+    \u0275\u0275elementStart(2, "div", 63)(3, "h2", 64);
     \u0275\u0275text(4);
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(5, "button", 63);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_19_Template_button_click_5_listener() {
-      \u0275\u0275restoreView(_r20);
+    \u0275\u0275elementStart(5, "button", 65);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_21_Template_button_click_5_listener() {
+      \u0275\u0275restoreView(_r21);
       const ctx_r1 = \u0275\u0275nextContext();
       return \u0275\u0275resetView(ctx_r1.closeQrModal());
     });
-    \u0275\u0275elementStart(6, "span", 8);
+    \u0275\u0275elementStart(6, "span", 9);
     \u0275\u0275text(7, "close");
     \u0275\u0275elementEnd()()();
-    \u0275\u0275template(8, TablesComponent_Conditional_19_Conditional_8_Template, 2, 0, "p", 31)(9, TablesComponent_Conditional_19_Conditional_9_Template, 4, 1, "div", 32)(10, TablesComponent_Conditional_19_Conditional_10_Template, 1, 1);
-    \u0275\u0275elementStart(11, "div", 84)(12, "button", 87);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_19_Template_button_click_12_listener() {
-      const table_r21 = \u0275\u0275restoreView(_r20);
+    \u0275\u0275template(8, TablesComponent_Conditional_21_Conditional_8_Template, 2, 0, "p", 34)(9, TablesComponent_Conditional_21_Conditional_9_Template, 4, 1, "div", 6)(10, TablesComponent_Conditional_21_Conditional_10_Template, 1, 1);
+    \u0275\u0275elementStart(11, "div", 86)(12, "button", 89);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_21_Template_button_click_12_listener() {
+      const table_r22 = \u0275\u0275restoreView(_r21);
       const ctx_r1 = \u0275\u0275nextContext();
-      return \u0275\u0275resetView(ctx_r1.downloadQrCode(table_r21, "png"));
+      return \u0275\u0275resetView(ctx_r1.downloadQrCode(table_r22, "png"));
     });
-    \u0275\u0275elementStart(13, "span", 8);
+    \u0275\u0275elementStart(13, "span", 9);
     \u0275\u0275text(14, "image");
     \u0275\u0275elementEnd();
     \u0275\u0275text(15, " Baixar PNG ");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(16, "button", 87);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_19_Template_button_click_16_listener() {
-      const table_r21 = \u0275\u0275restoreView(_r20);
+    \u0275\u0275elementStart(16, "button", 89);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_21_Template_button_click_16_listener() {
+      const table_r22 = \u0275\u0275restoreView(_r21);
       const ctx_r1 = \u0275\u0275nextContext();
-      return \u0275\u0275resetView(ctx_r1.downloadQrCode(table_r21, "pdf"));
+      return \u0275\u0275resetView(ctx_r1.downloadQrCode(table_r22, "pdf"));
     });
-    \u0275\u0275elementStart(17, "span", 8);
+    \u0275\u0275elementStart(17, "span", 9);
     \u0275\u0275text(18, "picture_as_pdf");
     \u0275\u0275elementEnd();
     \u0275\u0275text(19, " Baixar PDF ");
     \u0275\u0275elementEnd();
-    \u0275\u0275elementStart(20, "button", 87);
-    \u0275\u0275listener("click", function TablesComponent_Conditional_19_Template_button_click_20_listener() {
-      const table_r21 = \u0275\u0275restoreView(_r20);
+    \u0275\u0275elementStart(20, "button", 89);
+    \u0275\u0275listener("click", function TablesComponent_Conditional_21_Template_button_click_20_listener() {
+      const table_r22 = \u0275\u0275restoreView(_r21);
       const ctx_r1 = \u0275\u0275nextContext();
-      return \u0275\u0275resetView(ctx_r1.printQrCode(table_r21));
+      return \u0275\u0275resetView(ctx_r1.printQrCode(table_r22));
     });
-    \u0275\u0275elementStart(21, "span", 8);
+    \u0275\u0275elementStart(21, "span", 9);
     \u0275\u0275text(22, "print");
     \u0275\u0275elementEnd();
     \u0275\u0275text(23, " Imprimir ");
@@ -1265,6 +1297,8 @@ var TablesComponent = class _TablesComponent {
   qrImageUrl = signal(null);
   isLoadingQr = signal(false);
   qrError = signal(null);
+  isPrintingAllQr = signal(false);
+  printAllQrError = signal(null);
   tableForm = this.fb.nonNullable.group({
     sectorId: ["", Validators.required],
     number: this.fb.control(null, [Validators.required, Validators.min(1)]),
@@ -1612,6 +1646,97 @@ var TablesComponent = class _TablesComponent {
       }
     });
   }
+  // Imprime, numa única janela (uma mesa por página, com quebra de página no CSS de impressão),
+  // o QR Code de todas as mesas ATIVAS da empresa — não só as da página atual da listagem, que é
+  // paginada (ver PAGE_SIZE). Mesas INACTIVE ficam de fora: não estão em uso, não faz sentido
+  // imprimir a plaquinha delas.
+  printAllQrCodes() {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      this.printAllQrError.set("N\xE3o foi poss\xEDvel abrir a janela de impress\xE3o. Verifique o bloqueador de pop-ups.");
+      autoDismiss(this.printAllQrError, null);
+      return;
+    }
+    printWindow.document.title = "QR Codes \u2014 Mesas";
+    printWindow.document.body.innerHTML = '<p style="font-family: sans-serif; text-align: center; margin-top: 40vh;">Carregando QR Codes\u2026</p>';
+    this.isPrintingAllQr.set(true);
+    this.printAllQrError.set(null);
+    this.tablesService.list({ status: "ACTIVE", page: 0, size: 500, sortBy: "number", sortDirection: "ASC" }).subscribe({
+      next: (response) => {
+        const tables = response.content;
+        if (tables.length === 0) {
+          this.isPrintingAllQr.set(false);
+          printWindow.close();
+          this.printAllQrError.set("Nenhuma mesa ativa encontrada para imprimir.");
+          autoDismiss(this.printAllQrError, null);
+          return;
+        }
+        forkJoin(tables.map((table) => this.tablesService.getQrCodePng(table.id).pipe(map((blob) => ({ table, url: URL.createObjectURL(blob) }))))).subscribe({
+          next: (items) => {
+            this.isPrintingAllQr.set(false);
+            this.renderAllQrPrintDocument(printWindow, items);
+          },
+          error: () => {
+            this.isPrintingAllQr.set(false);
+            printWindow.close();
+            this.printAllQrError.set("N\xE3o foi poss\xEDvel carregar os QR Codes para impress\xE3o.");
+            autoDismiss(this.printAllQrError, null);
+          }
+        });
+      },
+      error: () => {
+        this.isPrintingAllQr.set(false);
+        printWindow.close();
+        this.printAllQrError.set("N\xE3o foi poss\xEDvel carregar a lista de mesas.");
+        autoDismiss(this.printAllQrError, null);
+      }
+    });
+  }
+  renderAllQrPrintDocument(printWindow, items) {
+    const doc = printWindow.document;
+    doc.open();
+    doc.write("<!doctype html><html><head><title>QR Codes \u2014 Mesas</title><style>* { box-sizing: border-box; } body { margin: 0; font-family: sans-serif; color: #111; } .qr-page { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 24px; page-break-after: always; text-align: center; } .qr-page:last-child { page-break-after: auto; } .qr-page img { max-width: 80%; max-height: 65vh; } .qr-page h2 { margin: 20px 0 4px; font-size: 1.5rem; } .qr-page p { margin: 0; color: #555; }</style></head><body></body></html>");
+    doc.close();
+    items.forEach(({ table, url }) => {
+      const page = doc.createElement("div");
+      page.className = "qr-page";
+      const img = doc.createElement("img");
+      img.src = url;
+      page.appendChild(img);
+      const title = doc.createElement("h2");
+      title.textContent = `Mesa ${table.number}${table.name ? " \u2014 " + table.name : ""}`;
+      page.appendChild(title);
+      const subtitle = doc.createElement("p");
+      subtitle.textContent = table.sectorName;
+      page.appendChild(subtitle);
+      doc.body.appendChild(page);
+    });
+    this.printWhenImagesReady(printWindow);
+  }
+  // Só chama print() depois que todo mundo carregou — chamar cedo demais imprime páginas em
+  // branco (imagem ainda não decodificada).
+  printWhenImagesReady(printWindow) {
+    const images = Array.from(printWindow.document.images);
+    if (images.length === 0) {
+      printWindow.print();
+      return;
+    }
+    let remaining = images.length;
+    const onSettled = () => {
+      remaining--;
+      if (remaining === 0) {
+        printWindow.print();
+      }
+    };
+    images.forEach((image) => {
+      if (image.complete) {
+        onSettled();
+      } else {
+        image.addEventListener("load", onSettled, { once: true });
+        image.addEventListener("error", onSettled, { once: true });
+      }
+    });
+  }
   replaceTable(updated) {
     this.tables.update((list) => list.map((current) => current.id === updated.id ? updated : current));
     if (this.editingTable()?.id === updated.id) {
@@ -1792,7 +1917,7 @@ var TablesComponent = class _TablesComponent {
   static \u0275fac = function TablesComponent_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _TablesComponent)();
   };
-  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _TablesComponent, selectors: [["app-admin-tables"]], standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 20, vars: 12, consts: [[1, "page-header", "page-header--row"], [1, "page-title"], [1, "page-subtitle"], [1, "tabs"], ["type", "button", 1, "tabs__item", 3, "click"], [1, "modal-backdrop"], ["type", "button", "appRipple", "", 1, "btn", "btn--primary"], ["type", "button", "appRipple", "", 1, "btn", "btn--primary", 3, "click"], ["aria-hidden", "true", 1, "material-icons"], [1, "card", "filters-card"], [1, "filters-row"], [1, "field"], ["for", "filter-sector", 1, "field__label"], [1, "field__control"], ["id", "filter-sector", 1, "field__input", 3, "change", "value"], ["value", ""], [3, "value"], ["for", "filter-status", 1, "field__label"], ["id", "filter-status", 1, "field__input", 3, "change", "value"], ["value", "all"], ["value", "ACTIVE"], ["value", "INACTIVE"], ["for", "filter-sort", 1, "field__label"], [1, "field__control", "filters-row__sort"], ["id", "filter-sort", 1, "field__input", 3, "change", "value"], ["type", "button", 1, "icon-btn", 3, "click", "title"], [1, "field", "filters-row__search"], ["for", "filter-search", 1, "field__label"], ["id", "filter-search", "type", "text", "placeholder", "Ex: 12, Varanda", 1, "field__input", 3, "input", "value"], ["type", "button", 1, "btn", "btn--ghost", "btn--sm", 3, "click", "disabled"], ["type", "button", 1, "btn", "btn--ghost", "btn--sm", "filters-row__reset", 3, "click"], [1, "field__hint"], ["role", "alert", 1, "form-alert", "form-alert--error"], [1, "tables-grid"], [1, "card", "table-item"], [1, "card", "pagination-card"], [1, "pagination"], [1, "pagination__info"], [1, "pagination__controls"], [1, "table-item__header"], [1, "table-item__number"], [1, "badge"], [1, "table-item__name"], [1, "table-item__reserved"], [1, "table-item__meta"], [1, "table-item__actions"], ["type", "button", "title", "Visualizar QR Code", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Baixar PNG", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Baixar PDF", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Imprimir QR Code", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Concluir limpeza", 1, "icon-btn", 3, "disabled"], ["type", "button", "title", "Concluir limpeza", 1, "icon-btn", 3, "click", "disabled"], ["type", "button", "title", "Regenerar QR Code", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Editar", 1, "icon-btn", 3, "click"], [1, "card", "table-card"], [1, "table-wrapper"], [1, "data-table"], [1, "data-table__actions-col"], [1, "data-table__empty"], ["type", "button", "title", "Excluir", 1, "icon-btn", "icon-btn--danger", 3, "click"], [1, "modal-card", "card", 3, "click"], [1, "modal-card__header"], [1, "step-heading"], ["type", "button", "aria-label", "Fechar", 1, "icon-btn", 3, "click"], ["novalidate", "", 3, "submit", "formGroup"], [1, "field__row"], ["for", "table-number", 1, "field__label"], ["id", "table-number", "type", "number", "min", "1", "formControlName", "number", "placeholder", "Ex: 12", 1, "field__input"], [1, "field__error"], ["for", "table-name", 1, "field__label"], ["id", "table-name", "type", "text", "formControlName", "name", "placeholder", "Opcional", 1, "field__input"], ["for", "table-sector", 1, "field__label"], [1, "field__control", "field__control--with-action"], ["id", "table-sector", "formControlName", "sectorId", 1, "field__input"], ["value", "", "disabled", ""], ["type", "button", 1, "btn", "btn--ghost", "btn--sm"], ["for", "table-capacity", 1, "field__label"], ["id", "table-capacity", "type", "number", "min", "1", "formControlName", "capacity", "placeholder", "Ex: 4", 1, "field__input"], ["for", "table-status", 1, "field__label"], ["id", "table-status", "formControlName", "status", 1, "field__input"], [1, "field__checkbox"], ["type", "checkbox", "formControlName", "allowQr"], ["for", "table-notes", 1, "field__label"], ["id", "table-notes", "rows", "3", "formControlName", "notes", "placeholder", "Opcional", 1, "field__input"], [1, "step-actions"], ["type", "submit", "appRipple", "", 1, "btn", "btn--primary", 3, "disabled"], ["type", "button", 1, "btn", "btn--ghost", 3, "click"], ["type", "button", 1, "btn", "btn--ghost", "btn--sm", 3, "click"], [1, "modal-card", "modal-card--sm", "card", 3, "click"], ["for", "sector-name", 1, "field__label"], ["id", "sector-name", "type", "text", "formControlName", "name", "placeholder", "Ex: Sal\xE3o, Varanda", 1, "field__input"], ["for", "sector-display-order", 1, "field__label"], ["id", "sector-display-order", "type", "number", "min", "0", "formControlName", "displayOrder", 1, "field__input"], ["type", "checkbox", "formControlName", "active"], ["type", "button", 1, "btn", "btn--danger", 3, "click", "disabled"], [1, "qr-preview"], [3, "src", "alt"]], template: function TablesComponent_Template(rf, ctx) {
+  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _TablesComponent, selectors: [["app-admin-tables"]], standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 22, vars: 13, consts: [[1, "page-header", "page-header--row"], [1, "page-title"], [1, "page-subtitle"], [1, "page-header__actions"], [1, "tabs"], ["type", "button", 1, "tabs__item", 3, "click"], ["role", "alert", 1, "form-alert", "form-alert--error"], [1, "modal-backdrop"], ["type", "button", "appRipple", "", 1, "btn", "btn--ghost", 3, "click", "disabled"], ["aria-hidden", "true", 1, "material-icons"], ["type", "button", "appRipple", "", 1, "btn", "btn--primary"], ["type", "button", "appRipple", "", 1, "btn", "btn--primary", 3, "click"], [1, "card", "filters-card"], [1, "filters-row"], [1, "field"], ["for", "filter-sector", 1, "field__label"], [1, "field__control"], ["id", "filter-sector", 1, "field__input", 3, "change", "value"], ["value", ""], [3, "value"], ["for", "filter-status", 1, "field__label"], ["id", "filter-status", 1, "field__input", 3, "change", "value"], ["value", "all"], ["value", "ACTIVE"], ["value", "INACTIVE"], ["for", "filter-sort", 1, "field__label"], [1, "field__control", "filters-row__sort"], ["id", "filter-sort", 1, "field__input", 3, "change", "value"], ["type", "button", 1, "icon-btn", 3, "click", "title"], [1, "field", "filters-row__search"], ["for", "filter-search", 1, "field__label"], ["id", "filter-search", "type", "text", "placeholder", "Ex: 12, Varanda", 1, "field__input", 3, "input", "value"], ["type", "button", 1, "btn", "btn--ghost", "btn--sm", 3, "click", "disabled"], ["type", "button", 1, "btn", "btn--ghost", "btn--sm", "filters-row__reset", 3, "click"], [1, "field__hint"], [1, "tables-grid"], [1, "card", "table-item"], [1, "card", "pagination-card"], [1, "pagination"], [1, "pagination__info"], [1, "pagination__controls"], [1, "table-item__header"], [1, "table-item__number"], [1, "badge"], [1, "table-item__name"], [1, "table-item__reserved"], [1, "table-item__meta"], [1, "table-item__actions"], ["type", "button", "title", "Visualizar QR Code", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Baixar PNG", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Baixar PDF", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Imprimir QR Code", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Concluir limpeza", 1, "icon-btn", 3, "disabled"], ["type", "button", "title", "Concluir limpeza", 1, "icon-btn", 3, "click", "disabled"], ["type", "button", "title", "Regenerar QR Code", 1, "icon-btn", 3, "click"], ["type", "button", "title", "Editar", 1, "icon-btn", 3, "click"], [1, "card", "table-card"], [1, "table-wrapper"], [1, "data-table"], [1, "data-table__actions-col"], [1, "data-table__empty"], ["type", "button", "title", "Excluir", 1, "icon-btn", "icon-btn--danger", 3, "click"], [1, "modal-card", "card", 3, "click"], [1, "modal-card__header"], [1, "step-heading"], ["type", "button", "aria-label", "Fechar", 1, "icon-btn", 3, "click"], ["novalidate", "", 3, "submit", "formGroup"], [1, "field__row"], ["for", "table-number", 1, "field__label"], ["id", "table-number", "type", "number", "min", "1", "formControlName", "number", "placeholder", "Ex: 12", 1, "field__input"], [1, "field__error"], ["for", "table-name", 1, "field__label"], ["id", "table-name", "type", "text", "formControlName", "name", "placeholder", "Opcional", 1, "field__input"], ["for", "table-sector", 1, "field__label"], [1, "field__control", "field__control--with-action"], ["id", "table-sector", "formControlName", "sectorId", 1, "field__input"], ["value", "", "disabled", ""], ["type", "button", 1, "btn", "btn--ghost", "btn--sm"], ["for", "table-capacity", 1, "field__label"], ["id", "table-capacity", "type", "number", "min", "1", "formControlName", "capacity", "placeholder", "Ex: 4", 1, "field__input"], ["for", "table-status", 1, "field__label"], ["id", "table-status", "formControlName", "status", 1, "field__input"], [1, "field__checkbox"], ["type", "checkbox", "formControlName", "allowQr"], ["for", "table-notes", 1, "field__label"], ["id", "table-notes", "rows", "3", "formControlName", "notes", "placeholder", "Opcional", 1, "field__input"], [1, "step-actions"], ["type", "submit", "appRipple", "", 1, "btn", "btn--primary", 3, "disabled"], ["type", "button", 1, "btn", "btn--ghost", 3, "click"], ["type", "button", 1, "btn", "btn--ghost", "btn--sm", 3, "click"], [1, "modal-card", "modal-card--sm", "card", 3, "click"], ["for", "sector-name", 1, "field__label"], ["id", "sector-name", "type", "text", "formControlName", "name", "placeholder", "Ex: Sal\xE3o, Varanda", 1, "field__input"], ["for", "sector-display-order", 1, "field__label"], ["id", "sector-display-order", "type", "number", "min", "0", "formControlName", "displayOrder", 1, "field__input"], ["type", "checkbox", "formControlName", "active"], ["type", "button", 1, "btn", "btn--danger", 3, "click", "disabled"], [1, "qr-preview"], [3, "src", "alt"]], template: function TablesComponent_Template(rf, ctx) {
     if (rf & 1) {
       \u0275\u0275elementStart(0, "div", 0)(1, "div")(2, "h1", 1);
       \u0275\u0275text(3, "Mesas");
@@ -1800,49 +1925,52 @@ var TablesComponent = class _TablesComponent {
       \u0275\u0275elementStart(4, "p", 2);
       \u0275\u0275text(5);
       \u0275\u0275elementEnd()();
-      \u0275\u0275template(6, TablesComponent_Conditional_6_Template, 1, 1)(7, TablesComponent_Conditional_7_Template, 1, 1);
-      \u0275\u0275elementEnd();
-      \u0275\u0275elementStart(8, "div", 3)(9, "button", 4);
-      \u0275\u0275listener("click", function TablesComponent_Template_button_click_9_listener() {
+      \u0275\u0275elementStart(6, "div", 3);
+      \u0275\u0275template(7, TablesComponent_Conditional_7_Template, 5, 3)(8, TablesComponent_Conditional_8_Template, 1, 1);
+      \u0275\u0275elementEnd()();
+      \u0275\u0275elementStart(9, "div", 4)(10, "button", 5);
+      \u0275\u0275listener("click", function TablesComponent_Template_button_click_10_listener() {
         return ctx.setActiveTab("mesas");
       });
-      \u0275\u0275text(10, " Mesas ");
+      \u0275\u0275text(11, " Mesas ");
       \u0275\u0275elementEnd();
-      \u0275\u0275elementStart(11, "button", 4);
-      \u0275\u0275listener("click", function TablesComponent_Template_button_click_11_listener() {
+      \u0275\u0275elementStart(12, "button", 5);
+      \u0275\u0275listener("click", function TablesComponent_Template_button_click_12_listener() {
         return ctx.setActiveTab("setores");
       });
-      \u0275\u0275text(12, " Setores ");
+      \u0275\u0275text(13, " Setores ");
       \u0275\u0275elementEnd()();
-      \u0275\u0275template(13, TablesComponent_Conditional_13_Template, 48, 8)(14, TablesComponent_Conditional_14_Template, 3, 1)(15, TablesComponent_Conditional_15_Template, 63, 15, "div", 5)(16, TablesComponent_Conditional_16_Template, 30, 8, "div", 5)(17, TablesComponent_Conditional_17_Template, 15, 4, "div", 5)(18, TablesComponent_Conditional_18_Template, 15, 4, "div", 5)(19, TablesComponent_Conditional_19_Template, 24, 2, "div", 5);
+      \u0275\u0275template(14, TablesComponent_Conditional_14_Template, 4, 1, "div", 6)(15, TablesComponent_Conditional_15_Template, 48, 8)(16, TablesComponent_Conditional_16_Template, 3, 1)(17, TablesComponent_Conditional_17_Template, 63, 15, "div", 7)(18, TablesComponent_Conditional_18_Template, 30, 8, "div", 7)(19, TablesComponent_Conditional_19_Template, 15, 4, "div", 7)(20, TablesComponent_Conditional_20_Template, 15, 4, "div", 7)(21, TablesComponent_Conditional_21_Template, 24, 2, "div", 7);
     }
     if (rf & 2) {
       let tmp_0_0;
-      let tmp_7_0;
       let tmp_8_0;
       let tmp_9_0;
+      let tmp_10_0;
       \u0275\u0275advance(5);
       \u0275\u0275textInterpolate1(" Gerencie as mesas e setores do sal\xE3o de ", (tmp_0_0 = (tmp_0_0 = ctx.selectedCompany()) == null ? null : tmp_0_0.companyName) !== null && tmp_0_0 !== void 0 ? tmp_0_0 : "sua empresa", ". ");
-      \u0275\u0275advance();
-      \u0275\u0275conditional(ctx.activeTab() === "mesas" ? 6 : 7);
+      \u0275\u0275advance(2);
+      \u0275\u0275conditional(ctx.activeTab() === "mesas" ? 7 : 8);
       \u0275\u0275advance(3);
       \u0275\u0275classProp("tabs__item--active", ctx.activeTab() === "mesas");
       \u0275\u0275advance(2);
       \u0275\u0275classProp("tabs__item--active", ctx.activeTab() === "setores");
       \u0275\u0275advance(2);
-      \u0275\u0275conditional(ctx.activeTab() === "mesas" ? 13 : 14);
+      \u0275\u0275conditional(ctx.printAllQrError() ? 14 : -1);
+      \u0275\u0275advance();
+      \u0275\u0275conditional(ctx.activeTab() === "mesas" ? 15 : 16);
       \u0275\u0275advance(2);
-      \u0275\u0275conditional(ctx.isTableModalOpen() ? 15 : -1);
+      \u0275\u0275conditional(ctx.isTableModalOpen() ? 17 : -1);
       \u0275\u0275advance();
-      \u0275\u0275conditional(ctx.isSectorModalOpen() ? 16 : -1);
+      \u0275\u0275conditional(ctx.isSectorModalOpen() ? 18 : -1);
       \u0275\u0275advance();
-      \u0275\u0275conditional((tmp_7_0 = ctx.tableToRegenerateQr()) ? 17 : -1, tmp_7_0);
+      \u0275\u0275conditional((tmp_8_0 = ctx.tableToRegenerateQr()) ? 19 : -1, tmp_8_0);
       \u0275\u0275advance();
-      \u0275\u0275conditional((tmp_8_0 = ctx.sectorToDelete()) ? 18 : -1, tmp_8_0);
+      \u0275\u0275conditional((tmp_9_0 = ctx.sectorToDelete()) ? 20 : -1, tmp_9_0);
       \u0275\u0275advance();
-      \u0275\u0275conditional((tmp_9_0 = ctx.qrModalTable()) ? 19 : -1, tmp_9_0);
+      \u0275\u0275conditional((tmp_10_0 = ctx.qrModalTable()) ? 21 : -1, tmp_10_0);
     }
-  }, dependencies: [ReactiveFormsModule, \u0275NgNoValidate, NgSelectOption, \u0275NgSelectMultipleOption, DefaultValueAccessor, NumberValueAccessor, CheckboxControlValueAccessor, SelectControlValueAccessor, NgControlStatus, NgControlStatusGroup, MinValidator, FormGroupDirective, FormControlName, RippleDirective], styles: ["\n\n[_nghost-%COMP%] {\n  display: block;\n}\n.page-header[_ngcontent-%COMP%] {\n  margin-bottom: 20px;\n}\n.page-header--row[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: flex-start;\n  justify-content: space-between;\n  gap: 16px;\n  flex-wrap: wrap;\n}\n.page-title[_ngcontent-%COMP%] {\n  font-size: 1.75rem;\n  color: var(--color-text);\n}\n.page-subtitle[_ngcontent-%COMP%] {\n  margin-top: 8px;\n  font-size: 1rem;\n}\n.field__hint[_ngcontent-%COMP%] {\n  font-size: 0.8125rem;\n  color: var(--color-text-muted);\n}\n.tabs[_ngcontent-%COMP%] {\n  display: flex;\n  gap: 4px;\n  margin-bottom: 20px;\n  border-bottom: 1px solid var(--color-border);\n}\n.tabs__item[_ngcontent-%COMP%] {\n  padding: 10px 18px;\n  border: none;\n  background: transparent;\n  color: var(--color-text-muted);\n  font-size: 0.9375rem;\n  font-weight: 600;\n  cursor: pointer;\n  border-bottom: 2px solid transparent;\n  transition: color var(--transition-fast), border-color var(--transition-fast);\n}\n.tabs__item[_ngcontent-%COMP%]:hover {\n  color: var(--color-text);\n}\n.tabs__item--active[_ngcontent-%COMP%] {\n  color: var(--color-text);\n  border-bottom-color: var(--color-primary, #6366f1);\n}\n.filters-card[_ngcontent-%COMP%] {\n  padding: 20px;\n  margin-bottom: 20px;\n}\n.filters-row[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: flex-end;\n  gap: 16px;\n  flex-wrap: wrap;\n}\n.filters-row[_ngcontent-%COMP%]   .field[_ngcontent-%COMP%] {\n  min-width: 160px;\n}\n.filters-row__search[_ngcontent-%COMP%] {\n  flex: 1;\n  min-width: 220px;\n}\n.filters-row__sort[_ngcontent-%COMP%] {\n  display: flex;\n  gap: 8px;\n  align-items: center;\n}\n.filters-row__reset[_ngcontent-%COMP%] {\n  align-self: center;\n}\n.tables-grid[_ngcontent-%COMP%] {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));\n  gap: 16px;\n  margin-bottom: 16px;\n}\n.table-item[_ngcontent-%COMP%] {\n  padding: 18px;\n  display: flex;\n  flex-direction: column;\n  gap: 10px;\n}\n.table-item__header[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 8px;\n}\n.table-item__number[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  font-size: 1.0625rem;\n  font-weight: 600;\n  color: var(--color-text);\n}\n.table-item__number[_ngcontent-%COMP%]   .material-icons[_ngcontent-%COMP%] {\n  font-size: 20px;\n  color: var(--color-text-muted);\n}\n.table-item__name[_ngcontent-%COMP%] {\n  font-size: 0.875rem;\n  color: var(--color-text-muted);\n  margin: 0;\n}\n.table-item__reserved[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  font-size: 0.8125rem;\n  color: var(--color-danger, #dc2626);\n  margin: 0;\n}\n.table-item__reserved[_ngcontent-%COMP%]   .material-icons[_ngcontent-%COMP%] {\n  font-size: 16px;\n}\n.table-item__meta[_ngcontent-%COMP%] {\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n  margin: 0;\n}\n.table-item__meta[_ngcontent-%COMP%]   div[_ngcontent-%COMP%] {\n  display: flex;\n  justify-content: space-between;\n  gap: 12px;\n  font-size: 0.8125rem;\n}\n.table-item__meta[_ngcontent-%COMP%]   dt[_ngcontent-%COMP%] {\n  color: var(--color-text-muted);\n}\n.table-item__meta[_ngcontent-%COMP%]   dd[_ngcontent-%COMP%] {\n  margin: 0;\n  color: var(--color-text);\n  font-weight: 600;\n}\n.table-item__actions[_ngcontent-%COMP%] {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px;\n  margin-top: 4px;\n  padding-top: 10px;\n  border-top: 1px solid var(--color-border);\n}\n.qr-preview[_ngcontent-%COMP%] {\n  display: flex;\n  justify-content: center;\n  padding: 16px 0;\n}\n.qr-preview[_ngcontent-%COMP%]   img[_ngcontent-%COMP%] {\n  max-width: 220px;\n  width: 100%;\n  border-radius: var(--radius-sm);\n  background: #fff;\n  padding: 8px;\n}\n.table-card[_ngcontent-%COMP%] {\n  padding: 8px 0 0;\n  overflow: hidden;\n}\n.table-wrapper[_ngcontent-%COMP%] {\n  overflow-x: auto;\n}\n.data-table[_ngcontent-%COMP%] {\n  width: 100%;\n  border-collapse: collapse;\n  font-size: 0.9375rem;\n}\n.data-table[_ngcontent-%COMP%]   th[_ngcontent-%COMP%], \n.data-table[_ngcontent-%COMP%]   td[_ngcontent-%COMP%] {\n  padding: 14px 20px;\n  text-align: left;\n  white-space: nowrap;\n}\n.data-table[_ngcontent-%COMP%]   thead[_ngcontent-%COMP%]   th[_ngcontent-%COMP%] {\n  color: var(--color-text-muted);\n  font-size: 0.8125rem;\n  font-weight: 600;\n  text-transform: uppercase;\n  letter-spacing: 0.04em;\n  border-bottom: 1px solid var(--color-border);\n}\n.data-table[_ngcontent-%COMP%]   tbody[_ngcontent-%COMP%]   tr[_ngcontent-%COMP%] {\n  border-bottom: 1px solid var(--color-border);\n}\n.data-table[_ngcontent-%COMP%]   tbody[_ngcontent-%COMP%]   tr[_ngcontent-%COMP%]:last-child {\n  border-bottom: none;\n}\n.data-table[_ngcontent-%COMP%]   tbody[_ngcontent-%COMP%]   tr[_ngcontent-%COMP%]:hover {\n  background: rgba(255, 255, 255, 0.02);\n}\n.data-table__actions-col[_ngcontent-%COMP%] {\n  text-align: right;\n}\n.data-table__empty[_ngcontent-%COMP%] {\n  text-align: center;\n  color: var(--color-text-muted);\n  padding: 32px 20px;\n  white-space: normal;\n}\n.badge[_ngcontent-%COMP%] {\n  display: inline-flex;\n  align-items: center;\n  padding: 4px 12px;\n  border-radius: var(--radius-full);\n  font-size: 0.8125rem;\n  font-weight: 600;\n}\n.badge--success[_ngcontent-%COMP%] {\n  background: var(--color-success-bg);\n  color: var(--color-success);\n}\n.badge--muted[_ngcontent-%COMP%] {\n  background: rgba(203, 213, 225, 0.12);\n  color: var(--color-text-muted);\n}\n.badge--warning[_ngcontent-%COMP%] {\n  background: rgba(250, 204, 21, 0.14);\n  color: #facc15;\n}\n.badge--danger[_ngcontent-%COMP%] {\n  background: rgba(248, 113, 113, 0.14);\n  color: #f87171;\n}\n.icon-btn[_ngcontent-%COMP%] {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 34px;\n  height: 34px;\n  border-radius: var(--radius-sm);\n  border: 1px solid transparent;\n  background: transparent;\n  color: var(--color-text-muted);\n  cursor: pointer;\n  transition: background var(--transition-fast), color var(--transition-fast);\n}\n.icon-btn[_ngcontent-%COMP%]   .material-icons[_ngcontent-%COMP%] {\n  font-size: 20px;\n}\n.icon-btn[_ngcontent-%COMP%]:hover {\n  background: rgba(255, 255, 255, 0.06);\n  color: var(--color-text);\n}\n.icon-btn[_ngcontent-%COMP%]    + .icon-btn[_ngcontent-%COMP%] {\n  margin-left: 4px;\n}\n.icon-btn--danger[_ngcontent-%COMP%]:hover {\n  background: rgba(248, 113, 113, 0.12);\n  color: #f87171;\n}\n.pagination-card[_ngcontent-%COMP%] {\n  padding: 0;\n}\n.pagination[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 16px;\n  flex-wrap: wrap;\n  padding: 16px 20px;\n}\n.pagination__info[_ngcontent-%COMP%] {\n  font-size: 0.875rem;\n  color: var(--color-text-muted);\n}\n.pagination__controls[_ngcontent-%COMP%] {\n  display: flex;\n  gap: 8px;\n}\n.modal-backdrop[_ngcontent-%COMP%] {\n  position: fixed;\n  inset: 0;\n  background: rgba(4, 8, 20, 0.64);\n  backdrop-filter: blur(2px);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 20px;\n  z-index: 100;\n}\n.modal-card[_ngcontent-%COMP%] {\n  width: 100%;\n  max-width: 640px;\n  max-height: calc(100vh - 40px);\n  overflow-y: auto;\n  padding: 32px;\n}\n.modal-card--sm[_ngcontent-%COMP%] {\n  max-width: 420px;\n}\n.modal-card__header[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  margin-bottom: 8px;\n}\n.step-heading[_ngcontent-%COMP%] {\n  margin-top: 0;\n  font-size: 1.0625rem;\n  color: var(--color-text);\n}\n.field__row[_ngcontent-%COMP%] {\n  display: flex;\n  gap: 16px;\n  flex-wrap: wrap;\n}\n.field__row[_ngcontent-%COMP%]   .field[_ngcontent-%COMP%] {\n  flex: 1;\n  min-width: 180px;\n}\n.field__control--with-action[_ngcontent-%COMP%] {\n  display: flex;\n  gap: 8px;\n}\n.field__control--with-action[_ngcontent-%COMP%]   select[_ngcontent-%COMP%] {\n  flex: 1;\n}\n.step-actions[_ngcontent-%COMP%] {\n  display: flex;\n  gap: 12px;\n  flex-wrap: wrap;\n  margin-top: 24px;\n}\n.btn--danger[_ngcontent-%COMP%] {\n  background: #f87171;\n  color: #2a0a0a;\n}\n.btn--danger[_ngcontent-%COMP%]:hover {\n  filter: brightness(1.08);\n  transform: translateY(-2px);\n}\nselect.field__input[_ngcontent-%COMP%] {\n  appearance: none;\n  cursor: pointer;\n}\n/*# sourceMappingURL=tables.component.css.map */"] });
+  }, dependencies: [ReactiveFormsModule, \u0275NgNoValidate, NgSelectOption, \u0275NgSelectMultipleOption, DefaultValueAccessor, NumberValueAccessor, CheckboxControlValueAccessor, SelectControlValueAccessor, NgControlStatus, NgControlStatusGroup, MinValidator, FormGroupDirective, FormControlName, RippleDirective], styles: ["\n\n[_nghost-%COMP%] {\n  display: block;\n}\n.page-header[_ngcontent-%COMP%] {\n  margin-bottom: 20px;\n}\n.page-header--row[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: flex-start;\n  justify-content: space-between;\n  gap: 16px;\n  flex-wrap: wrap;\n}\n.page-header__actions[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  gap: 10px;\n  flex-wrap: wrap;\n}\n.page-title[_ngcontent-%COMP%] {\n  font-size: 1.75rem;\n  color: var(--color-text);\n}\n.page-subtitle[_ngcontent-%COMP%] {\n  margin-top: 8px;\n  font-size: 1rem;\n}\n.field__hint[_ngcontent-%COMP%] {\n  font-size: 0.8125rem;\n  color: var(--color-text-muted);\n}\n.tabs[_ngcontent-%COMP%] {\n  display: flex;\n  gap: 4px;\n  margin-bottom: 20px;\n  border-bottom: 1px solid var(--color-border);\n}\n.tabs__item[_ngcontent-%COMP%] {\n  padding: 10px 18px;\n  border: none;\n  background: transparent;\n  color: var(--color-text-muted);\n  font-size: 0.9375rem;\n  font-weight: 600;\n  cursor: pointer;\n  border-bottom: 2px solid transparent;\n  transition: color var(--transition-fast), border-color var(--transition-fast);\n}\n.tabs__item[_ngcontent-%COMP%]:hover {\n  color: var(--color-text);\n}\n.tabs__item--active[_ngcontent-%COMP%] {\n  color: var(--color-text);\n  border-bottom-color: var(--color-primary, #6366f1);\n}\n.filters-card[_ngcontent-%COMP%] {\n  padding: 20px;\n  margin-bottom: 20px;\n}\n.filters-row[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: flex-end;\n  gap: 16px;\n  flex-wrap: wrap;\n}\n.filters-row[_ngcontent-%COMP%]   .field[_ngcontent-%COMP%] {\n  min-width: 160px;\n}\n.filters-row__search[_ngcontent-%COMP%] {\n  flex: 1;\n  min-width: 220px;\n}\n.filters-row__sort[_ngcontent-%COMP%] {\n  display: flex;\n  gap: 8px;\n  align-items: center;\n}\n.filters-row__reset[_ngcontent-%COMP%] {\n  align-self: center;\n}\n.tables-grid[_ngcontent-%COMP%] {\n  display: grid;\n  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));\n  gap: 16px;\n  margin-bottom: 16px;\n}\n.table-item[_ngcontent-%COMP%] {\n  padding: 18px;\n  display: flex;\n  flex-direction: column;\n  gap: 10px;\n}\n.table-item__header[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 8px;\n}\n.table-item__number[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  font-size: 1.0625rem;\n  font-weight: 600;\n  color: var(--color-text);\n}\n.table-item__number[_ngcontent-%COMP%]   .material-icons[_ngcontent-%COMP%] {\n  font-size: 20px;\n  color: var(--color-text-muted);\n}\n.table-item__name[_ngcontent-%COMP%] {\n  font-size: 0.875rem;\n  color: var(--color-text-muted);\n  margin: 0;\n}\n.table-item__reserved[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  gap: 4px;\n  font-size: 0.8125rem;\n  color: var(--color-danger, #dc2626);\n  margin: 0;\n}\n.table-item__reserved[_ngcontent-%COMP%]   .material-icons[_ngcontent-%COMP%] {\n  font-size: 16px;\n}\n.table-item__meta[_ngcontent-%COMP%] {\n  display: flex;\n  flex-direction: column;\n  gap: 6px;\n  margin: 0;\n}\n.table-item__meta[_ngcontent-%COMP%]   div[_ngcontent-%COMP%] {\n  display: flex;\n  justify-content: space-between;\n  gap: 12px;\n  font-size: 0.8125rem;\n}\n.table-item__meta[_ngcontent-%COMP%]   dt[_ngcontent-%COMP%] {\n  color: var(--color-text-muted);\n}\n.table-item__meta[_ngcontent-%COMP%]   dd[_ngcontent-%COMP%] {\n  margin: 0;\n  color: var(--color-text);\n  font-weight: 600;\n}\n.table-item__actions[_ngcontent-%COMP%] {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 4px;\n  margin-top: 4px;\n  padding-top: 10px;\n  border-top: 1px solid var(--color-border);\n}\n.qr-preview[_ngcontent-%COMP%] {\n  display: flex;\n  justify-content: center;\n  padding: 16px 0;\n}\n.qr-preview[_ngcontent-%COMP%]   img[_ngcontent-%COMP%] {\n  max-width: 220px;\n  width: 100%;\n  border-radius: var(--radius-sm);\n  background: #fff;\n  padding: 8px;\n}\n.table-card[_ngcontent-%COMP%] {\n  padding: 8px 0 0;\n  overflow: hidden;\n}\n.table-wrapper[_ngcontent-%COMP%] {\n  overflow-x: auto;\n}\n.data-table[_ngcontent-%COMP%] {\n  width: 100%;\n  border-collapse: collapse;\n  font-size: 0.9375rem;\n}\n.data-table[_ngcontent-%COMP%]   th[_ngcontent-%COMP%], \n.data-table[_ngcontent-%COMP%]   td[_ngcontent-%COMP%] {\n  padding: 14px 20px;\n  text-align: left;\n  white-space: nowrap;\n}\n.data-table[_ngcontent-%COMP%]   thead[_ngcontent-%COMP%]   th[_ngcontent-%COMP%] {\n  color: var(--color-text-muted);\n  font-size: 0.8125rem;\n  font-weight: 600;\n  text-transform: uppercase;\n  letter-spacing: 0.04em;\n  border-bottom: 1px solid var(--color-border);\n}\n.data-table[_ngcontent-%COMP%]   tbody[_ngcontent-%COMP%]   tr[_ngcontent-%COMP%] {\n  border-bottom: 1px solid var(--color-border);\n}\n.data-table[_ngcontent-%COMP%]   tbody[_ngcontent-%COMP%]   tr[_ngcontent-%COMP%]:last-child {\n  border-bottom: none;\n}\n.data-table[_ngcontent-%COMP%]   tbody[_ngcontent-%COMP%]   tr[_ngcontent-%COMP%]:hover {\n  background: rgba(255, 255, 255, 0.02);\n}\n.data-table__actions-col[_ngcontent-%COMP%] {\n  text-align: right;\n}\n.data-table__empty[_ngcontent-%COMP%] {\n  text-align: center;\n  color: var(--color-text-muted);\n  padding: 32px 20px;\n  white-space: normal;\n}\n.badge[_ngcontent-%COMP%] {\n  display: inline-flex;\n  align-items: center;\n  padding: 4px 12px;\n  border-radius: var(--radius-full);\n  font-size: 0.8125rem;\n  font-weight: 600;\n}\n.badge--success[_ngcontent-%COMP%] {\n  background: var(--color-success-bg);\n  color: var(--color-success);\n}\n.badge--muted[_ngcontent-%COMP%] {\n  background: rgba(203, 213, 225, 0.12);\n  color: var(--color-text-muted);\n}\n.badge--warning[_ngcontent-%COMP%] {\n  background: rgba(250, 204, 21, 0.14);\n  color: #facc15;\n}\n.badge--danger[_ngcontent-%COMP%] {\n  background: rgba(248, 113, 113, 0.14);\n  color: #f87171;\n}\n.icon-btn[_ngcontent-%COMP%] {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  width: 34px;\n  height: 34px;\n  border-radius: var(--radius-sm);\n  border: 1px solid transparent;\n  background: transparent;\n  color: var(--color-text-muted);\n  cursor: pointer;\n  transition: background var(--transition-fast), color var(--transition-fast);\n}\n.icon-btn[_ngcontent-%COMP%]   .material-icons[_ngcontent-%COMP%] {\n  font-size: 20px;\n}\n.icon-btn[_ngcontent-%COMP%]:hover {\n  background: rgba(255, 255, 255, 0.06);\n  color: var(--color-text);\n}\n.icon-btn[_ngcontent-%COMP%]    + .icon-btn[_ngcontent-%COMP%] {\n  margin-left: 4px;\n}\n.icon-btn--danger[_ngcontent-%COMP%]:hover {\n  background: rgba(248, 113, 113, 0.12);\n  color: #f87171;\n}\n.pagination-card[_ngcontent-%COMP%] {\n  padding: 0;\n}\n.pagination[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 16px;\n  flex-wrap: wrap;\n  padding: 16px 20px;\n}\n.pagination__info[_ngcontent-%COMP%] {\n  font-size: 0.875rem;\n  color: var(--color-text-muted);\n}\n.pagination__controls[_ngcontent-%COMP%] {\n  display: flex;\n  gap: 8px;\n}\n.modal-backdrop[_ngcontent-%COMP%] {\n  position: fixed;\n  inset: 0;\n  background: rgba(4, 8, 20, 0.64);\n  backdrop-filter: blur(2px);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  padding: 20px;\n  z-index: 100;\n}\n.modal-card[_ngcontent-%COMP%] {\n  width: 100%;\n  max-width: 640px;\n  max-height: calc(100vh - 40px);\n  overflow-y: auto;\n  padding: 32px;\n}\n.modal-card--sm[_ngcontent-%COMP%] {\n  max-width: 420px;\n}\n.modal-card__header[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  margin-bottom: 8px;\n}\n.step-heading[_ngcontent-%COMP%] {\n  margin-top: 0;\n  font-size: 1.0625rem;\n  color: var(--color-text);\n}\n.field__row[_ngcontent-%COMP%] {\n  display: flex;\n  gap: 16px;\n  flex-wrap: wrap;\n}\n.field__row[_ngcontent-%COMP%]   .field[_ngcontent-%COMP%] {\n  flex: 1;\n  min-width: 180px;\n}\n.field__control--with-action[_ngcontent-%COMP%] {\n  display: flex;\n  gap: 8px;\n}\n.field__control--with-action[_ngcontent-%COMP%]   select[_ngcontent-%COMP%] {\n  flex: 1;\n}\n.step-actions[_ngcontent-%COMP%] {\n  display: flex;\n  gap: 12px;\n  flex-wrap: wrap;\n  margin-top: 24px;\n}\n.btn--danger[_ngcontent-%COMP%] {\n  background: #f87171;\n  color: #2a0a0a;\n}\n.btn--danger[_ngcontent-%COMP%]:hover {\n  filter: brightness(1.08);\n  transform: translateY(-2px);\n}\nselect.field__input[_ngcontent-%COMP%] {\n  appearance: none;\n  cursor: pointer;\n}\n/*# sourceMappingURL=tables.component.css.map */"] });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && \u0275setClassDebugInfo(TablesComponent, { className: "TablesComponent", filePath: "src\\app\\features\\admin\\pages\\tables\\tables.component.ts", lineNumber: 49 });
@@ -1850,4 +1978,4 @@ var TablesComponent = class _TablesComponent {
 export {
   TablesComponent
 };
-//# sourceMappingURL=chunk-WUIMKA7Q.js.map
+//# sourceMappingURL=chunk-7A4LXZEG.js.map

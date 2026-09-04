@@ -5,21 +5,27 @@
       Gerencie as mesas e setores do salão de {{ selectedCompany()?.companyName ?? 'sua empresa' }}.
     </p>
   </div>
-  @if (activeTab() === 'mesas') {
-    @if (canManageTables()) {
-      <button type="button" class="btn btn--primary" appRipple (click)="openCreateTableModal()">
-        <span class="material-icons" aria-hidden="true">add</span>
-        Nova mesa
+  <div class="page-header__actions">
+    @if (activeTab() === 'mesas') {
+      <button type="button" class="btn btn--ghost" appRipple [disabled]="isPrintingAllQr()" (click)="printAllQrCodes()">
+        <span class="material-icons" aria-hidden="true">print</span>
+        {{ isPrintingAllQr() ? 'Preparando…' : 'Imprimir QR Codes' }}
       </button>
+      @if (canManageTables()) {
+        <button type="button" class="btn btn--primary" appRipple (click)="openCreateTableModal()">
+          <span class="material-icons" aria-hidden="true">add</span>
+          Nova mesa
+        </button>
+      }
+    } @else {
+      @if (canManageSectors()) {
+        <button type="button" class="btn btn--primary" appRipple (click)="openCreateSectorModal()">
+          <span class="material-icons" aria-hidden="true">add</span>
+          Novo setor
+        </button>
+      }
     }
-  } @else {
-    @if (canManageSectors()) {
-      <button type="button" class="btn btn--primary" appRipple (click)="openCreateSectorModal()">
-        <span class="material-icons" aria-hidden="true">add</span>
-        Novo setor
-      </button>
-    }
-  }
+  </div>
 </div>
 
 <div class="tabs">
@@ -30,6 +36,13 @@
     Setores
   </button>
 </div>
+
+@if (printAllQrError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ printAllQrError() }}
+  </div>
+}
 
 @if (activeTab() === 'mesas') {
   <div class="card filters-card">

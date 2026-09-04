@@ -24,4 +24,10 @@ export class PricingComponent {
     'Segurança',
     'Todas as funcionalidades'
   ];
+
+  // Taxa de processamento cobrada pela adquirente sobre pagamentos com cartão feitos pelo
+  // cardápio digital — separada da taxa de uso da plataforma (pricing__note acima). Só incide
+  // sobre o que for efetivamente pago com cartão pelo app; dinheiro/cartão na maquininha da casa
+  // não passam por aqui.
+  readonly paymentFees: { label: string; value: string }[] = [{ label: 'Cartão nacional', value: '3,99% + R$ 0,39 por transação' }];
 }

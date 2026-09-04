@@ -1,7 +1,7 @@
 import {
   LegalLayoutComponent
-} from "./chunk-YZDH5HKQ.js";
-import "./chunk-QCZ43G67.js";
+} from "./chunk-74MMY37R.js";
+import "./chunk-KNI6Y6JX.js";
 import "./chunk-P26S26B7.js";
 import "./chunk-EVJN5Z2J.js";
 import {
@@ -104,4 +104,4 @@ var PrivacyComponent = class _PrivacyComponent {
 export {
   PrivacyComponent
 };
-//# sourceMappingURL=chunk-7EZ2D2QU.js.map
+//# sourceMappingURL=chunk-6LS6OVQ2.js.map

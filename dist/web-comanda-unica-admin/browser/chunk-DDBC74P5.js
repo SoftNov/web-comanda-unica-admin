@@ -1,7 +1,7 @@
 import {
   FooterComponent,
   HeaderComponent
-} from "./chunk-QCZ43G67.js";
+} from "./chunk-KNI6Y6JX.js";
 import {
   RippleDirective
 } from "./chunk-P26S26B7.js";
@@ -675,9 +675,10 @@ var FeaturesComponent = class _FeaturesComponent {
 })();
 
 // src/app/features/landing/components/pricing/pricing.component.ts
+var _forTrack05 = ($index, $item) => $item.label;
 function PricingComponent_For_16_Template(rf, ctx) {
   if (rf & 1) {
-    \u0275\u0275elementStart(0, "li")(1, "span", 12);
+    \u0275\u0275elementStart(0, "li")(1, "span", 16);
     \u0275\u0275text(2, "check_circle");
     \u0275\u0275elementEnd();
     \u0275\u0275text(3);
@@ -687,6 +688,23 @@ function PricingComponent_For_16_Template(rf, ctx) {
     const item_r1 = ctx.$implicit;
     \u0275\u0275advance(3);
     \u0275\u0275textInterpolate1(" ", item_r1, " ");
+  }
+}
+function PricingComponent_For_22_Template(rf, ctx) {
+  if (rf & 1) {
+    \u0275\u0275elementStart(0, "li")(1, "span");
+    \u0275\u0275text(2);
+    \u0275\u0275elementEnd();
+    \u0275\u0275elementStart(3, "strong");
+    \u0275\u0275text(4);
+    \u0275\u0275elementEnd()();
+  }
+  if (rf & 2) {
+    const fee_r2 = ctx.$implicit;
+    \u0275\u0275advance(2);
+    \u0275\u0275textInterpolate(fee_r2.label);
+    \u0275\u0275advance(2);
+    \u0275\u0275textInterpolate(fee_r2.value);
   }
 }
 var PricingComponent = class _PricingComponent {
@@ -703,10 +721,15 @@ var PricingComponent = class _PricingComponent {
     "Seguran\xE7a",
     "Todas as funcionalidades"
   ];
+  // Taxa de processamento cobrada pela adquirente sobre pagamentos com cartão feitos pelo
+  // cardápio digital — separada da taxa de uso da plataforma (pricing__note acima). Só incide
+  // sobre o que for efetivamente pago com cartão pelo app; dinheiro/cartão na maquininha da casa
+  // não passam por aqui.
+  paymentFees = [{ label: "Cart\xE3o nacional", value: "3,99% + R$ 0,39 por transa\xE7\xE3o" }];
   static \u0275fac = function PricingComponent_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _PricingComponent)();
   };
-  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _PricingComponent, selectors: [["app-pricing"]], standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 23, vars: 1, consts: [["id", "precos", 1, "pricing", "section"], [1, "container"], ["appScrollReveal", "up", 1, "section-heading", "section-heading--center"], [1, "eyebrow"], [1, "section-title", 2, "margin-top", "16px"], [1, "section-subtitle"], ["appScrollReveal", "up", 1, "pricing__card", "card", 3, "revealDelay"], [1, "pricing__badge"], [1, "pricing__description"], [1, "pricing__included"], ["routerLink", "/criar-conta", "appRipple", "", 1, "btn", "btn--success", "pricing__cta"], [1, "pricing__note"], ["aria-hidden", "true", 1, "material-icons"]], template: function PricingComponent_Template(rf, ctx) {
+  static \u0275cmp = /* @__PURE__ */ \u0275\u0275defineComponent({ type: _PricingComponent, selectors: [["app-pricing"]], standalone: true, features: [\u0275\u0275StandaloneFeature], decls: 31, vars: 1, consts: [["id", "precos", 1, "pricing", "section"], [1, "container"], ["appScrollReveal", "up", 1, "section-heading", "section-heading--center"], [1, "eyebrow"], [1, "section-title", 2, "margin-top", "16px"], [1, "section-subtitle"], ["appScrollReveal", "up", 1, "pricing__card", "card", 3, "revealDelay"], [1, "pricing__badge"], [1, "pricing__description"], [1, "pricing__included"], [1, "pricing__fees"], [1, "pricing__fees-title"], [1, "pricing__fees-list"], [1, "pricing__fees-hint"], ["routerLink", "/criar-conta", "appRipple", "", 1, "btn", "btn--success", "pricing__cta"], [1, "pricing__note"], ["aria-hidden", "true", 1, "material-icons"]], template: function PricingComponent_Template(rf, ctx) {
     if (rf & 1) {
       \u0275\u0275elementStart(0, "section", 0)(1, "div", 1)(2, "div", 2)(3, "span", 3);
       \u0275\u0275text(4, "Modelo de cobran\xE7a");
@@ -726,13 +749,22 @@ var PricingComponent = class _PricingComponent {
       \u0275\u0275elementStart(14, "ul", 9);
       \u0275\u0275repeaterCreate(15, PricingComponent_For_16_Template, 4, 1, "li", null, \u0275\u0275repeaterTrackByIdentity);
       \u0275\u0275elementEnd();
-      \u0275\u0275elementStart(17, "a", 10);
-      \u0275\u0275text(18, "Criar minha conta");
+      \u0275\u0275elementStart(17, "div", 10)(18, "h3", 11);
+      \u0275\u0275text(19, "Taxas de pagamento com cart\xE3o");
       \u0275\u0275elementEnd();
-      \u0275\u0275elementStart(19, "p", 11)(20, "span", 12);
-      \u0275\u0275text(21, "info");
+      \u0275\u0275elementStart(20, "ul", 12);
+      \u0275\u0275repeaterCreate(21, PricingComponent_For_22_Template, 5, 2, "li", null, _forTrack05);
       \u0275\u0275elementEnd();
-      \u0275\u0275text(22, " Se nenhuma comanda for utilizada, n\xE3o h\xE1 cobran\xE7a de uso da plataforma. ");
+      \u0275\u0275elementStart(23, "p", 13);
+      \u0275\u0275text(24, " Cobrada s\xF3 sobre os pagamentos feitos com cart\xE3o pelo card\xE1pio digital. Dinheiro e maquininha pr\xF3pria n\xE3o t\xEAm taxa. ");
+      \u0275\u0275elementEnd()();
+      \u0275\u0275elementStart(25, "a", 14);
+      \u0275\u0275text(26, "Criar minha conta");
+      \u0275\u0275elementEnd();
+      \u0275\u0275elementStart(27, "p", 15)(28, "span", 16);
+      \u0275\u0275text(29, "info");
+      \u0275\u0275elementEnd();
+      \u0275\u0275text(30, " Se nenhuma comanda for utilizada, n\xE3o h\xE1 cobran\xE7a de uso da plataforma. ");
       \u0275\u0275elementEnd()()()();
     }
     if (rf & 2) {
@@ -740,15 +772,17 @@ var PricingComponent = class _PricingComponent {
       \u0275\u0275property("revealDelay", 100);
       \u0275\u0275advance(6);
       \u0275\u0275repeater(ctx.included);
+      \u0275\u0275advance(6);
+      \u0275\u0275repeater(ctx.paymentFees);
     }
-  }, dependencies: [ScrollRevealDirective, RippleDirective, RouterLink], styles: ["\n\n.pricing__card[_ngcontent-%COMP%] {\n  max-width: 720px;\n  margin: 48px auto 0;\n  padding: 48px;\n  position: relative;\n  text-align: center;\n  border-color: var(--color-accent);\n  box-shadow: var(--shadow-glow);\n  background: var(--gradient-surface), var(--color-bg-card);\n}\n.pricing__badge[_ngcontent-%COMP%] {\n  display: inline-flex;\n  padding: 8px 20px;\n  border-radius: var(--radius-full);\n  background: var(--gradient-accent);\n  color: #fff;\n  font-weight: 700;\n  font-size: 0.9375rem;\n}\n.pricing__description[_ngcontent-%COMP%] {\n  margin-top: 20px;\n  font-size: 1.0625rem;\n  color: var(--color-gray);\n}\n.pricing__included[_ngcontent-%COMP%] {\n  display: grid;\n  grid-template-columns: repeat(2, 1fr);\n  gap: 12px 24px;\n  margin-top: 32px;\n  text-align: left;\n}\n.pricing__included[_ngcontent-%COMP%]   li[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  font-size: 0.9375rem;\n  color: var(--color-text);\n}\n.pricing__included[_ngcontent-%COMP%]   .material-icons[_ngcontent-%COMP%] {\n  font-size: 18px;\n  color: var(--color-success);\n}\n.pricing__cta[_ngcontent-%COMP%] {\n  width: 100%;\n  margin-top: 36px;\n  font-size: 1rem;\n  padding-block: 16px;\n}\n.pricing__note[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n  margin-top: 20px;\n  font-size: 0.8125rem;\n  color: var(--color-text-muted);\n}\n.pricing__note[_ngcontent-%COMP%]   .material-icons[_ngcontent-%COMP%] {\n  font-size: 16px;\n  color: var(--color-accent-hover);\n}\n@media (max-width: 640px) {\n  .pricing__card[_ngcontent-%COMP%] {\n    padding: 32px 24px;\n  }\n  .pricing__included[_ngcontent-%COMP%] {\n    grid-template-columns: 1fr;\n  }\n}\n/*# sourceMappingURL=pricing.component.css.map */"] });
+  }, dependencies: [ScrollRevealDirective, RippleDirective, RouterLink], styles: ["\n\n.pricing__card[_ngcontent-%COMP%] {\n  max-width: 720px;\n  margin: 48px auto 0;\n  padding: 48px;\n  position: relative;\n  text-align: center;\n  border-color: var(--color-accent);\n  box-shadow: var(--shadow-glow);\n  background: var(--gradient-surface), var(--color-bg-card);\n}\n.pricing__badge[_ngcontent-%COMP%] {\n  display: inline-flex;\n  padding: 8px 20px;\n  border-radius: var(--radius-full);\n  background: var(--gradient-accent);\n  color: #fff;\n  font-weight: 700;\n  font-size: 0.9375rem;\n}\n.pricing__description[_ngcontent-%COMP%] {\n  margin-top: 20px;\n  font-size: 1.0625rem;\n  color: var(--color-gray);\n}\n.pricing__included[_ngcontent-%COMP%] {\n  display: grid;\n  grid-template-columns: repeat(2, 1fr);\n  gap: 12px 24px;\n  margin-top: 32px;\n  text-align: left;\n}\n.pricing__included[_ngcontent-%COMP%]   li[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  gap: 8px;\n  font-size: 0.9375rem;\n  color: var(--color-text);\n}\n.pricing__included[_ngcontent-%COMP%]   .material-icons[_ngcontent-%COMP%] {\n  font-size: 18px;\n  color: var(--color-success);\n}\n.pricing__fees[_ngcontent-%COMP%] {\n  margin-top: 32px;\n  padding: 20px 24px;\n  border: 1px solid var(--color-border);\n  border-radius: var(--radius-md);\n  text-align: left;\n  background: var(--color-bg-elevated);\n}\n.pricing__fees-title[_ngcontent-%COMP%] {\n  font-size: 0.9375rem;\n  font-weight: 700;\n  color: var(--color-text);\n}\n.pricing__fees-list[_ngcontent-%COMP%] {\n  margin-top: 12px;\n  display: flex;\n  flex-direction: column;\n  gap: 8px;\n}\n.pricing__fees-list[_ngcontent-%COMP%]   li[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  justify-content: space-between;\n  gap: 12px;\n  font-size: 0.9375rem;\n  color: var(--color-text);\n}\n.pricing__fees-list[_ngcontent-%COMP%]   strong[_ngcontent-%COMP%] {\n  color: var(--color-accent-hover);\n}\n.pricing__fees-hint[_ngcontent-%COMP%] {\n  margin-top: 12px;\n  font-size: 0.8125rem;\n  color: var(--color-text-muted);\n}\n.pricing__cta[_ngcontent-%COMP%] {\n  width: 100%;\n  margin-top: 36px;\n  font-size: 1rem;\n  padding-block: 16px;\n}\n.pricing__note[_ngcontent-%COMP%] {\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  gap: 6px;\n  margin-top: 20px;\n  font-size: 0.8125rem;\n  color: var(--color-text-muted);\n}\n.pricing__note[_ngcontent-%COMP%]   .material-icons[_ngcontent-%COMP%] {\n  font-size: 16px;\n  color: var(--color-accent-hover);\n}\n@media (max-width: 640px) {\n  .pricing__card[_ngcontent-%COMP%] {\n    padding: 32px 24px;\n  }\n  .pricing__included[_ngcontent-%COMP%] {\n    grid-template-columns: 1fr;\n  }\n}\n/*# sourceMappingURL=pricing.component.css.map */"] });
 };
 (() => {
   (typeof ngDevMode === "undefined" || ngDevMode) && \u0275setClassDebugInfo(PricingComponent, { className: "PricingComponent", filePath: "src\\app\\features\\landing\\components\\pricing\\pricing.component.ts", lineNumber: 13 });
 })();
 
 // src/app/features/landing/components/comparison/comparison.component.ts
-var _forTrack05 = ($index, $item) => $item.others;
+var _forTrack06 = ($index, $item) => $item.others;
 var _forTrack1 = ($index, $item) => $item.ours;
 function ComparisonComponent_For_13_Template(rf, ctx) {
   if (rf & 1) {
@@ -802,7 +836,7 @@ var ComparisonComponent = class _ComparisonComponent {
       \u0275\u0275text(10, "Outros Sistemas");
       \u0275\u0275elementEnd();
       \u0275\u0275elementStart(11, "ul");
-      \u0275\u0275repeaterCreate(12, ComparisonComponent_For_13_Template, 4, 1, "li", null, _forTrack05);
+      \u0275\u0275repeaterCreate(12, ComparisonComponent_For_13_Template, 4, 1, "li", null, _forTrack06);
       \u0275\u0275elementEnd()();
       \u0275\u0275elementStart(14, "div", 7)(15, "h3");
       \u0275\u0275text(16, "Comanda \xDAnica");
@@ -828,7 +862,7 @@ var ComparisonComponent = class _ComparisonComponent {
 })();
 
 // src/app/features/landing/components/testimonials/testimonials.component.ts
-var _forTrack06 = ($index, $item) => $item.name;
+var _forTrack07 = ($index, $item) => $item.name;
 var _c02 = () => [1, 2, 3, 4, 5];
 function TestimonialsComponent_For_15_Conditional_0_For_3_Template(rf, ctx) {
   if (rf & 1) {
@@ -956,7 +990,7 @@ var TestimonialsComponent = class _TestimonialsComponent {
       \u0275\u0275text(12, "chevron_left");
       \u0275\u0275elementEnd()();
       \u0275\u0275elementStart(13, "div", 9);
-      \u0275\u0275repeaterCreate(14, TestimonialsComponent_For_15_Template, 1, 1, null, null, _forTrack06);
+      \u0275\u0275repeaterCreate(14, TestimonialsComponent_For_15_Template, 1, 1, null, null, _forTrack07);
       \u0275\u0275elementEnd();
       \u0275\u0275elementStart(16, "button", 10);
       \u0275\u0275listener("click", function TestimonialsComponent_Template_button_click_16_listener() {
@@ -966,7 +1000,7 @@ var TestimonialsComponent = class _TestimonialsComponent {
       \u0275\u0275text(18, "chevron_right");
       \u0275\u0275elementEnd()()();
       \u0275\u0275elementStart(19, "div", 11);
-      \u0275\u0275repeaterCreate(20, TestimonialsComponent_For_21_Template, 1, 4, "button", 12, _forTrack06);
+      \u0275\u0275repeaterCreate(20, TestimonialsComponent_For_21_Template, 1, 4, "button", 12, _forTrack07);
       \u0275\u0275elementEnd()()();
     }
     if (rf & 2) {
@@ -984,7 +1018,7 @@ var TestimonialsComponent = class _TestimonialsComponent {
 })();
 
 // src/app/features/landing/components/faq/faq.component.ts
-var _forTrack07 = ($index, $item) => $item.question;
+var _forTrack08 = ($index, $item) => $item.question;
 function FaqComponent_For_11_Template(rf, ctx) {
   if (rf & 1) {
     const _r1 = \u0275\u0275getCurrentView();
@@ -1078,7 +1112,7 @@ var FaqComponent = class _FaqComponent {
       \u0275\u0275text(8, "Tudo o que voc\xEA precisa saber antes de come\xE7ar.");
       \u0275\u0275elementEnd()();
       \u0275\u0275elementStart(9, "div", 6);
-      \u0275\u0275repeaterCreate(10, FaqComponent_For_11_Template, 10, 11, "div", 7, _forTrack07);
+      \u0275\u0275repeaterCreate(10, FaqComponent_For_11_Template, 10, 11, "div", 7, _forTrack08);
       \u0275\u0275elementEnd()()();
     }
     if (rf & 2) {
@@ -1154,4 +1188,4 @@ var HomeComponent = class _HomeComponent {
 export {
   HomeComponent
 };
-//# sourceMappingURL=chunk-TTMZI3PT.js.map
+//# sourceMappingURL=chunk-DDBC74P5.js.map

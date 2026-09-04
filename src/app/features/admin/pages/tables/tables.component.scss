@@ -14,6 +14,13 @@
   flex-wrap: wrap;
 }
 
+.page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .page-title {
   font-size: 1.75rem;
   color: var(--color-text);

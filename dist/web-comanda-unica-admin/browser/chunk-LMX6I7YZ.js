@@ -5,7 +5,7 @@ import "./chunk-5BDNYZJ3.js";
 import "./chunk-FNN634HN.js";
 import {
   AuthShellComponent
-} from "./chunk-SF3TG6FN.js";
+} from "./chunk-IW6PKVMX.js";
 import "./chunk-P26S26B7.js";
 import "./chunk-2VOFBJJ2.js";
 import "./chunk-XDLONSRE.js";
@@ -40,4 +40,4 @@ var ForgotPasswordComponent = class _ForgotPasswordComponent {
 export {
   ForgotPasswordComponent
 };
-//# sourceMappingURL=chunk-IZPXDVQ4.js.map
+//# sourceMappingURL=chunk-LMX6I7YZ.js.map

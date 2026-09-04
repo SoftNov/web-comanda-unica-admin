@@ -41,17 +41,8 @@
   width: 32px;
   height: 32px;
   border-radius: 9px;
-  background: var(--gradient-accent);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.header__logo-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #fff;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
 .header__logo-text strong {

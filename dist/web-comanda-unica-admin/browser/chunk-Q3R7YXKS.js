@@ -2,9 +2,14 @@ import {
   onlyDigits
 } from "./chunk-5JXQFZ3G.js";
 import {
+  environment
+} from "./chunk-3BRF5UDA.js";
+import {
   HttpClient,
+  catchError,
   inject,
-  map,
+  of,
+  throwError,
   ɵɵdefineInjectable
 } from "./chunk-74GQPZJ4.js";
 
@@ -13,17 +18,7 @@ var CepService = class _CepService {
   http = inject(HttpClient);
   lookup(cep) {
     const digits = onlyDigits(cep);
-    return this.http.get(`https://viacep.com.br/ws/${digits}/json/`).pipe(map((response) => {
-      if (!response || response.erro) {
-        return null;
-      }
-      return {
-        street: response.logradouro,
-        neighborhood: response.bairro,
-        city: response.localidade,
-        state: response.uf
-      };
-    }));
+    return this.http.get(`${environment.apiBaseUrl}/api/v1/cep/${digits}`).pipe(catchError((error) => error.status === 404 ? of(null) : throwError(() => error)));
   }
   static \u0275fac = function CepService_Factory(__ngFactoryType__) {
     return new (__ngFactoryType__ || _CepService)();
@@ -34,4 +29,4 @@ var CepService = class _CepService {
 export {
   CepService
 };
-//# sourceMappingURL=chunk-6BY6Q3LE.js.map
+//# sourceMappingURL=chunk-Q3R7YXKS.js.map

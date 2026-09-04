@@ -52,6 +52,32 @@ export interface UpdateReservationRequest {
   notes?: string;
 }
 
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+}
+
+// Status possíveis de filtrar no histórico — ACTIVE fica de fora (já tem sua própria tela).
+export type ReservationHistoryStatus = Exclude<ReservationStatus, 'ACTIVE'>;
+
+export interface ReservationHistoryParams {
+  // ISO-8601 "yyyy-MM-ddTHH:mm:ss" em UTC (ver brDateTimeLocalToApi) — período por resolvedAt.
+  startDate?: string;
+  endDate?: string;
+  status?: ReservationHistoryStatus;
+  // Busca por nome, telefone ou CPF (com ou sem máscara) do responsável — um único campo, o
+  // backend decide contra qual coluna comparar (ver TableReservationSpecifications#search).
+  search?: string;
+  page: number;
+  size: number;
+  sortBy: string;
+  sortDirection: 'ASC' | 'DESC';
+}
+
 @Injectable({ providedIn: 'root' })
 export class ReservationsService {
   private readonly http = inject(HttpClient);
@@ -63,6 +89,28 @@ export class ReservationsService {
       params['includeResolved'] = 'true';
     }
     return this.http.get<TableReservationResponse[]>(this.baseUrl, { params });
+  }
+
+  history(params: ReservationHistoryParams): Observable<PageResponse<TableReservationResponse>> {
+    const httpParams: Record<string, string | number> = {
+      page: params.page,
+      size: params.size,
+      sortBy: params.sortBy,
+      sortDirection: params.sortDirection
+    };
+    if (params.startDate) {
+      httpParams['startDate'] = params.startDate;
+    }
+    if (params.endDate) {
+      httpParams['endDate'] = params.endDate;
+    }
+    if (params.status) {
+      httpParams['status'] = params.status;
+    }
+    if (params.search) {
+      httpParams['search'] = params.search;
+    }
+    return this.http.get<PageResponse<TableReservationResponse>>(`${this.baseUrl}/history`, { params: httpParams });
   }
 
   create(payload: CreateReservationRequest): Observable<TableReservationResponse> {

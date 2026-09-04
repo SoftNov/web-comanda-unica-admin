@@ -25,6 +25,21 @@
         }
       </ul>
 
+      <div class="pricing__fees">
+        <h3 class="pricing__fees-title">Taxas de pagamento com cartão</h3>
+        <ul class="pricing__fees-list">
+          @for (fee of paymentFees; track fee.label) {
+            <li>
+              <span>{{ fee.label }}</span>
+              <strong>{{ fee.value }}</strong>
+            </li>
+          }
+        </ul>
+        <p class="pricing__fees-hint">
+          Cobrada só sobre os pagamentos feitos com cartão pelo cardápio digital. Dinheiro e maquininha própria não têm taxa.
+        </p>
+      </div>
+
       <a routerLink="/criar-conta" class="btn btn--success pricing__cta" appRipple>Criar minha conta</a>
 
       <p class="pricing__note">

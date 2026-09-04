@@ -41,7 +41,7 @@
       <p class="field__hint">Nenhuma reserva ativa no momento.</p>
     } @else {
       <div class="reservas-grid">
-        @for (reservation of activeReservations(); track reservation.id) {
+        @for (reservation of pagedActiveReservations(); track reservation.id) {
           <div class="reserva-card card" [class.reserva-card--overdue]="isOverdue(reservation)">
             <div class="reserva-card__header">
               <span class="reserva-card__table">
@@ -74,7 +74,9 @@
               </p>
             }
 
-            <p class="reserva-card__meta">Criada por {{ reservation.createdByUserName || '—' }}</p>
+            <p class="reserva-card__meta">
+              Criada por {{ reservation.createdByUserName || '—' }} em {{ formatDateTime(reservation.createdAt) }}
+            </p>
 
             <div class="reserva-card__actions">
               <button
@@ -98,32 +100,154 @@
           </div>
         }
       </div>
+
+      @if (activeTotalPages() > 1) {
+        <div class="pagination">
+          <span class="pagination__info">
+            {{ activeReservations().length }} reserva(s) ativa(s) — página {{ activePage() + 1 }} de {{ activeTotalPages() }}
+          </span>
+          <div class="pagination__controls">
+            <button type="button" class="btn btn--ghost btn--sm" [disabled]="activePage() === 0" (click)="previousActivePage()">
+              <span class="material-icons" aria-hidden="true">chevron_left</span>
+              Anterior
+            </button>
+            <button
+              type="button"
+              class="btn btn--ghost btn--sm"
+              [disabled]="activePage() >= activeTotalPages() - 1"
+              (click)="nextActivePage()"
+            >
+              Próxima
+              <span class="material-icons" aria-hidden="true">chevron_right</span>
+            </button>
+          </div>
+        </div>
+      }
     }
   </section>
 
   <section class="reservas-section">
-    <button type="button" class="reservas-section__toggle" (click)="toggleResolved()">
-      <span class="material-icons" aria-hidden="true">{{ showResolved() ? 'expand_less' : 'expand_more' }}</span>
-      Resolvidas nas últimas 24h
+    <button type="button" class="reservas-section__toggle" (click)="toggleHistory()">
+      <span class="material-icons" aria-hidden="true">{{ showHistory() ? 'expand_less' : 'expand_more' }}</span>
+      Histórico de reservas
     </button>
 
-    @if (showResolved()) {
-      @if (resolvedReservations().length === 0) {
-        <p class="field__hint">Nenhuma reserva resolvida nas últimas 24h.</p>
+    @if (showHistory()) {
+      <form class="history-filters" (submit)="$event.preventDefault(); applyHistoryFilters()" novalidate>
+        <div class="field history-filters__field">
+          <label class="field__label" for="history-start">De</label>
+          <div class="field__control">
+            <input
+              id="history-start"
+              type="date"
+              class="field__input"
+              [value]="historyStartDate()"
+              (change)="onHistoryStartDateChange($any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <div class="field history-filters__field">
+          <label class="field__label" for="history-end">Até</label>
+          <div class="field__control">
+            <input
+              id="history-end"
+              type="date"
+              class="field__input"
+              [value]="historyEndDate()"
+              (change)="onHistoryEndDateChange($any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <div class="field history-filters__field">
+          <label class="field__label" for="history-status">Status</label>
+          <div class="field__control">
+            <select
+              id="history-status"
+              class="field__input"
+              [value]="historyStatus()"
+              (change)="onHistoryStatusChange($any($event.target).value)"
+            >
+              @for (option of historyStatusOptions; track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="field history-filters__field history-filters__field--search">
+          <label class="field__label" for="history-search">Nome, CPF ou telefone</label>
+          <div class="field__control">
+            <input
+              id="history-search"
+              type="text"
+              class="field__input"
+              placeholder="Buscar por nome, CPF ou telefone do responsável"
+              [value]="historySearch()"
+              (input)="onHistorySearchChange($any($event.target).value)"
+            />
+          </div>
+        </div>
+
+        <div class="history-filters__actions">
+          <button type="submit" class="btn btn--primary btn--sm" appRipple [disabled]="historyLoading()">
+            <span class="material-icons" aria-hidden="true">search</span>
+            Buscar
+          </button>
+          <button type="button" class="btn btn--ghost btn--sm" [disabled]="historyLoading()" (click)="clearHistoryFilters()">
+            Limpar filtros
+          </button>
+        </div>
+      </form>
+
+      @if (historyLoading()) {
+        <p class="field__hint">Carregando histórico…</p>
+      } @else if (historyError()) {
+        <div class="form-alert form-alert--error" role="alert">
+          <span class="material-icons" aria-hidden="true">error_outline</span>
+          {{ historyError() }}
+        </div>
+      } @else if (historyResults().length === 0) {
+        <p class="field__hint">Nenhuma reserva encontrada para os filtros selecionados.</p>
       } @else {
         <ul class="reservas-resolved">
-          @for (reservation of resolvedReservations(); track reservation.id) {
+          @for (reservation of historyResults(); track reservation.id) {
             <li class="reservas-resolved__item">
               <span class="reservas-resolved__table">Mesa {{ reservation.tableNumber }}</span>
               <span class="badge badge--muted">{{ statusLabel(reservation.status) }}</span>
               <span class="reservas-resolved__info">
                 {{ reservation.guestName || 'Sem nome' }}{{ reservation.guestDocument ? ' · CPF ' + maskDocument(reservation.guestDocument) : '' }}
+                {{ reservation.guestPhone ? ' · ' + reservation.guestPhone : '' }}
                 · segurava até {{ formatDateTime(reservation.holdUntil) }}
               </span>
-              <span class="reservas-resolved__when">{{ formatDateTime(reservation.resolvedAt) }}</span>
+              <span class="reservas-resolved__when">
+                {{ formatDateTime(reservation.resolvedAt) }}{{ reservation.resolvedByUserName ? ' · por ' + reservation.resolvedByUserName : '' }}
+              </span>
             </li>
           }
         </ul>
+
+        <div class="pagination">
+          <span class="pagination__info">
+            {{ historyTotalElements() }} reserva(s) — página {{ historyPage() + 1 }} de {{ historyTotalPages() }}
+          </span>
+          <div class="pagination__controls">
+            <button type="button" class="btn btn--ghost btn--sm" [disabled]="historyPage() === 0" (click)="previousHistoryPage()">
+              <span class="material-icons" aria-hidden="true">chevron_left</span>
+              Anterior
+            </button>
+            <button
+              type="button"
+              class="btn btn--ghost btn--sm"
+              [disabled]="historyPage() >= historyTotalPages() - 1"
+              (click)="nextHistoryPage()"
+            >
+              Próxima
+              <span class="material-icons" aria-hidden="true">chevron_right</span>
+            </button>
+          </div>
+        </div>
       }
     }
   </section>
@@ -184,7 +308,17 @@
         <div class="field">
           <label class="field__label" for="reserva-phone">Telefone (opcional)</label>
           <div class="field__control">
-            <input id="reserva-phone" type="tel" class="field__input" formControlName="guestPhone" maxlength="30" />
+            <input
+              id="reserva-phone"
+              type="tel"
+              inputmode="numeric"
+              class="field__input"
+              formControlName="guestPhone"
+              placeholder="(00) 00000-0000"
+              maxlength="15"
+              autocomplete="tel"
+              (input)="onPhoneInput($event)"
+            />
           </div>
         </div>
 

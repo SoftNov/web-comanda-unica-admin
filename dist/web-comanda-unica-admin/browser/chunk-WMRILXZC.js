@@ -1,7 +1,7 @@
 import {
   LegalLayoutComponent
-} from "./chunk-YZDH5HKQ.js";
-import "./chunk-QCZ43G67.js";
+} from "./chunk-74MMY37R.js";
+import "./chunk-KNI6Y6JX.js";
 import "./chunk-P26S26B7.js";
 import "./chunk-EVJN5Z2J.js";
 import {
@@ -98,4 +98,4 @@ var TermsComponent = class _TermsComponent {
 export {
   TermsComponent
 };
-//# sourceMappingURL=chunk-H7B5BOG7.js.map
+//# sourceMappingURL=chunk-WMRILXZC.js.map
