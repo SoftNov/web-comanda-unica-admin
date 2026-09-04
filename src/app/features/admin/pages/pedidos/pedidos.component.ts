@@ -9,6 +9,7 @@ import {
   OrderQueueService
 } from '../../../../shared/services/order-queue.service';
 import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
+import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
 import { AuthService } from '../../../auth/services/auth.service';
 
 const WS_RETRY_DELAY_MS = 5000;
@@ -68,8 +69,8 @@ export class PedidosComponent implements OnDestroy {
   private readonly orderQueueService = inject(OrderQueueService);
   private readonly authService = inject(AuthService);
 
-  private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-  private readonly timeFormatter = new Intl.DateTimeFormat('pt-BR', { timeStyle: 'short' });
+  private readonly dateTimeFormatter = brDateTimeFormat({ dateStyle: 'short', timeStyle: 'short' });
+  private readonly timeFormatter = brDateTimeFormat({ timeStyle: 'short' });
 
   readonly selectedCompany = this.authService.selectedCompany;
 
@@ -137,11 +138,13 @@ export class PedidosComponent implements OnDestroy {
   }
 
   formatDateTime(value: string | undefined | null): string {
-    return value ? this.dateTimeFormatter.format(new Date(value)) : '—';
+    const parsed = parseApiDate(value);
+    return parsed ? this.dateTimeFormatter.format(parsed) : '—';
   }
 
   formatTime(value: string | undefined | null): string {
-    return value ? this.timeFormatter.format(new Date(value)) : '—';
+    const parsed = parseApiDate(value);
+    return parsed ? this.timeFormatter.format(parsed) : '—';
   }
 
   // Colunas em fila (REQUESTED/PREPARING/ON_THE_WAY) mantêm a ordem FIFO que já vem do backend

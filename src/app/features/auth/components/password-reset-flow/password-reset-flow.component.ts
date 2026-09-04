@@ -6,6 +6,7 @@ import { PasswordRulesComponent } from '../../../../shared/components/password-r
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { passwordStrengthValidator, passwordsMatchValidator } from '../../../../shared/validators/password.validator';
 import { extractUnlockTime, formatCountdown, secondsUntil } from '../../../../shared/utils/countdown.util';
+import { parseApiDate } from '../../../../shared/utils/datetime.util';
 import { ApiErrorResponse, AuthService } from '../../services/auth.service';
 
 type Step = 'start' | 'code' | 'password' | 'done';
@@ -116,7 +117,7 @@ export class PasswordResetFlowComponent {
         this.resetToken = response.resetToken;
         this.passwordForm.reset();
         this.step.set('password');
-        this.startCountdown(new Date(response.resetTokenExpiresAt), 'resetToken');
+        this.startCountdown(parseApiDate(response.resetTokenExpiresAt) ?? new Date(), 'resetToken');
       },
       error: (error: HttpErrorResponse) => {
         this.isSubmitting.set(false);
@@ -199,7 +200,7 @@ export class PasswordResetFlowComponent {
         this.resetToken = null;
         this.codeForm.reset();
         this.step.set('code');
-        this.startCountdown(new Date(response.codeExpiresAt), 'code');
+        this.startCountdown(parseApiDate(response.codeExpiresAt) ?? new Date(), 'code');
       },
       error: (error: HttpErrorResponse) => {
         this.isSubmitting.set(false);

@@ -9,6 +9,7 @@ import {
 } from '../../../../shared/services/platform-fee-rules.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
+import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
 
 const PAGE_SIZE = 10;
 
@@ -33,7 +34,7 @@ export class FinanceiroPlataformaComponent {
   private readonly fb = new FormBuilder();
   private readonly platformFeeRulesService = inject(PlatformFeeRulesService);
   private readonly currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-  private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  private readonly dateTimeFormatter = brDateTimeFormat({ dateStyle: 'short', timeStyle: 'short' });
 
   // --- Regra padrão -----------------------------------------------------------------
   readonly defaultRule = signal<PlatformFeeRuleResponse | null>(null);
@@ -87,7 +88,8 @@ export class FinanceiroPlataformaComponent {
   }
 
   formatDateTime(value: string | undefined | null): string {
-    return value ? this.dateTimeFormatter.format(new Date(value)) : '—';
+    const parsed = parseApiDate(value);
+    return parsed ? this.dateTimeFormatter.format(parsed) : '—';
   }
 
   // Cálculo ao vivo, sem ida ao backend — cobrança por faixa: até thresholdAmount cobra o

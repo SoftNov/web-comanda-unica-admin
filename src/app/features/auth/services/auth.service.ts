@@ -5,6 +5,7 @@ import { Observable, tap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { AccountsService } from '../../../shared/services/accounts.service';
 import { CookieService } from '../../../shared/services/cookie.service';
+import { apiDateTime } from '../../../shared/utils/datetime.util';
 
 export interface LoginRequest {
   email: string;
@@ -194,7 +195,7 @@ export class AuthService {
   }
 
   private persistSession(session: SessionData): void {
-    const maxAgeSeconds = Math.max(1, Math.floor((new Date(session.expiresAt).getTime() - Date.now()) / 1000));
+    const maxAgeSeconds = Math.max(1, Math.floor((apiDateTime(session.expiresAt) - Date.now()) / 1000));
     this.cookies.set(SESSION_COOKIE, JSON.stringify(session), { maxAgeSeconds });
     this.session.set(session);
   }
@@ -213,6 +214,6 @@ export class AuthService {
   }
 
   private hasValidSession(session: SessionData | null): session is SessionData {
-    return !!session && new Date(session.expiresAt).getTime() > Date.now();
+    return !!session && apiDateTime(session.expiresAt) > Date.now();
   }
 }

@@ -19,6 +19,7 @@ import {
 } from '../../../../shared/services/platform-extrato.service';
 import { CompanyFeeRuleResponse, PlatformFeeRulesService } from '../../../../shared/services/platform-fee-rules.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
+import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
 
 type PeriodPresetId = 'hoje' | 'ontem' | '7d' | '30d' | 'este-mes' | 'mes-anterior' | 'personalizado';
 
@@ -94,7 +95,7 @@ export class ExtratoFinanceiroComponent {
   private readonly platformExtratoService = inject(PlatformExtratoService);
   private readonly platformFeeRulesService = inject(PlatformFeeRulesService);
   private readonly currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-  private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  private readonly dateTimeFormatter = brDateTimeFormat({ dateStyle: 'short', timeStyle: 'short' });
 
   readonly isPlatformAdmin = this.authService.isPlatformAdmin;
   readonly myCompanies = this.authService.companies;
@@ -158,7 +159,8 @@ export class ExtratoFinanceiroComponent {
     if (!value) {
       return '—';
     }
-    return this.dateTimeFormatter.format(new Date(value));
+    const parsed = parseApiDate(value);
+    return parsed ? this.dateTimeFormatter.format(parsed) : '—';
   }
 
   tipoLabel(tipo: ExtratoTipo): string {

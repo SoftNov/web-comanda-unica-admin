@@ -24,6 +24,7 @@ import {
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { formatCurrencyInput, parseCurrencyInput } from '../../../../shared/utils/br-format.util';
 import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
+import { apiDateTime, apiToBrDateTimeLocal, brDateTimeLocalToApi } from '../../../../shared/utils/datetime.util';
 import { AuthService } from '../../../auth/services/auth.service';
 
 const PAGE_SIZE = 10;
@@ -280,11 +281,11 @@ export class MenuComponent {
     if (item.promotionalPrice == null) {
       return false;
     }
-    const now = new Date();
-    if (item.promotionStart && new Date(item.promotionStart) > now) {
+    const now = Date.now();
+    if (item.promotionStart && apiDateTime(item.promotionStart) > now) {
       return false;
     }
-    if (item.promotionEnd && new Date(item.promotionEnd) < now) {
+    if (item.promotionEnd && apiDateTime(item.promotionEnd) < now) {
       return false;
     }
     return true;
@@ -427,8 +428,8 @@ export class MenuComponent {
       description: item.description ?? '',
       price: this.toMaskedCurrency(item.price),
       promotionalPrice: this.toMaskedCurrency(item.promotionalPrice),
-      promotionStart: this.toDatetimeLocal(item.promotionStart),
-      promotionEnd: this.toDatetimeLocal(item.promotionEnd),
+      promotionStart: apiToBrDateTimeLocal(item.promotionStart),
+      promotionEnd: apiToBrDateTimeLocal(item.promotionEnd),
       active: item.active,
       available: item.available,
       highlight: item.highlight,
@@ -664,8 +665,8 @@ export class MenuComponent {
       description: value.description.trim() || undefined,
       price: parseCurrencyInput(value.price) ?? 0,
       promotionalPrice: parseCurrencyInput(value.promotionalPrice) ?? undefined,
-      promotionStart: value.promotionStart ?? undefined,
-      promotionEnd: value.promotionEnd ?? undefined,
+      promotionStart: brDateTimeLocalToApi(value.promotionStart),
+      promotionEnd: brDateTimeLocalToApi(value.promotionEnd),
       active: value.active,
       available: value.available,
       highlight: value.highlight,
@@ -681,10 +682,6 @@ export class MenuComponent {
       kitchenSector: value.kitchenSector || undefined,
       displayOrder: value.displayOrder ?? undefined
     };
-  }
-
-  private toDatetimeLocal(value: string | undefined): string | null {
-    return value ? value.slice(0, 16) : null;
   }
 
   private toMaskedCurrency(value: number | undefined | null): string {

@@ -22,6 +22,7 @@ import {
 import { RestaurantTableResponse, TablesService } from '../../../../shared/services/tables.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
+import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
 import { AuthService } from '../../../auth/services/auth.service';
 
 const PAGE_SIZE = 10;
@@ -44,7 +45,7 @@ export class ComandasComponent {
   private readonly router = inject(Router);
 
   private readonly currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-  private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  private readonly dateTimeFormatter = brDateTimeFormat({ dateStyle: 'short', timeStyle: 'short' });
 
   readonly selectedCompany = this.authService.selectedCompany;
   // Estorno restrito a OWNER/ADMIN/MANAGER (ver seed de permissão payment.refund no backend,
@@ -309,7 +310,8 @@ export class ComandasComponent {
   }
 
   formatDateTime(value: string | undefined | null): string {
-    return value ? this.dateTimeFormatter.format(new Date(value)) : '—';
+    const parsed = parseApiDate(value);
+    return parsed ? this.dateTimeFormatter.format(parsed) : '—';
   }
 
   // "2x X-Burger, 1x Coca-Cola" — itens cancelados individualmente já não vêm nesta lista (ver

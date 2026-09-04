@@ -59,10 +59,11 @@
               <span class="reserva-card__countdown">· {{ holdCountdown(reservation) }}</span>
             </p>
 
-            @if (reservation.guestName || reservation.guestPhone) {
+            @if (reservation.guestName || reservation.guestPhone || reservation.guestDocument) {
               <p class="reserva-card__guest">
                 <span class="material-icons" aria-hidden="true">person</span>
                 {{ reservation.guestName || 'Sem nome' }}{{ reservation.guestPhone ? ' · ' + reservation.guestPhone : '' }}
+                {{ reservation.guestDocument ? ' · CPF ' + maskDocument(reservation.guestDocument) : '' }}
               </p>
             }
 
@@ -116,7 +117,8 @@
               <span class="reservas-resolved__table">Mesa {{ reservation.tableNumber }}</span>
               <span class="badge badge--muted">{{ statusLabel(reservation.status) }}</span>
               <span class="reservas-resolved__info">
-                {{ reservation.guestName || 'Sem nome' }} · segurava até {{ formatDateTime(reservation.holdUntil) }}
+                {{ reservation.guestName || 'Sem nome' }}{{ reservation.guestDocument ? ' · CPF ' + maskDocument(reservation.guestDocument) : '' }}
+                · segurava até {{ formatDateTime(reservation.holdUntil) }}
               </span>
               <span class="reservas-resolved__when">{{ formatDateTime(reservation.resolvedAt) }}</span>
             </li>
@@ -184,6 +186,27 @@
           <div class="field__control">
             <input id="reserva-phone" type="tel" class="field__input" formControlName="guestPhone" maxlength="30" />
           </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="reserva-document">CPF</label>
+          <div class="field__control">
+            <input
+              id="reserva-document"
+              type="text"
+              inputmode="numeric"
+              class="field__input"
+              [class.field__input--invalid]="createForm.controls.guestDocument.invalid && createForm.controls.guestDocument.touched"
+              formControlName="guestDocument"
+              placeholder="000.000.000-00"
+              maxlength="14"
+              (input)="onCpfInput($event)"
+            />
+          </div>
+          <span class="field__hint">É contra este CPF que o cliente confirma a chegada pelo QR Code da mesa.</span>
+          @if (createForm.controls.guestDocument.invalid && createForm.controls.guestDocument.touched) {
+            <span class="field__error">Informe um CPF válido.</span>
+          }
         </div>
 
         <div class="field">

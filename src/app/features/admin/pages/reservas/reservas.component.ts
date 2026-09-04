@@ -12,6 +12,15 @@ import {
 import { RestaurantTableResponse, TablesService } from '../../../../shared/services/tables.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
+import { formatCPF, maskCPF, onlyDigits } from '../../../../shared/utils/br-format.util';
+import { cpfValidator } from '../../../../shared/validators/br-document.validator';
+import {
+  apiDateTime,
+  brDateTimeFormat,
+  brDateTimeLocalFromNow,
+  brDateTimeLocalToApi,
+  parseApiDate
+} from '../../../../shared/utils/datetime.util';
 
 // A reserva expira sozinha no backend (ReservationLifecycleScheduler, a cada 1 min) — a tela
 // recarrega no mesmo ritmo para refletir expirações sem o usuário precisar apertar "Atualizar".
@@ -19,6 +28,7 @@ const AUTO_REFRESH_MS = 60_000;
 
 const STATUS_LABELS: Record<ReservationStatus, string> = {
   ACTIVE: 'Ativa',
+  SEATED: 'Cliente na mesa',
   HONORED: 'Cliente chegou',
   EXPIRED: 'Expirada',
   RELEASED: 'Cancelada'
@@ -36,7 +46,7 @@ export class ReservasComponent implements OnDestroy {
   private readonly reservationsService = inject(ReservationsService);
   private readonly tablesService = inject(TablesService);
 
-  private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  private readonly dateTimeFormatter = brDateTimeFormat({ day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
   readonly reservations = signal<TableReservationResponse[]>([]);
   readonly isLoading = signal(true);
@@ -69,6 +79,8 @@ export class ReservasComponent implements OnDestroy {
     holdUntil: this.fb.nonNullable.control('', Validators.required),
     guestName: this.fb.control<string | null>(null),
     guestPhone: this.fb.control<string | null>(null),
+    // Obrigatório: é contra este CPF que o cliente confirma a chegada pelo QR Code.
+    guestDocument: this.fb.nonNullable.control('', [Validators.required, cpfValidator()]),
     notes: this.fb.control<string | null>(null)
   });
 
@@ -92,16 +104,17 @@ export class ReservasComponent implements OnDestroy {
   }
 
   formatDateTime(value: string | null | undefined): string {
-    return value ? this.dateTimeFormatter.format(new Date(value)) : '—';
+    const parsed = parseApiDate(value);
+    return parsed ? this.dateTimeFormatter.format(parsed) : '—';
   }
 
   isOverdue(reservation: TableReservationResponse): boolean {
-    return reservation.status === 'ACTIVE' && new Date(reservation.holdUntil).getTime() < this.now();
+    return reservation.status === 'ACTIVE' && apiDateTime(reservation.holdUntil) < this.now();
   }
 
   // "faltam 25 min" / "venceu há 3 min" — dica rápida ao lado do horário.
   holdCountdown(reservation: TableReservationResponse): string {
-    const diffMs = new Date(reservation.holdUntil).getTime() - this.now();
+    const diffMs = apiDateTime(reservation.holdUntil) - this.now();
     const minutes = Math.round(Math.abs(diffMs) / 60_000);
     if (minutes < 1) {
       return diffMs >= 0 ? 'vence agora' : 'venceu agora';
@@ -173,12 +186,21 @@ export class ReservasComponent implements OnDestroy {
   // --- Nova reserva ---------------------------------------------------------------
   openCreateModal(): void {
     this.createError.set(null);
-    this.createForm.reset({ tableId: '', holdUntil: this.defaultHoldUntil(), guestName: null, guestPhone: null, notes: null });
+    this.createForm.reset({ tableId: '', holdUntil: this.defaultHoldUntil(), guestName: null, guestPhone: null, guestDocument: '', notes: null });
     this.isCreateModalOpen.set(true);
   }
 
   closeCreateModal(): void {
     this.isCreateModalOpen.set(false);
+  }
+
+  onCpfInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.createForm.controls.guestDocument.setValue(formatCPF(input.value));
+  }
+
+  maskDocument(value: string | null | undefined): string {
+    return maskCPF(value);
   }
 
   submitCreate(): void {
@@ -193,11 +215,12 @@ export class ReservasComponent implements OnDestroy {
 
     const payload: CreateReservationRequest = {
       tableId: value.tableId,
-      // input datetime-local devolve "yyyy-MM-ddTHH:mm" (hora local) — o backend espera LocalDateTime,
-      // que aceita exatamente esse formato.
-      holdUntil: value.holdUntil,
+      // O input datetime-local devolve "yyyy-MM-ddTHH:mm" no horário de Brasília; o backend guarda
+      // tudo em UTC, então convertemos antes de enviar (ver datetime.util).
+      holdUntil: brDateTimeLocalToApi(value.holdUntil) ?? value.holdUntil,
       guestName: value.guestName?.trim() || undefined,
       guestPhone: value.guestPhone?.trim() || undefined,
+      guestDocument: onlyDigits(value.guestDocument),
       notes: value.notes?.trim() || undefined
     };
 
@@ -214,11 +237,9 @@ export class ReservasComponent implements OnDestroy {
     });
   }
 
-  // datetime-local precisa do formato "yyyy-MM-ddTHH:mm" em hora local — default: daqui a 1h.
+  // datetime-local precisa do formato "yyyy-MM-ddTHH:mm" no horário de Brasília — default: daqui a 1h.
   private defaultHoldUntil(): string {
-    const d = new Date(Date.now() + 60 * 60 * 1000);
-    const pad = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return brDateTimeLocalFromNow(60);
   }
 
   private resolveErrorMessage(error: HttpErrorResponse): string {

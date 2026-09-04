@@ -11,6 +11,7 @@ import {
   SERVICE_TYPE_LABELS
 } from '../../../../shared/services/notifications.service';
 import { ServiceRequestType } from '../../../../shared/services/service-requests.service';
+import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
 
 @Component({
   selector: 'app-admin-layout',
@@ -25,7 +26,7 @@ export class AdminLayoutComponent {
   private readonly notificationsService = inject(NotificationsService);
   private readonly router = inject(Router);
 
-  private readonly timeFormatter = new Intl.DateTimeFormat('pt-BR', { timeStyle: 'short' });
+  private readonly timeFormatter = brDateTimeFormat({ timeStyle: 'short' });
 
   readonly currentUser = this.authService.currentUser;
   readonly companies = this.authService.companies;
@@ -100,7 +101,8 @@ export class AdminLayoutComponent {
   }
 
   formatTime(value: string): string {
-    return this.timeFormatter.format(new Date(value));
+    const parsed = parseApiDate(value);
+    return parsed ? this.timeFormatter.format(parsed) : '—';
   }
 
   serviceTypeLabel(type: ServiceRequestType): string {

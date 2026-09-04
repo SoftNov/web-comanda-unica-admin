@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { PlatformStripeConfig } from '../../../../../../../shared/services/platform-stripe-config.service';
+import { brDateTimeFormat, parseApiDate } from '../../../../../../../shared/utils/datetime.util';
 
 // Modelo simplificado: só a última alteração (quem/quando), não um histórico completo — não há
 // tabela de auditoria dedicada, o próprio registro de configuração guarda só o último editor
@@ -13,9 +14,10 @@ import { PlatformStripeConfig } from '../../../../../../../shared/services/platf
 export class AdminStripeAuditCardComponent {
   @Input({ required: true }) config!: PlatformStripeConfig;
 
-  private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+  private readonly dateTimeFormatter = brDateTimeFormat({ dateStyle: 'short', timeStyle: 'short' });
 
   formatDateTime(value: string | null): string {
-    return value ? this.dateTimeFormatter.format(new Date(value)) : '—';
+    const parsed = parseApiDate(value);
+    return parsed ? this.dateTimeFormatter.format(parsed) : '—';
   }
 }

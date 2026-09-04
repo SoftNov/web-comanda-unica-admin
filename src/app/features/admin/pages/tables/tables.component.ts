@@ -19,6 +19,7 @@ import {
 } from '../../../../shared/services/table-sectors.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
+import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
 import { AuthService } from '../../../auth/services/auth.service';
 
 const PAGE_SIZE = 12;
@@ -146,11 +147,12 @@ export class TablesComponent {
     this.activeTab.set(tab);
   }
 
-  private readonly dateTimeFormatter = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  private readonly dateTimeFormatter = brDateTimeFormat({ day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 
   // --- Mesas: apresentação --------------------------------------------------
   formatShortDateTime(value: string | null | undefined): string {
-    return value ? this.dateTimeFormatter.format(new Date(value)) : '—';
+    const parsed = parseApiDate(value);
+    return parsed ? this.dateTimeFormatter.format(parsed) : '—';
   }
 
   tableStatusLabel(table: RestaurantTableResponse): string {

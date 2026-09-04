@@ -10,6 +10,16 @@ export function formatCPF(value: string): string {
     .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 }
 
+// Exibição discreta do CPF em telas de listagem (ex.: reservas) — mostra só o primeiro e o
+// último dígito de cada bloco, mascarando o resto. "52998224725" -> "5**.***.**7-*5".
+export function maskCPF(value: string | null | undefined): string {
+  const digits = onlyDigits(value);
+  if (digits.length !== 11) {
+    return digits ? formatCPF(digits) : '—';
+  }
+  return `${digits[0]}**.***.**${digits[8]}-*${digits[10]}`;
+}
+
 export function formatCNPJ(value: string): string {
   return onlyDigits(value)
     .slice(0, 14)

@@ -10,7 +10,7 @@ export interface ApiErrorResponse {
   codigoErro?: string;
 }
 
-export type ReservationStatus = 'ACTIVE' | 'HONORED' | 'EXPIRED' | 'RELEASED';
+export type ReservationStatus = 'ACTIVE' | 'SEATED' | 'HONORED' | 'EXPIRED' | 'RELEASED';
 
 // HONORED = "o grupo chegou, libere a mesa"; RELEASED = "cancelar a reserva". Ambos liberam a mesa
 // para pedidos — a distinção é só histórica (ver TableReservationApi no backend).
@@ -23,6 +23,7 @@ export interface TableReservationResponse {
   tableName?: string;
   guestName?: string;
   guestPhone?: string;
+  guestDocument?: string;
   notes?: string;
   holdUntil: string;
   status: ReservationStatus;
@@ -37,6 +38,9 @@ export interface CreateReservationRequest {
   holdUntil: string;
   guestName?: string;
   guestPhone?: string;
+  // Obrigatório: é contra este CPF que o cliente confirma a chegada pelo QR Code (ver
+  // PublicMenuServiceImpl#checkInReservation na api-comanda-unica-menu).
+  guestDocument: string;
   notes?: string;
 }
 
@@ -44,6 +48,7 @@ export interface UpdateReservationRequest {
   holdUntil?: string;
   guestName?: string;
   guestPhone?: string;
+  guestDocument?: string;
   notes?: string;
 }
 
