@@ -1,0 +1,117 @@
+<div class="page-header">
+  <h1 class="page-title">Assinatura Comanda Única</h1>
+  <p class="page-subtitle">
+    A Comanda Única funciona com uma assinatura anual. Gerencie o plano de {{ companyName() }} aqui.
+  </p>
+</div>
+
+@if (isLoading()) {
+  <p class="field__hint">Carregando…</p>
+} @else if (noPermission()) {
+  <div class="form-alert form-alert--info" role="status">
+    <span class="material-icons" aria-hidden="true">lock</span>
+    A assinatura da Comanda Única só pode ser gerenciada pelo proprietário ou por um administrador do
+    estabelecimento. Peça a um responsável para regularizar.
+  </div>
+} @else if (loadError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    Não foi possível carregar a assinatura.
+    <button type="button" class="btn btn--ghost btn--sm" (click)="load()">Tentar novamente</button>
+  </div>
+} @else {
+
+  @if (status()?.courtesy) {
+    <div class="form-alert form-alert--info" role="status">
+      <span class="material-icons" aria-hidden="true">schedule</span>
+      <span>
+        Você está no período de cortesia.
+        @if (courtesyDaysLeft() !== null) {
+          Faltam <strong>{{ courtesyDaysLeft() }} dia(s)</strong> ({{ dateLabel(status()?.currentPeriodEnd) }}).
+        }
+        Assine para não perder o acesso.
+      </span>
+    </div>
+  } @else if (mode() === 'past-due') {
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">warning_amber</span>
+      O pagamento da renovação não foi concluído. Regularize para manter o acesso ao sistema.
+    </div>
+  }
+
+  <div class="card sub-card">
+    <div class="sub-card__head">
+      <div>
+        <span class="sub-card__eyebrow">Plano anual</span>
+        <p class="sub-card__price">{{ planPriceLabel() }} <span>/ 12 meses</span></p>
+      </div>
+      <span class="badge"
+            [class.badge--success]="status()?.active && !status()?.courtesy"
+            [class.badge--warning]="status()?.courtesy || status()?.status === 'PAST_DUE'"
+            [class.badge--muted]="!status()?.active">
+        {{ statusLabel() }}
+      </span>
+    </div>
+
+    <ul class="sub-card__benefits">
+      <li><span class="material-icons" aria-hidden="true">check</span> Comandas, mesas, cardápio e pedidos</li>
+      <li><span class="material-icons" aria-hidden="true">check</span> Dashboard e relatórios financeiros</li>
+      <li><span class="material-icons" aria-hidden="true">check</span> Renovação automática — sem precisar acessar o Stripe todo ano</li>
+      <li><span class="material-icons" aria-hidden="true">check</span> Cobrança segura pelo Stripe — nenhum dado de cartão passa pela Comanda Única</li>
+    </ul>
+
+    @if (mode() === 'active') {
+      <dl class="sub-card__details">
+        <div>
+          <dt>Início</dt>
+          <dd>{{ dateLabel(status()?.startDate) }}</dd>
+        </div>
+        <div>
+          <dt>Período vigente</dt>
+          <dd>{{ dateLabel(status()?.currentPeriodStart) }} — {{ dateLabel(status()?.currentPeriodEnd) }}</dd>
+        </div>
+        <div>
+          <dt>Próxima cobrança</dt>
+          <dd>{{ status()?.cancelAtPeriodEnd ? 'Não renova (cancelada para o fim do período)' : dateLabel(status()?.currentPeriodEnd) }}</dd>
+        </div>
+        <div>
+          <dt>Renovação automática</dt>
+          <dd>{{ status()?.autoRenew ? 'Sim' : 'Não' }}</dd>
+        </div>
+      </dl>
+    }
+
+    @if (actionError()) {
+      <div class="form-alert form-alert--error" role="alert">
+        <span class="material-icons" aria-hidden="true">error_outline</span>
+        {{ actionError() }}
+      </div>
+    }
+
+    <div class="sub-card__actions">
+      @if (mode() === 'active') {
+        <button type="button" class="btn btn--primary" appRipple [disabled]="isRedirecting()" (click)="manage()">
+          {{ isRedirecting() ? 'Abrindo…' : 'Gerenciar pagamento' }}
+        </button>
+      } @else if (mode() === 'past-due') {
+        <button type="button" class="btn btn--primary" appRipple [disabled]="isRedirecting()" (click)="manage()">
+          {{ isRedirecting() ? 'Abrindo…' : 'Regularizar pagamento' }}
+        </button>
+      } @else {
+        <button type="button" class="btn btn--primary" appRipple [disabled]="isRedirecting()" (click)="subscribe()">
+          {{ isRedirecting() ? 'Abrindo…' : 'Assinar agora' }}
+        </button>
+        @if (status()?.manageable) {
+          <button type="button" class="btn btn--ghost" [disabled]="isRedirecting()" (click)="manage()">
+            Gerenciar pagamento
+          </button>
+        }
+      }
+    </div>
+
+    <p class="sub-card__fineprint">
+      Você será levado para uma página segura do Stripe para concluir. A assinatura tem renovação
+      automática anual e pode ser cancelada a qualquer momento pelo painel de pagamento.
+    </p>
+  </div>
+}

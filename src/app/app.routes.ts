@@ -4,6 +4,7 @@ import { homeGuard } from './core/guards/home.guard';
 import { platformAdminGuard } from './core/guards/platform-admin.guard';
 import { profileGuard } from './core/guards/profile.guard';
 import { profileOrPlatformAdminGuard } from './core/guards/profile-or-platform-admin.guard';
+import { subscriptionGuard } from './core/guards/subscription.guard';
 
 export const routes: Routes = [
   {
@@ -36,9 +37,17 @@ export const routes: Routes = [
   {
     path: 'painel',
     canActivate: [authGuard],
+    canActivateChild: [subscriptionGuard],
     loadComponent: () => import('./features/admin/layout/admin-layout/admin-layout.component').then((m) => m.AdminLayoutComponent),
     children: [
       { path: '', pathMatch: 'full', canActivate: [homeGuard], children: [] },
+      {
+        // Sem profileGuard: um funcionário sem permissão de assinatura também pode cair aqui
+        // (quando o backend bloqueia o acesso com 402) — a tela mostra "peça ao proprietário".
+        path: 'assinatura',
+        loadComponent: () => import('./features/admin/pages/assinatura/assinatura.component').then((m) => m.AssinaturaComponent),
+        title: 'Assinatura — Comanda Única'
+      },
       {
         path: 'dashboard',
         loadComponent: () => import('./features/admin/pages/dashboard/dashboard.component').then((m) => m.DashboardComponent),

@@ -1,11 +1,15 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { AuthService } from '../../features/auth/services/auth.service';
+import { SubscriptionService } from '../../shared/services/subscription.service';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
+  const subscriptionService = inject(SubscriptionService);
+  const router = inject(Router);
 
   const isApiRequest = req.url.startsWith(environment.apiBaseUrl);
   const token = authService.getAccessToken();
@@ -28,8 +32,18 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(request).pipe(
     catchError((error: unknown) => {
-      if (isAuthenticatedRequest && error instanceof HttpErrorResponse && error.status === 401) {
-        authService.logout();
+      if (isAuthenticatedRequest && error instanceof HttpErrorResponse) {
+        if (error.status === 401) {
+          authService.logout();
+        } else if (error.status === 402) {
+          // Assinatura necessária (ver SubscriptionRequiredException no backend) — invalida o
+          // cache e leva para a tela de assinatura. Não redireciona se a própria chamada de
+          // assinatura falhou, para não entrar em laço.
+          subscriptionService.clear();
+          if (!request.url.includes('/api/v1/subscription')) {
+            void router.navigateByUrl('/painel/assinatura');
+          }
+        }
       }
       return throwError(() => error);
     })

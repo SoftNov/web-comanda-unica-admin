@@ -88,6 +88,7 @@ export const ADMIN_MENU_SEGMENTS: MenuSegment[] = [
     label: 'Financeiro',
     items: [
       { label: 'Financeiro', icon: 'payments', route: '/painel/financeiro' },
+      { label: 'Assinatura', icon: 'card_membership', route: '/painel/assinatura', roles: ['OWNER', 'ADMIN'] },
       {
         label: 'Financeiro Comanda Única',
         icon: 'account_balance',

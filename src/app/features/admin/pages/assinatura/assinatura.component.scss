@@ -1,0 +1,154 @@
+:host {
+  display: block;
+}
+
+.page-header {
+  margin-bottom: 24px;
+}
+
+.page-title {
+  font-size: 1.75rem;
+  color: var(--color-text);
+}
+
+.page-subtitle {
+  margin-top: 8px;
+  font-size: 1rem;
+  max-width: 60ch;
+}
+
+.field__hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+// --- badges (component-scoped, mesmo padrão das outras telas) -----------
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-muted);
+}
+
+.badge--success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.badge--warning {
+  background: rgba(214, 164, 79, 0.14);
+  color: #d6a44f;
+}
+
+.badge--muted {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-muted);
+}
+
+// --- cartão da assinatura ---------------------------------------------
+.sub-card {
+  max-width: 640px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sub-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.sub-card__eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+}
+
+.sub-card__price {
+  margin-top: 6px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+
+  span {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+  }
+}
+
+.sub-card__benefits {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9375rem;
+    color: var(--color-gray);
+  }
+
+  .material-icons {
+    font-size: 18px;
+    color: var(--color-success);
+    flex-shrink: 0;
+  }
+}
+
+.sub-card__details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px 24px;
+  margin: 0;
+  padding: 16px 0 4px;
+  border-top: 1px solid var(--color-border);
+
+  dt {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+  }
+
+  dd {
+    margin: 4px 0 0;
+    font-size: 0.9375rem;
+    color: var(--color-text);
+  }
+}
+
+.sub-card__actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sub-card__fineprint {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.form-alert {
+  margin-bottom: 20px;
+
+  button {
+    margin-left: auto;
+  }
+}
