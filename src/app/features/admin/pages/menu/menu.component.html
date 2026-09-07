@@ -142,6 +142,7 @@
                   } @else {
                     {{ formatCurrency(item.price) }}
                   }
+                  <span class="price-base-hint">você recebe {{ formatCurrency(item.basePrice) }}</span>
                 </td>
                 <td>
                   <button type="button" class="badge-btn" (click)="toggleStatus(item)" title="Alternar status">
@@ -417,10 +418,14 @@
         </div>
 
         <h3 class="form-section-title">Preço</h3>
+        <p class="field__hint">
+          Informe o valor que você quer receber por este produto — a taxa da Comanda Única é somada
+          automaticamente ao preço exibido no cardápio, para o cliente pagar.
+        </p>
 
         <div class="field__row">
           <div class="field">
-            <label class="field__label" for="item-price">Preço</label>
+            <label class="field__label" for="item-price">Valor que você recebe</label>
             <div class="field__control">
               <input
                 id="item-price"
@@ -436,10 +441,13 @@
             @if (itemForm.controls.price.invalid && itemForm.controls.price.touched) {
               <span class="field__error">Informe um preço válido.</span>
             }
+            @if (editingItem()) {
+              <span class="field__hint">Preço atual no cardápio (com taxa): {{ formatCurrency(editingItem()?.price) }}</span>
+            }
           </div>
 
           <div class="field">
-            <label class="field__label" for="item-promotional-price">Preço promocional</label>
+            <label class="field__label" for="item-promotional-price">Valor promocional que você recebe</label>
             <div class="field__control">
               <input
                 id="item-promotional-price"

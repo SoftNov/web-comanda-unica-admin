@@ -44,6 +44,8 @@ export interface ComandaPaymentResponse {
   registeredByUserId?: string;
   registeredByUserName?: string;
   amount: number;
+  // Parcela de amount que é o valor base (sem a taxa da plataforma embutida) — só para auditoria.
+  baseAmount?: number;
   paidAt: string;
   // Taxa da Comanda Única gerada por este pagamento fora da Stripe — nulo para pagamentos online
   // (a taxa já sai direto da cobrança Stripe, ver ComandaChargeFeeResponse.platformFeeAmount).
@@ -118,6 +120,11 @@ export interface ComandaResponse {
   totalOrdersAmount: number;
   totalPaidAmount: number;
   balanceAmount: number;
+  // Quanto a equipe deve realmente pedir ao cliente para fechar a comanda (pagamento manual em
+  // dinheiro) — igual a balanceAmount na maioria dos casos, com desconto quando a taxa da
+  // plataforma embutida no preço dos itens ultrapassa o valor padronizado da faixa.
+  amountToCollect: number;
+  discountAmount: number;
   openedAt: string;
   closedAt?: string;
   closedByUserId?: string;

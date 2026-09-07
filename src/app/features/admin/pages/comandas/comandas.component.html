@@ -212,6 +212,12 @@
             <dt>Saldo</dt>
             <dd>{{ formatCurrency(comanda.balanceAmount) }}</dd>
           </div>
+          @if (comanda.discountAmount > 0) {
+            <div class="comanda-summary__discount">
+              <dt>Desconto da plataforma</dt>
+              <dd>-{{ formatCurrency(comanda.discountAmount) }}</dd>
+            </div>
+          }
           <div>
             <dt>Aberta em</dt>
             <dd>{{ formatDateTime(comanda.openedAt) }}</dd>
@@ -416,7 +422,7 @@
           <form (submit)="$event.preventDefault(); submitPayment()" novalidate [formGroup]="paymentForm">
             <div class="field__row">
               <div class="field">
-                <label class="field__label" for="payment-amount">Valor (saldo: {{ formatCurrency(comanda.balanceAmount) }})</label>
+                <label class="field__label" for="payment-amount">Valor a cobrar (saldo: {{ formatCurrency(comanda.amountToCollect) }})</label>
                 <div class="field__control">
                   <input
                     id="payment-amount"
@@ -429,6 +435,9 @@
                     placeholder="0,00"
                   >
                 </div>
+                @if (comanda.discountAmount > 0) {
+                  <span class="field__hint">Já inclui desconto da plataforma de {{ formatCurrency(comanda.discountAmount) }}.</span>
+                }
                 @if (paymentForm.controls.amount.invalid && paymentForm.controls.amount.touched) {
                   <span class="field__error">Informe um valor maior que zero.</span>
                 }

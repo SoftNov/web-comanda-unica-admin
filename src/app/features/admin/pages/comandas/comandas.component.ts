@@ -302,7 +302,7 @@ export class ComandasComponent {
   // Comanda sem saldo em aberto (já quitada, ou sem pedidos) pode ser encerrada com um clique,
   // sem precisar passar pelo formulário genérico de alteração manual de status.
   canFinalize(comanda: ComandaResponse): boolean {
-    return comanda.status === 'OPEN' && comanda.balanceAmount <= 0;
+    return comanda.status === 'OPEN' && comanda.amountToCollect <= 0;
   }
 
   formatCurrency(value: number | undefined | null): string {

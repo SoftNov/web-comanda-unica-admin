@@ -426,8 +426,10 @@ export class MenuComponent {
       categoryId: item.categoryId,
       name: item.name,
       description: item.description ?? '',
-      price: this.toMaskedCurrency(item.price),
-      promotionalPrice: this.toMaskedCurrency(item.promotionalPrice),
+      // O formulário edita sempre o valor BASE (o que o lojista recebe) — o preço com taxa
+      // embutida (item.price) é calculado pelo backend e só exibido, não editado diretamente.
+      price: this.toMaskedCurrency(item.basePrice),
+      promotionalPrice: this.toMaskedCurrency(item.basePromotionalPrice),
       promotionStart: apiToBrDateTimeLocal(item.promotionStart),
       promotionEnd: apiToBrDateTimeLocal(item.promotionEnd),
       active: item.active,
@@ -663,8 +665,10 @@ export class MenuComponent {
       categoryId: value.categoryId,
       name: value.name.trim(),
       description: value.description.trim() || undefined,
-      price: parseCurrencyInput(value.price) ?? 0,
-      promotionalPrice: parseCurrencyInput(value.promotionalPrice) ?? undefined,
+      // O campo digitado é sempre o valor BASE (o que o lojista recebe) — o backend calcula e
+      // devolve o preço final com a taxa da plataforma embutida (ver MenuItemResponse.price).
+      basePrice: parseCurrencyInput(value.price) ?? 0,
+      basePromotionalPrice: parseCurrencyInput(value.promotionalPrice) ?? undefined,
       promotionStart: brDateTimeLocalToApi(value.promotionStart),
       promotionEnd: brDateTimeLocalToApi(value.promotionEnd),
       active: value.active,

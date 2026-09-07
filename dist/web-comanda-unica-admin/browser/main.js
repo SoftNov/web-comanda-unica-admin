@@ -4630,7 +4630,7 @@ var routes = [
       {
         path: "comandas",
         canActivate: [profileGuard(["OWNER", "ADMIN", "MANAGER", "CASHIER", "WAITER"])],
-        loadComponent: () => import("./chunk-YLYZD3TM.js").then((m) => m.ComandasComponent),
+        loadComponent: () => import("./chunk-YBMEGUDX.js").then((m) => m.ComandasComponent),
         title: "Comandas \u2014 Comanda \xDAnica"
       },
       {
@@ -4642,7 +4642,7 @@ var routes = [
       {
         path: "cardapio",
         canActivate: [profileGuard(["ADMIN", "OWNER", "MANAGER"])],
-        loadComponent: () => import("./chunk-MYLKP2Y3.js").then((m) => m.MenuComponent),
+        loadComponent: () => import("./chunk-Y2WQPQRZ.js").then((m) => m.MenuComponent),
         title: "Card\xE1pio \u2014 Comanda \xDAnica"
       },
       {

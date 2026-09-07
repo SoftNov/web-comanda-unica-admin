@@ -316,6 +316,10 @@ select.field__input {
   }
 }
 
+.comanda-summary__discount dd {
+  color: var(--color-success, #16a34a);
+}
+
 .comanda-summary__by {
   display: block;
   font-size: 0.75rem;
