@@ -41,6 +41,15 @@ interface FontOption {
   label: string;
 }
 
+interface PriceBreakdown {
+  // Valor que o lojista recebe (o que ele digita).
+  base: number;
+  // Taxa da Comanda Única somada ao valor base.
+  fee: number;
+  // Valor final exibido no cardápio, que o cliente paga.
+  total: number;
+}
+
 const FONT_OPTIONS: FontOption[] = [
   { value: 'Inter', label: 'Inter' },
   { value: 'Roboto', label: 'Roboto' },
@@ -180,6 +189,32 @@ export class MenuComponent {
   readonly pendingImageFile = signal<File | null>(null);
   readonly pendingImagePreviewUrl = signal<string | null>(null);
 
+  // Espelham o texto digitado nos campos de preço para recalcular, em tempo real, o valor que o
+  // cliente verá no cardápio (valor base + taxa da Comanda Única).
+  readonly priceInput = signal('');
+  readonly promotionalPriceInput = signal('');
+
+  // Fator de acréscimo da taxa (preço no cardápio ÷ valor base) — a taxa embutida no preço é um
+  // percentual puro (ver PlatformFeeCalculator.applyMarkup no backend), então basta a razão de
+  // qualquer produto já cadastrado da empresa para projetar o preço de um novo valor.
+  readonly markupFactor = computed<number | null>(() => {
+    const candidates = [this.editingItem(), ...this.items()];
+    for (const candidate of candidates) {
+      if (candidate && candidate.basePrice > 0 && candidate.price > 0) {
+        return candidate.price / candidate.basePrice;
+      }
+    }
+    return null;
+  });
+
+  readonly feePercentLabel = computed<string | null>(() => {
+    const factor = this.markupFactor();
+    return factor == null ? null : this.percentFormatter.format((factor - 1) * 100);
+  });
+
+  readonly priceBreakdown = computed(() => this.buildPriceBreakdown(this.priceInput()));
+  readonly promotionalPriceBreakdown = computed(() => this.buildPriceBreakdown(this.promotionalPriceInput()));
+
   readonly itemForm = this.fb.nonNullable.group({
     categoryId: ['', Validators.required],
     name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(150)]],
@@ -255,6 +290,7 @@ export class MenuComponent {
   });
 
   private readonly currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  private readonly percentFormatter = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 });
 
   constructor() {
     this.searchInput.pipe(debounceTime(400), distinctUntilChanged()).subscribe((value) => {
@@ -413,6 +449,8 @@ export class MenuComponent {
       kitchenSector: '',
       displayOrder: null
     });
+    this.priceInput.set('');
+    this.promotionalPriceInput.set('');
     this.isItemModalOpen.set(true);
   }
 
@@ -447,6 +485,8 @@ export class MenuComponent {
       kitchenSector: item.kitchenSector ?? '',
       displayOrder: item.displayOrder
     });
+    this.priceInput.set(this.toMaskedCurrency(item.basePrice));
+    this.promotionalPriceInput.set(this.toMaskedCurrency(item.basePromotionalPrice));
     this.isItemModalOpen.set(true);
   }
 
@@ -694,12 +734,33 @@ export class MenuComponent {
 
   onPriceInput(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.itemForm.controls.price.setValue(formatCurrencyInput(input.value));
+    const masked = formatCurrencyInput(input.value);
+    this.itemForm.controls.price.setValue(masked);
+    this.priceInput.set(masked);
   }
 
   onPromotionalPriceInput(event: Event): void {
     const input = event.target as HTMLInputElement;
-    this.itemForm.controls.promotionalPrice.setValue(formatCurrencyInput(input.value));
+    const masked = formatCurrencyInput(input.value);
+    this.itemForm.controls.promotionalPrice.setValue(masked);
+    this.promotionalPriceInput.set(masked);
+  }
+
+  // Valor base + taxa projetados a partir do texto digitado. Retorna null enquanto não houver um
+  // valor digitado ou uma referência de taxa (empresa sem nenhum produto cadastrado).
+  private buildPriceBreakdown(maskedValue: string): PriceBreakdown | null {
+    const factor = this.markupFactor();
+    const base = parseCurrencyInput(maskedValue);
+    if (factor == null || base == null) {
+      return null;
+    }
+    const total = Math.round(base * factor * 100) / 100;
+    return { base, fee: Math.round((total - base) * 100) / 100, total };
+  }
+
+  // Taxa embutida no preço exibido de um produto já cadastrado (preço no cardápio − valor base).
+  feeAmount(item: MenuItemResponse): number {
+    return Math.round((item.price - item.basePrice) * 100) / 100;
   }
 
   // --- Categorias -------------------------------------------------------
