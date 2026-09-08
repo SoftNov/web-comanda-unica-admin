@@ -80,6 +80,14 @@ export class SubscriptionBannerComponent {
     if (!s) {
       return null;
     }
+    if (s.courtesyTableLimitExceeded) {
+      return {
+        text: `O período grátis permite até ${s.courtesyTableLimit} mesas — você tem ${s.tableCount}. Assine para continuar.`,
+        cta: 'Assinar',
+        icon: 'block',
+        tone: 'warn'
+      };
+    }
     if (s.status === 'PAST_DUE') {
       return {
         text: 'O pagamento da assinatura não foi concluído. Regularize para não perder o acesso.',

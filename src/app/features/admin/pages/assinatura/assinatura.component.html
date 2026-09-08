@@ -21,11 +21,20 @@
   </div>
 } @else {
 
-  @if (status()?.courtesy) {
+  @if (status()?.courtesyTableLimitExceeded) {
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">block</span>
+      <span>
+        O período grátis permite até <strong>{{ status()?.courtesyTableLimit }} mesas</strong> e seu
+        estabelecimento tem <strong>{{ status()?.tableCount }}</strong>. Assine para continuar usando
+        a Comanda Única.
+      </span>
+    </div>
+  } @else if (status()?.courtesy) {
     <div class="form-alert form-alert--info" role="status">
       <span class="material-icons" aria-hidden="true">schedule</span>
       <span>
-        Você está no período de cortesia.
+        Você está no período grátis (até {{ status()?.courtesyTableLimit }} mesas).
         @if (courtesyDaysLeft() !== null) {
           Faltam <strong>{{ courtesyDaysLeft() }} dia(s)</strong> ({{ dateLabel(status()?.currentPeriodEnd) }}).
         }

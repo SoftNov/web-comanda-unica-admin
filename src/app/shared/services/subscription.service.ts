@@ -11,9 +11,12 @@ export interface SubscriptionStatusResponse {
   status: SubscriptionStatus | null;
   // Libera o acesso ao sistema (ACTIVE, ou PAST_DUE ainda em carência).
   active: boolean;
-  // Cortesia de 1 mês dada aos estabelecimentos que já existiam quando a assinatura passou a ser
-  // exigida — ainda não assinou de verdade.
+  // Período grátis (cortesia) — ainda não assinou de verdade.
   courtesy: boolean;
+  // Limite de mesas do período grátis, e se o estabelecimento já passou dele (nesse caso a
+  // cortesia deixa de liberar o acesso — precisa assinar).
+  courtesyTableLimit: number | null;
+  courtesyTableLimitExceeded: boolean;
   // Valor contratado na assinatura vigente (anual) + mensal-equivalente + nº de mesas na
   // contratação.
   amount: number | null;
