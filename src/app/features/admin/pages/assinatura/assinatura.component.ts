@@ -109,10 +109,21 @@ export class AssinaturaComponent {
     });
   }
 
-  planPriceLabel(): string {
+  planMonthlyLabel(): string {
+    const s = this.status();
+    const amount = s?.planMonthlyAmount ?? s?.monthlyAmount ?? null;
+    return amount != null && amount > 0 ? this.currencyFormatter.format(amount) : '—';
+  }
+
+  planAnnualLabel(): string {
     const s = this.status();
     const amount = s?.planAmount ?? s?.amount ?? null;
     return amount != null && amount > 0 ? this.currencyFormatter.format(amount) : '—';
+  }
+
+  tableCountLabel(): string {
+    const n = this.status()?.tableCount ?? null;
+    return n != null ? `${n} mesa${n === 1 ? '' : 's'}` : '—';
   }
 
   amountLabel(value: number | null | undefined): string {

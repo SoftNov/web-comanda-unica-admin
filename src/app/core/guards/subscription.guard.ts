@@ -21,6 +21,12 @@ export const subscriptionGuard: CanActivateChildFn = (_route, state) => {
   const subscriptionService = inject(SubscriptionService);
   const router = inject(Router);
 
+  // A conta da própria Comanda Única nunca precisa de assinatura (espelha o
+  // SubscriptionAccessAspect no backend).
+  if (auth.isPlatformAdmin()) {
+    return true;
+  }
+
   const path = state.url.split('?')[0];
   if (ALLOWED_WITHOUT_SUBSCRIPTION.includes(path)) {
     return true;
@@ -28,7 +34,7 @@ export const subscriptionGuard: CanActivateChildFn = (_route, state) => {
 
   const companyId = auth.selectedCompany()?.companyId;
   if (!companyId) {
-    // Sem empresa selecionada (ex.: platform admin puro) — não há assinatura a exigir.
+    // Sem empresa selecionada — não há assinatura a exigir.
     return true;
   }
 

@@ -100,6 +100,12 @@ export const ADMIN_MENU_SEGMENTS: MenuSegment[] = [
         icon: 'credit_card',
         route: '/painel/configuracoes/stripe-plataforma',
         platformAdminOnly: true
+      },
+      {
+        label: 'Preço da Assinatura',
+        icon: 'sell',
+        route: '/painel/configuracoes/assinatura-plataforma',
+        platformAdminOnly: true
       }
     ]
   },

@@ -1,0 +1,150 @@
+<div class="page-header">
+  <h1 class="page-title">Precificação da assinatura</h1>
+  <p class="page-subtitle">
+    Faixas de preço por quantidade de mesas e valores negociados por estabelecimento. O contrato é
+    anual — o valor cobrado é 12× o mensal.
+  </p>
+</div>
+
+<!-- ==================== FAIXAS ==================== -->
+<div class="card section">
+  <h2 class="section__title">Faixas por quantidade de mesas</h2>
+  <p class="field__hint">
+    Um estabelecimento paga o valor da primeira faixa cujo limite de mesas seja maior ou igual ao
+    número de mesas dele. Acima da maior faixa, usa a maior.
+  </p>
+
+  @if (isLoadingTiers()) {
+    <p class="field__hint">Carregando…</p>
+  } @else {
+    <div class="tier-grid">
+      <div class="tier-grid__head">
+        <span>Até (mesas)</span>
+        <span>Valor mensal</span>
+        <span>Cobrado / ano</span>
+        <span></span>
+      </div>
+      @for (tier of tiers(); track $index) {
+        <div class="tier-grid__row">
+          <input type="number" min="1" class="field__input" [value]="tier.upToTables ?? ''"
+                 (input)="updateTier($index, 'upToTables', $any($event.target).value)">
+          <input type="number" min="0" step="0.01" class="field__input" [value]="tier.monthlyAmount ?? ''"
+                 (input)="updateTier($index, 'monthlyAmount', $any($event.target).value)">
+          <span class="tier-grid__annual">{{ annualOf(tier.monthlyAmount) }}</span>
+          <button type="button" class="icon-btn icon-btn--danger" title="Remover" (click)="removeTier($index)">
+            <span class="material-icons" aria-hidden="true">close</span>
+          </button>
+        </div>
+      }
+    </div>
+
+    <button type="button" class="btn btn--ghost btn--sm" (click)="addTier()">
+      <span class="material-icons" aria-hidden="true">add</span> Adicionar faixa
+    </button>
+
+    @if (tiersMessage(); as msg) {
+      <div class="form-alert" [class.form-alert--error]="msg.type === 'error'" [class.form-alert--success]="msg.type === 'ok'">
+        <span class="material-icons" aria-hidden="true">{{ msg.type === 'ok' ? 'check_circle' : 'error_outline' }}</span>
+        {{ msg.text }}
+      </div>
+    }
+
+    <div class="section__actions">
+      <button type="button" class="btn btn--primary" appRipple [disabled]="isSavingTiers()" (click)="saveTiers()">
+        {{ isSavingTiers() ? 'Salvando…' : 'Salvar faixas' }}
+      </button>
+    </div>
+  }
+</div>
+
+<!-- ==================== ESTABELECIMENTOS ==================== -->
+<div class="card section">
+  <h2 class="section__title">Valor por estabelecimento</h2>
+  <p class="field__hint">Defina um valor mensal negociado — ele tem prioridade sobre as faixas.</p>
+
+  <div class="company-search">
+    <input type="text" class="field__input" placeholder="Buscar por nome"
+           [value]="companySearch()" (input)="onSearchInput($any($event.target).value)"
+           (keyup.enter)="search()">
+    <button type="button" class="btn btn--ghost btn--sm" (click)="search()">Buscar</button>
+  </div>
+
+  @if (isLoadingCompanies()) {
+    <p class="field__hint">Carregando…</p>
+  } @else {
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Estabelecimento</th>
+            <th>Mesas</th>
+            <th>Valor mensal</th>
+            <th>Origem</th>
+            <th class="data-table__actions-col"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (company of companies(); track company.companyId) {
+            <tr>
+              <td>{{ company.companyName }}</td>
+              <td>{{ company.tableCount }}</td>
+              <td>
+                {{ currency(company.monthlyAmount) }}
+                <span class="muted">/ ano {{ currency(company.annualAmount) }}</span>
+              </td>
+              <td>
+                <span class="badge" [class.badge--warning]="company.source === 'OVERRIDE'">
+                  {{ company.source === 'OVERRIDE' ? 'Negociado' : company.source === 'TIER' ? 'Faixa' : 'Padrão' }}
+                </span>
+                @if (company.overrideNote) { <span class="muted note">{{ company.overrideNote }}</span> }
+              </td>
+              <td class="data-table__actions-col">
+                <button type="button" class="btn btn--ghost btn--sm" (click)="startEdit(company)">
+                  {{ company.customized ? 'Editar' : 'Definir valor' }}
+                </button>
+              </td>
+            </tr>
+
+            @if (editingCompanyId() === company.companyId) {
+              <tr class="edit-row">
+                <td colspan="5">
+                  <div class="edit-row__form">
+                    <label class="field__label">Valor mensal negociado
+                      <input type="number" min="0" step="0.01" class="field__input"
+                             [value]="overrideAmount() ?? ''"
+                             (input)="overrideAmount.set($any($event.target).value === '' ? null : +$any($event.target).value)">
+                    </label>
+                    <label class="field__label">Observação
+                      <input type="text" class="field__input" [value]="overrideNote()"
+                             (input)="overrideNote.set($any($event.target).value)">
+                    </label>
+                    <div class="edit-row__actions">
+                      <button type="button" class="btn btn--primary btn--sm" appRipple
+                              [disabled]="isSavingOverride()" (click)="saveOverride(company.companyId)">Salvar</button>
+                      @if (company.customized) {
+                        <button type="button" class="btn btn--ghost btn--sm"
+                                [disabled]="isSavingOverride()" (click)="removeOverride(company.companyId)">Remover valor negociado</button>
+                      }
+                      <button type="button" class="btn btn--ghost btn--sm" (click)="cancelEdit()">Cancelar</button>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+          @if (companies().length === 0) {
+            <tr><td colspan="5" class="data-table__empty">Nenhum estabelecimento encontrado.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalPages() > 1) {
+      <div class="pagination">
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="page() === 0" (click)="goToPage(-1)">Anterior</button>
+        <span class="field__hint">Página {{ page() + 1 }} de {{ totalPages() }}</span>
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="page() + 1 >= totalPages()" (click)="goToPage(1)">Próxima</button>
+      </div>
+    }
+  }
+</div>

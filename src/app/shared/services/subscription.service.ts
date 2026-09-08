@@ -14,12 +14,19 @@ export interface SubscriptionStatusResponse {
   // Cortesia de 1 mês dada aos estabelecimentos que já existiam quando a assinatura passou a ser
   // exigida — ainda não assinou de verdade.
   courtesy: boolean;
+  // Valor contratado na assinatura vigente (anual) + mensal-equivalente + nº de mesas na
+  // contratação.
   amount: number | null;
+  monthlyAmount: number | null;
+  subscriptionTableCount: number | null;
   currency: string | null;
-  // Valor do plano ofertado (do Price no Stripe) — usado na tela de oferta antes de existir uma
-  // assinatura. Pode ser nulo se o Stripe estiver indisponível.
+  // Valor VIGENTE hoje para o estabelecimento (faixa de mesas ou valor negociado). planAmount é
+  // anual (= 12 × planMonthlyAmount).
   planAmount: number | null;
+  planMonthlyAmount: number | null;
   planCurrency: string | null;
+  // Mesas cadastradas hoje — base da faixa de preço.
+  tableCount: number | null;
   startDate: string | null;
   currentPeriodStart: string | null;
   currentPeriodEnd: string | null;

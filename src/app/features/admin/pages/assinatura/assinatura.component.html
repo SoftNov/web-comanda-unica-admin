@@ -42,8 +42,9 @@
   <div class="card sub-card">
     <div class="sub-card__head">
       <div>
-        <span class="sub-card__eyebrow">Plano anual</span>
-        <p class="sub-card__price">{{ planPriceLabel() }} <span>/ 12 meses</span></p>
+        <span class="sub-card__eyebrow">Plano · baseado em {{ tableCountLabel() }}</span>
+        <p class="sub-card__price">{{ planMonthlyLabel() }} <span>/ mês</span></p>
+        <p class="sub-card__price-note">Cobrado 1x por ano: {{ planAnnualLabel() }} / 12 meses</p>
       </div>
       <span class="badge"
             [class.badge--success]="status()?.active && !status()?.courtesy"

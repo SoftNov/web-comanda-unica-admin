@@ -8,6 +8,7 @@ import { LineChartComponent, LineChartPoint } from '../../../../shared/component
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { PedidosComponent } from '../pedidos/pedidos.component';
 import { ServicosComponent } from '../servicos/servicos.component';
+import { SubscriptionBannerComponent } from '../../../../shared/components/subscription-banner/subscription-banner.component';
 
 const MANAGEMENT_PROFILES = ['ADMIN', 'OWNER', 'MANAGER'];
 // Perfis operacionais que vivem na fila de pedidos no dia a dia — a home entra direto na mesma
@@ -42,7 +43,14 @@ const REVENUE_PRESETS: RevenuePreset[] = [
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [FloorPlanViewerComponent, LineChartComponent, PedidosComponent, ServicosComponent, RippleDirective],
+  imports: [
+    FloorPlanViewerComponent,
+    LineChartComponent,
+    PedidosComponent,
+    ServicosComponent,
+    RippleDirective,
+    SubscriptionBannerComponent
+  ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })

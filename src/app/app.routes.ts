@@ -141,6 +141,15 @@ export const routes: Routes = [
         title: 'Stripe da Plataforma — Comanda Única'
       },
       {
+        path: 'configuracoes/assinatura-plataforma',
+        canActivate: [platformAdminGuard],
+        loadComponent: () =>
+          import('./features/admin/pages/settings/subscription-pricing/subscription-pricing.component').then(
+            (m) => m.SubscriptionPricingComponent
+          ),
+        title: 'Precificação da Assinatura — Comanda Única'
+      },
+      {
         path: 'configuracoes/mapa-salao',
         canActivate: [profileGuard(['ADMIN', 'OWNER', 'MANAGER'])],
         loadComponent: () =>

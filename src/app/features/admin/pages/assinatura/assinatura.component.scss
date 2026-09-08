@@ -88,6 +88,12 @@
   }
 }
 
+.sub-card__price-note {
+  margin-top: 4px;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
 .sub-card__benefits {
   display: flex;
   flex-direction: column;
