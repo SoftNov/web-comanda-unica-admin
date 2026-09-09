@@ -27,6 +27,8 @@ export class AssinaturaComponent {
   readonly noPermission = signal(false);
   readonly isRedirecting = signal(false);
   readonly actionError = signal<string | null>(null);
+  readonly isChangingPlan = signal(false);
+  readonly changePlanMessage = signal<{ type: 'ok' | 'error'; text: string } | null>(null);
 
   readonly status = signal<SubscriptionStatusResponse | null>(null);
   readonly companyName = computed(() => this.authService.selectedCompany()?.companyName ?? 'seu estabelecimento');
@@ -89,6 +91,25 @@ export class AssinaturaComponent {
 
   subscribe(): void {
     this.startRedirect(() => this.subscriptionService.createCheckoutSession());
+  }
+
+  changePlan(): void {
+    this.isChangingPlan.set(true);
+    this.changePlanMessage.set(null);
+    this.subscriptionService.changePlan().subscribe({
+      next: (status) => {
+        this.status.set(status);
+        this.isChangingPlan.set(false);
+        this.changePlanMessage.set({ type: 'ok', text: 'Plano atualizado. A diferença entra na próxima fatura.' });
+      },
+      error: (error: unknown) => {
+        this.isChangingPlan.set(false);
+        const msg = error instanceof HttpErrorResponse && error.status === 422
+          ? 'O plano já corresponde à quantidade de mesas atual.'
+          : 'Não foi possível atualizar o plano agora. Tente novamente em instantes.';
+        this.changePlanMessage.set({ type: 'error', text: msg });
+      }
+    });
   }
 
   manage(): void {

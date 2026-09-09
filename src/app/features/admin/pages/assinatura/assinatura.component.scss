@@ -145,6 +145,46 @@
   flex-wrap: wrap;
 }
 
+.plan-upgrade {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-elevated);
+}
+
+.plan-upgrade__info {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+
+  .material-icons {
+    color: var(--color-accent-hover);
+    flex-shrink: 0;
+  }
+}
+
+.plan-upgrade__title {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 0.9375rem;
+}
+
+.plan-upgrade__detail {
+  margin-top: 4px;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.btn--sm {
+  padding: 8px 16px;
+  font-size: 0.85rem;
+}
+
 .sub-card__fineprint {
   font-size: 0.8125rem;
   color: var(--color-text-muted);

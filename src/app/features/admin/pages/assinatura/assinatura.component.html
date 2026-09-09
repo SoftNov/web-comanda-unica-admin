@@ -70,6 +70,32 @@
       <li><span class="material-icons" aria-hidden="true">check</span> Cobrança segura pelo Stripe — nenhum dado de cartão passa pela Comanda Única</li>
     </ul>
 
+    @if (mode() === 'active' && status()?.planOutdated) {
+      <div class="plan-upgrade">
+        <div class="plan-upgrade__info">
+          <span class="material-icons" aria-hidden="true">upgrade</span>
+          <div>
+            <p class="plan-upgrade__title">Seu plano não cobre mais o número de mesas atual</p>
+            <p class="plan-upgrade__detail">
+              Contratado: <strong>{{ amountLabel(status()?.monthlyAmount) }}/mês</strong> ·
+              Valor para {{ tableCountLabel() }}: <strong>{{ planMonthlyLabel() }}/mês</strong>
+            </p>
+          </div>
+        </div>
+        <button type="button" class="btn btn--primary btn--sm" appRipple
+                [disabled]="isChangingPlan()" (click)="changePlan()">
+          {{ isChangingPlan() ? 'Atualizando…' : 'Atualizar plano' }}
+        </button>
+      </div>
+    }
+
+    @if (changePlanMessage(); as msg) {
+      <div class="form-alert" [class.form-alert--error]="msg.type === 'error'" [class.form-alert--success]="msg.type === 'ok'">
+        <span class="material-icons" aria-hidden="true">{{ msg.type === 'ok' ? 'check_circle' : 'error_outline' }}</span>
+        {{ msg.text }}
+      </div>
+    }
+
     @if (mode() === 'active') {
       <dl class="sub-card__details">
         <div>

@@ -116,6 +116,14 @@ export class SubscriptionBannerComponent {
         tone: 'info'
       };
     }
+    if (s.planOutdated) {
+      return {
+        text: 'Você mudou de faixa de mesas — o valor da assinatura está desatualizado.',
+        cta: 'Atualizar plano',
+        icon: 'upgrade',
+        tone: 'info'
+      };
+    }
     return null;
   });
 

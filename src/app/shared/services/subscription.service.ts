@@ -30,6 +30,9 @@ export interface SubscriptionStatusResponse {
   planCurrency: string | null;
   // Mesas cadastradas hoje — base da faixa de preço.
   tableCount: number | null;
+  // O preço vigente difere do contratado (mudou de faixa de mesas) — dá pra atualizar o plano
+  // sem esperar o fim do contrato (ver changePlan).
+  planOutdated: boolean;
   startDate: string | null;
   currentPeriodStart: string | null;
   currentPeriodEnd: string | null;
@@ -79,6 +82,19 @@ export class SubscriptionService {
 
   createPortalSession(): Observable<StripeHostedLinkResponse> {
     return this.http.post<StripeHostedLinkResponse>(`${this.baseUrl}/portal-session`, {});
+  }
+
+  // Atualiza a assinatura ativa para o valor vigente da faixa de mesas atual (upgrade/downgrade
+  // no meio do ciclo). Devolve o estado atualizado e atualiza o cache.
+  changePlan(): Observable<SubscriptionStatusResponse> {
+    return this.http.post<SubscriptionStatusResponse>(`${this.baseUrl}/change-plan`, {}).pipe(
+      tap((data) => {
+        const cached = this.cache();
+        if (cached) {
+          this.cache.set({ ...cached, fetchedAt: Date.now(), data });
+        }
+      })
+    );
   }
 
   private fetch(companyId: string): Observable<SubscriptionStatusResponse> {
