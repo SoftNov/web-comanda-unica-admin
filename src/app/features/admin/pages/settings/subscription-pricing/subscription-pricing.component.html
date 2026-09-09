@@ -1,8 +1,8 @@
 <div class="page-header">
   <h1 class="page-title">Precificação da assinatura</h1>
   <p class="page-subtitle">
-    Faixas de preço por quantidade de mesas e valores negociados por estabelecimento. O contrato é
-    anual — o valor cobrado é 12× o mensal.
+    Faixas de preço por quantidade de mesas e valores negociados por estabelecimento. A cobrança é
+    mensal, com renovação automática.
   </p>
 </div>
 
@@ -21,7 +21,7 @@
       <div class="tier-grid__head">
         <span>Até (mesas)</span>
         <span>Valor mensal</span>
-        <span>Cobrado / ano</span>
+        <span>≈ por ano</span>
         <span></span>
       </div>
       @for (tier of tiers(); track $index) {
@@ -89,8 +89,8 @@
               <td>{{ company.companyName }}</td>
               <td>{{ company.tableCount }}</td>
               <td>
-                {{ currency(company.monthlyAmount) }}
-                <span class="muted">/ ano {{ currency(company.annualAmount) }}</span>
+                {{ currency(company.monthlyAmount) }}<span class="muted">/mês</span>
+                <span class="muted">≈ {{ currency(company.annualAmount) }}/ano</span>
               </td>
               <td>
                 <span class="badge" [class.badge--warning]="company.source === 'OVERRIDE'">

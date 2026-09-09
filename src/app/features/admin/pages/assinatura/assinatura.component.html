@@ -1,7 +1,7 @@
 <div class="page-header">
   <h1 class="page-title">Assinatura Comanda Única</h1>
   <p class="page-subtitle">
-    A Comanda Única funciona com uma assinatura anual. Gerencie o plano de {{ companyName() }} aqui.
+    A Comanda Única funciona com uma assinatura mensal. Gerencie o plano de {{ companyName() }} aqui.
   </p>
 </div>
 
@@ -53,7 +53,7 @@
       <div>
         <span class="sub-card__eyebrow">Plano · baseado em {{ tableCountLabel() }}</span>
         <p class="sub-card__price">{{ planMonthlyLabel() }} <span>/ mês</span></p>
-        <p class="sub-card__price-note">Cobrado 1x por ano: {{ planAnnualLabel() }} / 12 meses</p>
+        <p class="sub-card__price-note">Cobrança mensal com renovação automática.</p>
       </div>
       <span class="badge"
             [class.badge--success]="status()?.active && !status()?.courtesy"
@@ -66,7 +66,7 @@
     <ul class="sub-card__benefits">
       <li><span class="material-icons" aria-hidden="true">check</span> Comandas, mesas, cardápio e pedidos</li>
       <li><span class="material-icons" aria-hidden="true">check</span> Dashboard e relatórios financeiros</li>
-      <li><span class="material-icons" aria-hidden="true">check</span> Renovação automática — sem precisar acessar o Stripe todo ano</li>
+      <li><span class="material-icons" aria-hidden="true">check</span> Renovação automática todo mês — sem precisar acessar o Stripe</li>
       <li><span class="material-icons" aria-hidden="true">check</span> Cobrança segura pelo Stripe — nenhum dado de cartão passa pela Comanda Única</li>
     </ul>
 
@@ -120,8 +120,8 @@
     </div>
 
     <p class="sub-card__fineprint">
-      Você será levado para uma página segura do Stripe para concluir. A assinatura tem renovação
-      automática anual e pode ser cancelada a qualquer momento pelo painel de pagamento.
+      Você será levado para uma página segura do Stripe para concluir. A cobrança é mensal com
+      renovação automática e pode ser cancelada a qualquer momento pelo painel de pagamento.
     </p>
   </div>
 }
