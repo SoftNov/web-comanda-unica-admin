@@ -185,6 +185,98 @@
   font-size: 0.85rem;
 }
 
+// --- seletor de plano (upgrade/downgrade) -----------------------------
+.plan-picker {
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.plan-picker__title {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 0.9375rem;
+}
+
+.plan-picker__hint {
+  margin-top: 4px;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.plan-picker__grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.plan-option {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-elevated);
+}
+
+.plan-option--current {
+  border-color: var(--color-success);
+}
+
+.plan-option--blocked {
+  opacity: 0.55;
+}
+
+.plan-option__tables {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 0.9375rem;
+}
+
+.plan-option__price {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text);
+
+  span {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+  }
+}
+
+.plan-option__badge {
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.plan-option__note {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.plan-option__confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.plan-option__confirm-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .sub-card__fineprint {
   font-size: 0.8125rem;
   color: var(--color-text-muted);
@@ -197,4 +289,79 @@
   button {
     margin-left: auto;
   }
+}
+
+// --- card de crédito da assinatura -----------------------------------
+.credit-card {
+  max-width: 640px;
+  margin-top: 20px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.credit-card__available {
+  margin-top: 6px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+
+  span {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+  }
+}
+
+.credit-movements__title {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  margin-bottom: 10px;
+}
+
+.credit-movements__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.credit-movements__item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: 'desc value' 'date value';
+  gap: 2px 16px;
+  padding: 10px 0;
+  border-top: 1px solid var(--color-border);
+  font-size: 0.875rem;
+}
+
+.credit-movements__desc {
+  grid-area: desc;
+  color: var(--color-text);
+}
+
+.credit-movements__detail {
+  color: var(--color-text-muted);
+}
+
+.credit-movements__date {
+  grid-area: date;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.credit-movements__value {
+  grid-area: value;
+  align-self: center;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.credit-movements__value--in {
+  color: var(--color-success);
 }

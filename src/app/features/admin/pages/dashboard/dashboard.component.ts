@@ -9,6 +9,7 @@ import { RippleDirective } from '../../../../shared/directives/ripple.directive'
 import { PedidosComponent } from '../pedidos/pedidos.component';
 import { ServicosComponent } from '../servicos/servicos.component';
 import { SubscriptionBannerComponent } from '../../../../shared/components/subscription-banner/subscription-banner.component';
+import { SubscriptionService } from '../../../../shared/services/subscription.service';
 
 const MANAGEMENT_PROFILES = ['ADMIN', 'OWNER', 'MANAGER'];
 // Perfis operacionais que vivem na fila de pedidos no dia a dia — a home entra direto na mesma
@@ -58,6 +59,12 @@ export class DashboardComponent implements OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly floorPlansService = inject(FloorPlansService);
   private readonly dashboardService = inject(DashboardService);
+  private readonly subscriptionService = inject(SubscriptionService);
+
+  // Crédito da assinatura — vem do SubscriptionService (REST, já carregado pelo subscriptionGuard),
+  // NÃO do resumo operacional do WebSocket: o crédito não é métrica de tempo real e o payload do
+  // WS passa por serializadores diferentes do REST.
+  readonly subscriptionCreditAvailable = computed(() => this.subscriptionService.status()?.credit?.available ?? null);
   private readonly currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
   readonly currentUser = this.authService.currentUser;

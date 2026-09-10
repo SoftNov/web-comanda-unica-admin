@@ -225,6 +225,13 @@
         <span class="stat-card__label">Taxa da Comanda Única pendente</span>
         <span class="stat-card__value">{{ isLoadingSummary() ? '—' : formatCurrency(summary()?.pendingFeeBalance) }}</span>
       </div>
+      @if (subscriptionCreditAvailable() != null) {
+        <div class="stat-card">
+          <span class="material-icons stat-card__icon" aria-hidden="true">card_giftcard</span>
+          <span class="stat-card__label">Crédito da assinatura disponível</span>
+          <span class="stat-card__value">{{ formatCurrency(subscriptionCreditAvailable()) }}</span>
+        </div>
+      }
     </div>
   </div>
 }

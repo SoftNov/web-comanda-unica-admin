@@ -30,6 +30,11 @@ export interface SubscriptionStatusResponse {
   planCurrency: string | null;
   // Mesas cadastradas hoje — base da faixa de preço.
   tableCount: number | null;
+  // Quantas mesas o plano contratado comporta. null = ilimitado (faixa topo / valor negociado).
+  // Para cortesia, é o limite do período grátis.
+  contractedTableLimit: number | null;
+  // Faixas para o seletor de upgrade/downgrade (vazio quando não há assinatura paga ativa).
+  availablePlans: PlanOption[];
   // O preço vigente difere do contratado (mudou de faixa de mesas) — dá pra atualizar o plano
   // sem esperar o fim do contrato (ver changePlan).
   planOutdated: boolean;
@@ -40,6 +45,56 @@ export interface SubscriptionStatusResponse {
   autoRenew: boolean;
   // Já tem Customer no Stripe — pode abrir o Customer Portal.
   manageable: boolean;
+  // Resumo do crédito da assinatura do período vigente. null quando nunca houve crédito
+  // (cortesia / nunca assinou).
+  credit: CreditSummary | null;
+}
+
+export type SubscriptionCreditStatus = 'ACTIVE' | 'EXPIRED';
+
+export interface CreditSummary {
+  granted: number;
+  consumed: number;
+  expired: number;
+  available: number;
+  periodStart: string;
+  periodEnd: string;
+  status: SubscriptionCreditStatus;
+}
+
+export type CreditMovementType =
+  | 'SUBSCRIPTION_CREDIT'
+  | 'FEE_CREDIT_CONSUMPTION'
+  | 'FEE_CREDIT_CONSUMPTION_REVERSAL'
+  | 'CREDIT_EXPIRATION';
+
+export interface CreditMovement {
+  type: CreditMovementType;
+  amount: number;
+  description: string | null;
+  referenceType: string | null;
+  referenceId: string | null;
+  createdAt: string;
+}
+
+export interface PagedResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
+}
+
+// Uma faixa de plano no seletor de upgrade/downgrade (espelho de PlanOptionResponse no backend).
+export interface PlanOption {
+  upToTables: number;
+  monthlyAmount: number;
+  annualAmount: number;
+  // Faixa do valor atualmente contratado.
+  current: boolean;
+  // false quando as mesas cadastradas hoje não cabem nesta faixa (downgrade bloqueado).
+  allowed: boolean;
 }
 
 export interface StripeHostedLinkResponse {
@@ -84,10 +139,19 @@ export class SubscriptionService {
     return this.http.post<StripeHostedLinkResponse>(`${this.baseUrl}/portal-session`, {});
   }
 
-  // Atualiza a assinatura ativa para o valor vigente da faixa de mesas atual (upgrade/downgrade
-  // no meio do ciclo). Devolve o estado atualizado e atualiza o cache.
-  changePlan(): Observable<SubscriptionStatusResponse> {
-    return this.http.post<SubscriptionStatusResponse>(`${this.baseUrl}/change-plan`, {}).pipe(
+  // Movimentações de crédito (concessão / consumo / devolução / expiração), mais recentes primeiro.
+  getCreditMovements(page = 0, size = 20): Observable<PagedResponse<CreditMovement>> {
+    return this.http.get<PagedResponse<CreditMovement>>(`${this.baseUrl}/credit/movements`, {
+      params: { page: String(page), size: String(size) }
+    });
+  }
+
+  // Atualiza a assinatura ativa no meio do ciclo (proração pelo Stripe). Sem argumento:
+  // sincroniza ao valor da faixa de mesas atual (botão "Atualizar plano" do planOutdated). Com
+  // upToTables: move para a faixa escolhida no seletor. Devolve o estado atualizado e atualiza o cache.
+  changePlan(upToTables?: number): Observable<SubscriptionStatusResponse> {
+    const body = upToTables != null ? { upToTables } : {};
+    return this.http.post<SubscriptionStatusResponse>(`${this.baseUrl}/change-plan`, body).pipe(
       tap((data) => {
         const cached = this.cache();
         if (cached) {

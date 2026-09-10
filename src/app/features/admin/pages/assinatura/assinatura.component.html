@@ -51,7 +51,10 @@
   <div class="card sub-card">
     <div class="sub-card__head">
       <div>
-        <span class="sub-card__eyebrow">Plano · baseado em {{ tableCountLabel() }}</span>
+        <span class="sub-card__eyebrow">
+          @if (mode() === 'active') { Plano · {{ tableUsageLabel() }} }
+          @else { Plano · baseado em {{ tableCountLabel() }} }
+        </span>
         <p class="sub-card__price">{{ planMonthlyLabel() }} <span>/ mês</span></p>
         <p class="sub-card__price-note">Cobrança mensal com renovação automática.</p>
       </div>
@@ -86,6 +89,48 @@
                 [disabled]="isChangingPlan()" (click)="changePlan()">
           {{ isChangingPlan() ? 'Atualizando…' : 'Atualizar plano' }}
         </button>
+      </div>
+    }
+
+    @if (mode() === 'active' && (status()?.availablePlans?.length ?? 0) > 0) {
+      <div class="plan-picker">
+        <p class="plan-picker__title">Escolha seu plano</p>
+        <p class="plan-picker__hint">
+          O upgrade é cobrado proporcionalmente na próxima fatura. O downgrade só é possível se as
+          mesas cadastradas couberem no plano menor.
+        </p>
+        <div class="plan-picker__grid">
+          @for (plan of status()?.availablePlans; track plan.upToTables) {
+            <div class="plan-option"
+                 [class.plan-option--current]="plan.current"
+                 [class.plan-option--blocked]="!plan.allowed && !plan.current">
+              <span class="plan-option__tables">Até {{ plan.upToTables }} mesas</span>
+              <span class="plan-option__price">{{ planCardMonthlyLabel(plan.monthlyAmount) }} <span>/ mês</span></span>
+              @if (plan.current) {
+                <span class="plan-option__badge">Plano atual</span>
+              } @else if (!plan.allowed) {
+                <span class="plan-option__note">Você tem mais mesas do que este plano comporta</span>
+              } @else if (pendingPlan() === plan.upToTables) {
+                <div class="plan-option__confirm">
+                  <span>Confirmar a troca para este plano?</span>
+                  <div class="plan-option__confirm-actions">
+                    <button type="button" class="btn btn--primary btn--sm" appRipple
+                            [disabled]="isChangingPlan()" (click)="confirmPlanChange()">
+                      {{ isChangingPlan() ? 'Trocando…' : 'Confirmar' }}
+                    </button>
+                    <button type="button" class="btn btn--ghost btn--sm"
+                            [disabled]="isChangingPlan()" (click)="cancelPlanChange()">Cancelar</button>
+                  </div>
+                </div>
+              } @else {
+                <button type="button" class="btn btn--ghost btn--sm" appRipple
+                        [disabled]="isChangingPlan()" (click)="requestPlanChange(plan.upToTables)">
+                  Mudar para este plano
+                </button>
+              }
+            </div>
+          }
+        </div>
       </div>
     }
 
@@ -150,4 +195,55 @@
       renovação automática e pode ser cancelada a qualquer momento pelo painel de pagamento.
     </p>
   </div>
+
+  @if (status()?.credit; as credit) {
+    <div class="card credit-card">
+      <div class="credit-card__head">
+        <div>
+          <span class="sub-card__eyebrow">Crédito da assinatura</span>
+          <p class="credit-card__available">{{ amountLabel(credit.available) }} <span>disponível</span></p>
+          <p class="sub-card__price-note">
+            O crédito abate as taxas da Comanda Única conforme os pagamentos entram. O saldo não usado
+            expira em {{ creditExpiryLabel() }} — não acumula.
+          </p>
+        </div>
+      </div>
+      <dl class="sub-card__details">
+        <div><dt>Concedido no período</dt><dd>{{ amountLabel(credit.granted) }}</dd></div>
+        <div><dt>Já usado</dt><dd>{{ amountLabel(credit.consumed) }}</dd></div>
+        @if (credit.expired > 0) {
+          <div><dt>Expirado</dt><dd>{{ amountLabel(credit.expired) }}</dd></div>
+        }
+      </dl>
+
+      <div class="credit-movements">
+        <p class="credit-movements__title">Movimentações</p>
+        @if (isLoadingMovements()) {
+          <p class="field__hint">Carregando…</p>
+        } @else if (movementsLoadError()) {
+          <p class="field__hint">Não foi possível carregar as movimentações.
+            <button type="button" class="btn btn--ghost btn--sm" (click)="loadMovements()">Tentar de novo</button>
+          </p>
+        } @else if (creditMovements().length === 0) {
+          <p class="field__hint">Nenhuma movimentação ainda.</p>
+        } @else {
+          <ul class="credit-movements__list">
+            @for (m of creditMovements(); track $index) {
+              <li class="credit-movements__item">
+                <span class="credit-movements__desc">
+                  {{ movementLabel(m.type) }}
+                  @if (m.description) { <span class="credit-movements__detail">— {{ m.description }}</span> }
+                </span>
+                <span class="credit-movements__value"
+                      [class.credit-movements__value--in]="movementSign(m.type) === '+'">
+                  {{ movementSign(m.type) }} {{ amountLabel(m.amount) }}
+                </span>
+                <span class="credit-movements__date">{{ dateLabel(m.createdAt) }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  }
 }
