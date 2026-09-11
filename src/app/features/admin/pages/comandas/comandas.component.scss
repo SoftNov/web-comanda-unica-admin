@@ -531,6 +531,164 @@ select.field__input {
   }
 }
 
+// --- Gerenciar pedidos já lançados (cancelar pedido, remover item, anotações) --------------------
+.staff-order-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.staff-order-group {
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-card);
+}
+
+.staff-order-group--cancelled {
+  opacity: 0.7;
+}
+
+.staff-order-group__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.staff-order-group__customer {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--color-text);
+}
+
+.staff-order-group__total {
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.staff-order-group__items {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.staff-order-item--cancelled {
+  opacity: 0.55;
+}
+
+.staff-order-item__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+
+.staff-order-item__qty {
+  color: var(--color-accent, #818cf8);
+  font-weight: 700;
+}
+
+.staff-order-item__name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text);
+}
+
+.staff-order-item__status {
+  padding: 2px 8px;
+  font-size: 0.6875rem;
+}
+
+.staff-order-item__price {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+}
+
+.staff-order-item__notes {
+  margin: 4px 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.staff-order-item__notes--reason {
+  color: #f87171;
+}
+
+// Justificativa pedida inline no próprio card (não um modal sobre o modal) — mesmo padrão visual
+// do formulário de estorno (.field__label + .field__input), só que compacto.
+.staff-order-reason {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-elevated, rgba(255, 255, 255, 0.03));
+
+  .field__label {
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  textarea.field__input {
+    width: 100%;
+    resize: vertical;
+  }
+}
+
+.step-actions--sm {
+  margin-top: 10px;
+}
+
+.staff-order-notes-edit {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--color-border);
+
+  .field__label {
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  textarea.field__input {
+    width: 100%;
+    resize: vertical;
+  }
+}
+
+.staff-order-group__notes-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 12px;
+  border: none;
+  border-top: 1px dashed var(--color-border);
+  background: none;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+
+  .material-icons {
+    font-size: 16px;
+  }
+
+  &:hover {
+    color: var(--color-text);
+  }
+}
+
 // --- Lançar pedido pela equipe --------------------------------------------------
 .order-category-filters {
   display: flex;

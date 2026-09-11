@@ -669,13 +669,138 @@
       }
 
       @if (orderTableId() && !isLoadingOrderComanda() && !orderComandaError()) {
-        @if (orderComanda(); as comanda) {
-          @if (comanda.items.length > 0) {
-            <section class="comanda-section">
-              <h3 class="comanda-section__title">Já pedido nesta comanda</h3>
-              <p class="field__hint">{{ orderComandaItemsSummary(comanda) }} · Total: {{ formatCurrency(comanda.totalAmount) }}</p>
-            </section>
-          }
+        @if (orderGroups().length > 0) {
+          <section class="comanda-section">
+            <h3 class="comanda-section__title">Já pedido nesta comanda</h3>
+            <p class="field__hint">
+              Cancele um pedido inteiro ou remova só um item — sempre com justificativa. Também dá pra anotar algo
+              no pedido (ex: "cliente vai buscar no balcão").
+            </p>
+
+            @if (orderActionError()) {
+              <div class="form-alert form-alert--error" role="alert">
+                <span class="material-icons" aria-hidden="true">error_outline</span>
+                {{ orderActionError() }}
+              </div>
+            }
+
+            <div class="staff-order-groups">
+              @for (group of orderGroups(); track group.orderId) {
+                <div class="staff-order-group" [class.staff-order-group--cancelled]="group.allCancelled">
+                  <div class="staff-order-group__header">
+                    <span class="staff-order-group__customer">{{ group.customerName }}</span>
+                    <span class="staff-order-group__total">{{ formatCurrency(group.activeTotal) }}</span>
+                    @if (group.allCancelled) {
+                      <span class="badge badge--danger">Pedido cancelado</span>
+                    } @else if (pendingCancelOrderId() !== group.orderId) {
+                      <button type="button" class="btn btn--sm btn--danger" (click)="askCancelOrder(group.orderId)">
+                        Cancelar pedido
+                      </button>
+                    }
+                  </div>
+
+                  @if (pendingCancelOrderId() === group.orderId) {
+                    <div class="staff-order-reason">
+                      <label class="field__label" [for]="'cancel-reason-' + group.orderId">Motivo do cancelamento</label>
+                      <textarea
+                        [id]="'cancel-reason-' + group.orderId"
+                        class="field__input"
+                        rows="2"
+                        maxlength="500"
+                        placeholder="Ex: cliente desistiu do pedido"
+                        [value]="reasonInput()"
+                        (input)="reasonInput.set($any($event.target).value)"
+                      ></textarea>
+                      <div class="step-actions step-actions--sm">
+                        <button type="button" class="btn btn--ghost btn--sm" [disabled]="cancellingOrderId() === group.orderId" (click)="dismissOrderAction()">
+                          Voltar
+                        </button>
+                        <button type="button" class="btn btn--danger btn--sm" [disabled]="!reasonInput().trim() || cancellingOrderId() === group.orderId" (click)="confirmCancelOrder()">
+                          {{ cancellingOrderId() === group.orderId ? 'Cancelando…' : 'Confirmar cancelamento' }}
+                        </button>
+                      </div>
+                    </div>
+                  }
+
+                  <ul class="staff-order-group__items">
+                    @for (item of group.items; track item.id) {
+                      <li class="staff-order-item" [class.staff-order-item--cancelled]="item.status === 'CANCELLED'">
+                        <div class="staff-order-item__row">
+                          <span class="staff-order-item__qty">{{ item.quantity }}x</span>
+                          <span class="staff-order-item__name">
+                            {{ item.name }}
+                            <span class="badge badge--muted staff-order-item__status">{{ staffItemStatusLabel(item.status) }}</span>
+                          </span>
+                          <span class="staff-order-item__price">{{ formatCurrency(item.totalPrice) }}</span>
+                          @if (item.status !== 'CANCELLED' && pendingRemoveItemId() !== item.id) {
+                            <button type="button" class="icon-btn icon-btn--danger" title="Remover item" (click)="askRemoveItem(item.id)">
+                              <span class="material-icons" aria-hidden="true">delete_outline</span>
+                            </button>
+                          }
+                        </div>
+
+                        @if (item.notes) {
+                          <p class="staff-order-item__notes">Obs: {{ item.notes }}</p>
+                        }
+                        @if (item.status === 'CANCELLED' && item.removalReason) {
+                          <p class="staff-order-item__notes staff-order-item__notes--reason">Motivo: {{ item.removalReason }}</p>
+                        }
+
+                        @if (pendingRemoveItemId() === item.id) {
+                          <div class="staff-order-reason">
+                            <label class="field__label" [for]="'remove-reason-' + item.id">Motivo da remoção</label>
+                            <textarea
+                              [id]="'remove-reason-' + item.id"
+                              class="field__input"
+                              rows="2"
+                              maxlength="500"
+                              placeholder="Ex: item pedido errado"
+                              [value]="reasonInput()"
+                              (input)="reasonInput.set($any($event.target).value)"
+                            ></textarea>
+                            <div class="step-actions step-actions--sm">
+                              <button type="button" class="btn btn--ghost btn--sm" [disabled]="removingItemId() === item.id" (click)="dismissOrderAction()">
+                                Voltar
+                              </button>
+                              <button type="button" class="btn btn--danger btn--sm" [disabled]="!reasonInput().trim() || removingItemId() === item.id" (click)="confirmRemoveItem()">
+                                {{ removingItemId() === item.id ? 'Removendo…' : 'Confirmar remoção' }}
+                              </button>
+                            </div>
+                          </div>
+                        }
+                      </li>
+                    }
+                  </ul>
+
+                  @if (editingNotesOrderId() === group.orderId) {
+                    <div class="staff-order-notes-edit">
+                      <label class="field__label" [for]="'order-notes-' + group.orderId">Observação do pedido</label>
+                      <textarea
+                        [id]="'order-notes-' + group.orderId"
+                        class="field__input"
+                        rows="2"
+                        maxlength="1000"
+                        placeholder="Ex: cliente vai buscar no balcão"
+                        [value]="notesInput()"
+                        (input)="notesInput.set($any($event.target).value)"
+                      ></textarea>
+                      <div class="step-actions step-actions--sm">
+                        <button type="button" class="btn btn--ghost btn--sm" [disabled]="isSavingNotes()" (click)="cancelEditOrderNotes()">Cancelar</button>
+                        <button type="button" class="btn btn--primary btn--sm" [disabled]="isSavingNotes()" (click)="saveOrderNotes(group.orderId)">
+                          {{ isSavingNotes() ? 'Salvando…' : 'Salvar observação' }}
+                        </button>
+                      </div>
+                    </div>
+                  } @else {
+                    <button type="button" class="staff-order-group__notes-toggle" (click)="startEditOrderNotes(group)">
+                      <span class="material-icons" aria-hidden="true">edit_note</span>
+                      {{ group.notes ? group.notes : 'Adicionar anotação ao pedido' }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          </section>
         }
 
         <section class="comanda-section">

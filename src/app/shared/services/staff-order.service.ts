@@ -19,6 +19,13 @@ export interface StaffComandaLineItem {
   notes?: string;
   status: StaffOrderItemStatus;
   createdAt: string;
+  // Observação do PEDIDO (não do item) a que este item pertence — repetida em cada item do mesmo
+  // pedido, já que a resposta não agrupa por pedido (ver orderId acima e ComandasComponent, que
+  // agrupa no front pelo mesmo orderId para exibir "Cancelar pedido"/observação por pedido).
+  orderNotes?: string;
+  // Preenchido só quando o item foi removido pela equipe (individualmente ou em cascata por
+  // cancelamento do pedido inteiro) — ver StaffOrderService#removeItem/cancelOrder (API).
+  removalReason?: string;
 }
 
 export interface StaffComandaResponse {
@@ -43,6 +50,18 @@ export interface CreateStaffOrderRequest {
   notes?: string;
 }
 
+export interface CancelOrderRequest {
+  reason: string;
+}
+
+export interface RemoveOrderItemRequest {
+  reason: string;
+}
+
+export interface UpdateOrderNotesRequest {
+  notes: string | null;
+}
+
 export interface ApiErrorResponse {
   titulo?: string;
   mensagem?: string;
@@ -64,5 +83,26 @@ export class StaffOrderService {
 
   createOrder(tableId: string, payload: CreateStaffOrderRequest): Observable<StaffComandaResponse> {
     return this.http.post<StaffComandaResponse>(`${this.baseUrl}/api/v1/staff/tables/${tableId}/comanda/orders`, payload);
+  }
+
+  cancelOrder(tableId: string, orderId: string, reason: string): Observable<StaffComandaResponse> {
+    return this.http.patch<StaffComandaResponse>(
+      `${this.baseUrl}/api/v1/staff/tables/${tableId}/comanda/orders/${orderId}/cancel`,
+      { reason } as CancelOrderRequest
+    );
+  }
+
+  removeItem(tableId: string, itemId: string, reason: string): Observable<StaffComandaResponse> {
+    return this.http.patch<StaffComandaResponse>(
+      `${this.baseUrl}/api/v1/staff/tables/${tableId}/comanda/items/${itemId}/remove`,
+      { reason } as RemoveOrderItemRequest
+    );
+  }
+
+  updateOrderNotes(tableId: string, orderId: string, notes: string | null): Observable<StaffComandaResponse> {
+    return this.http.patch<StaffComandaResponse>(
+      `${this.baseUrl}/api/v1/staff/tables/${tableId}/comanda/orders/${orderId}/notes`,
+      { notes } as UpdateOrderNotesRequest
+    );
   }
 }

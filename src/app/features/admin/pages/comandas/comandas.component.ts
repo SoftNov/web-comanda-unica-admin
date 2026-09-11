@@ -22,7 +22,7 @@ import {
 import { RestaurantTableResponse, TablesService } from '../../../../shared/services/tables.service';
 import { MenuCategoryResponse, MenuCategoriesService } from '../../../../shared/services/menu-categories.service';
 import { MenuItemResponse, MenuItemsService } from '../../../../shared/services/menu-items.service';
-import { StaffComandaResponse, StaffOrderService } from '../../../../shared/services/staff-order.service';
+import { StaffComandaLineItem, StaffComandaResponse, StaffOrderItemStatus, StaffOrderService } from '../../../../shared/services/staff-order.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
 import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
@@ -44,6 +44,20 @@ interface OrderDraftItem {
 interface OrderItemBadge {
   icon: string;
   label: string;
+}
+
+// Itens já lançados na comanda (StaffComandaResponse.items, achatados) agrupados por pedido no
+// front — a API não agrupa (ver orderId em cada item), mesmo padrão de OrderGroup no
+// comanda.component.ts do web-comanda-unica-menu (visão do cliente).
+interface StaffOrderGroup {
+  orderId: string;
+  customerName: string;
+  notes: string | null;
+  items: StaffComandaLineItem[];
+  // Soma dos itens ainda ativos (não cancelados) — usada pra mostrar o total real do pedido e pra
+  // decidir se ainda faz sentido oferecer "Cancelar pedido" (já cancelado por inteiro não precisa).
+  activeTotal: number;
+  allCancelled: boolean;
 }
 
 @Component({
@@ -159,6 +173,50 @@ export class ComandasComponent {
 
   readonly isSubmittingOrder = signal(false);
   readonly submitOrderError = signal<string | null>(null);
+
+  // --- Gerenciar pedidos já lançados (cancelar pedido, remover item, editar observação) ----------
+  // Justificativa pedida inline no próprio card do pedido/item (não um modal por cima do modal) —
+  // só uma pendência por vez: abrir uma fecha a outra (ver askCancelOrder/askRemoveItem).
+  readonly pendingCancelOrderId = signal<string | null>(null);
+  readonly pendingRemoveItemId = signal<string | null>(null);
+  readonly reasonInput = signal('');
+  readonly cancellingOrderId = signal<string | null>(null);
+  readonly removingItemId = signal<string | null>(null);
+  readonly orderActionError = signal<string | null>(null);
+
+  readonly editingNotesOrderId = signal<string | null>(null);
+  readonly notesInput = signal('');
+  readonly isSavingNotes = signal(false);
+
+  readonly orderGroups = computed<StaffOrderGroup[]>(() => {
+    const comanda = this.orderComanda();
+    if (!comanda) {
+      return [];
+    }
+    const byOrderId = new Map<string, StaffOrderGroup>();
+    const groups: StaffOrderGroup[] = [];
+    for (const item of comanda.items) {
+      let group = byOrderId.get(item.orderId);
+      if (!group) {
+        group = {
+          orderId: item.orderId,
+          customerName: item.customerName,
+          notes: item.orderNotes ?? null,
+          items: [],
+          activeTotal: 0,
+          allCancelled: true
+        };
+        byOrderId.set(item.orderId, group);
+        groups.push(group);
+      }
+      group.items.push(item);
+      if (item.status !== 'CANCELLED') {
+        group.activeTotal += item.totalPrice;
+        group.allCancelled = false;
+      }
+    }
+    return groups;
+  });
 
   readonly visibleOrderMenuItems = computed(() => {
     const categoryId = this.orderCategoryFilter();
@@ -695,16 +753,6 @@ export class ComandasComponent {
     this.comandas.update((list) => list.map((current) => (current.id === updated.id ? updated : current)));
   }
 
-  // "2x X-Burger, 1x Coca-Cola" dos itens já lançados na comanda (de qualquer origem — cliente
-  // pelo cardápio digital ou equipe por este mesmo modal) — mesmo padrão de orderItemsSummary,
-  // mas sobre StaffComandaResponse.items (linhas já "achatadas", sem agrupar por pedido).
-  orderComandaItemsSummary(comanda: StaffComandaResponse): string {
-    if (comanda.items.length === 0) {
-      return '—';
-    }
-    return comanda.items.map((item) => `${item.quantity}x ${item.name}`).join(', ');
-  }
-
   // Mesma exibição do cardápio digital do cliente (ver PublicMenuComponent#hasImage/getBadges/
   // hasActivePromotion no web-comanda-unica-menu) — o garçom vê o produto igual ao que o cliente
   // veria no app, só que dentro do painel e sem precisar de login/QR Code.
@@ -764,6 +812,7 @@ export class ComandasComponent {
     this.orderDraftItems.set([]);
     this.submitOrderError.set(null);
     this.orderCategoryFilter.set('');
+    this.resetOrderManagementState();
     this.isOrderModalOpen.set(true);
 
     if (!this.catalogLoaded) {
@@ -814,6 +863,7 @@ export class ComandasComponent {
     this.orderComanda.set(null);
     this.orderComandaError.set(null);
     this.orderDraftItems.set([]);
+    this.resetOrderManagementState();
 
     if (!tableId) {
       return;
@@ -876,6 +926,151 @@ export class ComandasComponent {
           autoDismiss(this.submitOrderError, null);
         }
       });
+  }
+
+  staffItemStatusLabel(status: StaffOrderItemStatus): string {
+    switch (status) {
+      case 'REQUESTED':
+        return 'Solicitado';
+      case 'PREPARING':
+        return 'Em preparo';
+      case 'ON_THE_WAY':
+        return 'A caminho';
+      case 'DELIVERED':
+        return 'Entregue';
+      default:
+        return 'Cancelado';
+    }
+  }
+
+  private resetOrderManagementState(): void {
+    this.pendingCancelOrderId.set(null);
+    this.pendingRemoveItemId.set(null);
+    this.reasonInput.set('');
+    this.orderActionError.set(null);
+    this.editingNotesOrderId.set(null);
+    this.notesInput.set('');
+  }
+
+  // --- Cancelar pedido / remover item (com justificativa obrigatória) -----------------------------
+  askCancelOrder(orderId: string): void {
+    this.pendingRemoveItemId.set(null);
+    this.editingNotesOrderId.set(null);
+    this.pendingCancelOrderId.set(orderId);
+    this.reasonInput.set('');
+    this.orderActionError.set(null);
+  }
+
+  askRemoveItem(itemId: string): void {
+    this.pendingCancelOrderId.set(null);
+    this.editingNotesOrderId.set(null);
+    this.pendingRemoveItemId.set(itemId);
+    this.reasonInput.set('');
+    this.orderActionError.set(null);
+  }
+
+  dismissOrderAction(): void {
+    if (this.cancellingOrderId() || this.removingItemId()) {
+      return;
+    }
+    this.pendingCancelOrderId.set(null);
+    this.pendingRemoveItemId.set(null);
+    this.reasonInput.set('');
+  }
+
+  confirmCancelOrder(): void {
+    const orderId = this.pendingCancelOrderId();
+    const tableId = this.orderTableId();
+    const reason = this.reasonInput().trim();
+    if (!orderId || !tableId || !reason || this.cancellingOrderId()) {
+      return;
+    }
+
+    this.cancellingOrderId.set(orderId);
+    this.orderActionError.set(null);
+
+    this.staffOrderService.cancelOrder(tableId, orderId, reason).subscribe({
+      next: (comanda) => {
+        this.cancellingOrderId.set(null);
+        this.pendingCancelOrderId.set(null);
+        this.reasonInput.set('');
+        this.orderComanda.set(comanda);
+        this.loadComandas(this.page());
+      },
+      error: (error: HttpErrorResponse) => {
+        this.cancellingOrderId.set(null);
+        this.orderActionError.set(this.resolveErrorMessage(error));
+        autoDismiss(this.orderActionError, null);
+      }
+    });
+  }
+
+  confirmRemoveItem(): void {
+    const itemId = this.pendingRemoveItemId();
+    const tableId = this.orderTableId();
+    const reason = this.reasonInput().trim();
+    if (!itemId || !tableId || !reason || this.removingItemId()) {
+      return;
+    }
+
+    this.removingItemId.set(itemId);
+    this.orderActionError.set(null);
+
+    this.staffOrderService.removeItem(tableId, itemId, reason).subscribe({
+      next: (comanda) => {
+        this.removingItemId.set(null);
+        this.pendingRemoveItemId.set(null);
+        this.reasonInput.set('');
+        this.orderComanda.set(comanda);
+        this.loadComandas(this.page());
+      },
+      error: (error: HttpErrorResponse) => {
+        this.removingItemId.set(null);
+        this.orderActionError.set(this.resolveErrorMessage(error));
+        autoDismiss(this.orderActionError, null);
+      }
+    });
+  }
+
+  // --- Anotações do pedido ---------------------------------------------------------------------
+  startEditOrderNotes(group: StaffOrderGroup): void {
+    this.pendingCancelOrderId.set(null);
+    this.pendingRemoveItemId.set(null);
+    this.editingNotesOrderId.set(group.orderId);
+    this.notesInput.set(group.notes ?? '');
+    this.orderActionError.set(null);
+  }
+
+  cancelEditOrderNotes(): void {
+    if (this.isSavingNotes()) {
+      return;
+    }
+    this.editingNotesOrderId.set(null);
+    this.notesInput.set('');
+  }
+
+  saveOrderNotes(orderId: string): void {
+    const tableId = this.orderTableId();
+    if (!tableId || this.isSavingNotes()) {
+      return;
+    }
+
+    this.isSavingNotes.set(true);
+    this.orderActionError.set(null);
+
+    this.staffOrderService.updateOrderNotes(tableId, orderId, this.notesInput().trim() || null).subscribe({
+      next: (comanda) => {
+        this.isSavingNotes.set(false);
+        this.editingNotesOrderId.set(null);
+        this.notesInput.set('');
+        this.orderComanda.set(comanda);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isSavingNotes.set(false);
+        this.orderActionError.set(this.resolveErrorMessage(error));
+        autoDismiss(this.orderActionError, null);
+      }
+    });
   }
 
   // --- Erros --------------------------------------------------------------------
