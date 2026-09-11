@@ -11,7 +11,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const subscriptionService = inject(SubscriptionService);
   const router = inject(Router);
 
-  const isApiRequest = req.url.startsWith(environment.apiBaseUrl);
+  // Mesmo JWT_SECRET nas duas APIs (ver StaffOrderService) — o token de funcionário emitido pelo
+  // login do painel também é válido na api-comanda-unica-menu, então os mesmos headers valem
+  // para as duas.
+  const isApiRequest = req.url.startsWith(environment.apiBaseUrl) || req.url.startsWith(environment.menuApiBaseUrl);
   const token = authService.getAccessToken();
   const isAuthenticatedRequest = isApiRequest && !!token;
 

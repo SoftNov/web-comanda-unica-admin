@@ -20,6 +20,9 @@ import {
   RefundStatus
 } from '../../../../shared/services/comandas.service';
 import { RestaurantTableResponse, TablesService } from '../../../../shared/services/tables.service';
+import { MenuCategoryResponse, MenuCategoriesService } from '../../../../shared/services/menu-categories.service';
+import { MenuItemResponse, MenuItemsService } from '../../../../shared/services/menu-items.service';
+import { StaffComandaResponse, StaffOrderService } from '../../../../shared/services/staff-order.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
 import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
@@ -28,6 +31,20 @@ import { AuthService } from '../../../auth/services/auth.service';
 const PAGE_SIZE = 10;
 
 type StatusFilter = 'all' | ComandaStatus;
+
+// Item em montagem no pedido lançado pela equipe (ver seção "Lançar pedido" mais abaixo) — só no
+// front, nada é persistido até o clique em "Enviar pedido" (ver StaffOrderService#createOrder).
+interface OrderDraftItem {
+  menuItemId: string;
+  name: string;
+  unitPrice: number;
+  quantity: number;
+}
+
+interface OrderItemBadge {
+  icon: string;
+  label: string;
+}
 
 @Component({
   selector: 'app-admin-comandas',
@@ -40,6 +57,9 @@ export class ComandasComponent {
   private readonly fb = new FormBuilder();
   private readonly comandasService = inject(ComandasService);
   private readonly tablesService = inject(TablesService);
+  private readonly menuCategoriesService = inject(MenuCategoriesService);
+  private readonly menuItemsService = inject(MenuItemsService);
+  private readonly staffOrderService = inject(StaffOrderService);
   private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -113,6 +133,43 @@ export class ComandasComponent {
   // paga. Carregada isoladamente (não depende de estar na página atual da listagem).
   readonly openingFromLink = signal(false);
   readonly openFromLinkError = signal<string | null>(null);
+
+  // --- Lançar pedido pela equipe (modal) -------------------------------------------
+  // Para estabelecimentos em que o cliente não usa o cardápio digital: a própria equipe
+  // (qualquer perfil desta tela — todos exceto KITCHEN) abre/entra na comanda da mesa e lança o
+  // pedido direto, sem exigir login (social ou convidado) do cliente final. Ver StaffOrderService,
+  // que fala com a api-comanda-unica-menu (não a api-comanda-unica-admin, como o resto da tela).
+  readonly isOrderModalOpen = signal(false);
+  readonly orderTableId = signal('');
+  readonly orderComanda = signal<StaffComandaResponse | null>(null);
+  readonly isLoadingOrderComanda = signal(false);
+  readonly orderComandaError = signal<string | null>(null);
+
+  readonly orderCategories = signal<MenuCategoryResponse[]>([]);
+  readonly orderMenuItems = signal<MenuItemResponse[]>([]);
+  readonly isLoadingOrderCatalog = signal(false);
+  readonly orderCatalogError = signal<string | null>(null);
+  readonly orderCategoryFilter = signal('');
+  private catalogLoaded = false;
+
+  readonly orderDraftItems = signal<OrderDraftItem[]>([]);
+  readonly orderDraftTotal = computed(() =>
+    this.orderDraftItems().reduce((sum, item) => sum + item.unitPrice * item.quantity, 0)
+  );
+
+  readonly isSubmittingOrder = signal(false);
+  readonly submitOrderError = signal<string | null>(null);
+
+  readonly visibleOrderMenuItems = computed(() => {
+    const categoryId = this.orderCategoryFilter();
+    const items = this.orderMenuItems();
+    return categoryId ? items.filter((item) => item.categoryId === categoryId) : items;
+  });
+
+  // Imagens quebradas do cardápio (ver menu-item__image no público) — mesmo padrão do
+  // PublicMenuComponent#brokenImageIds: só um Set imperativo, não precisa ser signal (nunca lido
+  // em template reativo diretamente, só consultado a cada render via hasOrderItemImage).
+  private readonly brokenOrderImageIds = new Set<string>();
 
   constructor() {
     this.loadTables();
@@ -636,6 +693,189 @@ export class ComandasComponent {
   private applyUpdatedComanda(updated: ComandaResponse): void {
     this.selectedComanda.set(updated);
     this.comandas.update((list) => list.map((current) => (current.id === updated.id ? updated : current)));
+  }
+
+  // "2x X-Burger, 1x Coca-Cola" dos itens já lançados na comanda (de qualquer origem — cliente
+  // pelo cardápio digital ou equipe por este mesmo modal) — mesmo padrão de orderItemsSummary,
+  // mas sobre StaffComandaResponse.items (linhas já "achatadas", sem agrupar por pedido).
+  orderComandaItemsSummary(comanda: StaffComandaResponse): string {
+    if (comanda.items.length === 0) {
+      return '—';
+    }
+    return comanda.items.map((item) => `${item.quantity}x ${item.name}`).join(', ');
+  }
+
+  // Mesma exibição do cardápio digital do cliente (ver PublicMenuComponent#hasImage/getBadges/
+  // hasActivePromotion no web-comanda-unica-menu) — o garçom vê o produto igual ao que o cliente
+  // veria no app, só que dentro do painel e sem precisar de login/QR Code.
+  hasOrderItemImage(item: MenuItemResponse): boolean {
+    return !!item.imageUrl && !this.brokenOrderImageIds.has(item.id);
+  }
+
+  onOrderItemImageError(itemId: string): void {
+    this.brokenOrderImageIds.add(itemId);
+  }
+
+  hasActivePromotionForOrder(item: MenuItemResponse): boolean {
+    if (!item.promotionalPrice || item.promotionalPrice >= item.price) {
+      return false;
+    }
+    const now = Date.now();
+    const start = parseApiDate(item.promotionStart);
+    if (start && start.getTime() > now) {
+      return false;
+    }
+    const end = parseApiDate(item.promotionEnd);
+    if (end && end.getTime() < now) {
+      return false;
+    }
+    return true;
+  }
+
+  orderItemBadges(item: MenuItemResponse): OrderItemBadge[] {
+    const badges: OrderItemBadge[] = [];
+    if (item.vegan) {
+      badges.push({ icon: 'eco', label: 'Vegano' });
+    }
+    if (item.vegetarian) {
+      badges.push({ icon: 'spa', label: 'Vegetariano' });
+    }
+    if (item.glutenFree) {
+      badges.push({ icon: 'grain', label: 'Sem glúten' });
+    }
+    if (item.lactoseFree) {
+      badges.push({ icon: 'icecream', label: 'Sem lactose' });
+    }
+    if (item.alcoholic) {
+      badges.push({ icon: 'local_bar', label: 'Contém álcool' });
+    }
+    return badges;
+  }
+
+  getDraftQuantity(menuItemId: string): number {
+    return this.orderDraftItems().find((draft) => draft.menuItemId === menuItemId)?.quantity ?? 0;
+  }
+
+  // --- Lançar pedido pela equipe (modal) -------------------------------------------
+  openOrderModal(): void {
+    this.orderTableId.set('');
+    this.orderComanda.set(null);
+    this.orderComandaError.set(null);
+    this.orderDraftItems.set([]);
+    this.submitOrderError.set(null);
+    this.orderCategoryFilter.set('');
+    this.isOrderModalOpen.set(true);
+
+    if (!this.catalogLoaded) {
+      this.loadOrderCatalog();
+    }
+  }
+
+  closeOrderModal(): void {
+    if (this.isSubmittingOrder()) {
+      return;
+    }
+    this.isOrderModalOpen.set(false);
+  }
+
+  private loadOrderCatalog(): void {
+    this.catalogLoaded = true;
+    this.isLoadingOrderCatalog.set(true);
+    this.orderCatalogError.set(null);
+
+    this.menuCategoriesService.list(true).subscribe({
+      next: (categories) => this.orderCategories.set(categories),
+      error: () => this.orderCategories.set([])
+    });
+
+    this.menuItemsService
+      .list({ active: true, available: true, page: 0, size: 500, sortBy: 'displayOrder', sortDirection: 'ASC' })
+      .subscribe({
+        next: (response) => {
+          this.isLoadingOrderCatalog.set(false);
+          this.orderMenuItems.set(response.content);
+        },
+        error: () => {
+          this.isLoadingOrderCatalog.set(false);
+          this.orderCatalogError.set('Não foi possível carregar o cardápio.');
+        }
+      });
+  }
+
+  setOrderCategoryFilter(categoryId: string): void {
+    this.orderCategoryFilter.set(categoryId);
+  }
+
+  // Abre/entra na comanda da mesa escolhida (mesmo comportamento do primeiro scan do QR Code
+  // pelo cliente — ver StaffOrderService#openOrEnter) para mostrar o que já foi pedido antes de
+  // a equipe lançar itens novos.
+  selectOrderTable(tableId: string): void {
+    this.orderTableId.set(tableId);
+    this.orderComanda.set(null);
+    this.orderComandaError.set(null);
+    this.orderDraftItems.set([]);
+
+    if (!tableId) {
+      return;
+    }
+
+    this.isLoadingOrderComanda.set(true);
+    this.staffOrderService.openOrEnter(tableId).subscribe({
+      next: (comanda) => {
+        this.isLoadingOrderComanda.set(false);
+        this.orderComanda.set(comanda);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isLoadingOrderComanda.set(false);
+        this.orderComandaError.set(this.resolveErrorMessage(error));
+      }
+    });
+  }
+
+  addDraftItem(item: MenuItemResponse): void {
+    const price = this.hasActivePromotionForOrder(item) ? item.promotionalPrice! : item.price;
+    this.orderDraftItems.update((current) => {
+      const existing = current.find((draft) => draft.menuItemId === item.id);
+      if (existing) {
+        return current.map((draft) => (draft.menuItemId === item.id ? { ...draft, quantity: draft.quantity + 1 } : draft));
+      }
+      return [...current, { menuItemId: item.id, name: item.name, unitPrice: price, quantity: 1 }];
+    });
+  }
+
+  decrementDraftItem(menuItemId: string): void {
+    this.orderDraftItems.update((current) =>
+      current
+        .map((draft) => (draft.menuItemId === menuItemId ? { ...draft, quantity: draft.quantity - 1 } : draft))
+        .filter((draft) => draft.quantity > 0)
+    );
+  }
+
+  submitOrder(): void {
+    const tableId = this.orderTableId();
+    const items = this.orderDraftItems();
+    if (!tableId || items.length === 0 || this.isSubmittingOrder()) {
+      return;
+    }
+
+    this.isSubmittingOrder.set(true);
+    this.submitOrderError.set(null);
+
+    this.staffOrderService
+      .createOrder(tableId, { items: items.map((item) => ({ menuItemId: item.menuItemId, quantity: item.quantity })) })
+      .subscribe({
+        next: (comanda) => {
+          this.isSubmittingOrder.set(false);
+          this.orderComanda.set(comanda);
+          this.orderDraftItems.set([]);
+          this.loadComandas(this.page());
+        },
+        error: (error: HttpErrorResponse) => {
+          this.isSubmittingOrder.set(false);
+          this.submitOrderError.set(this.resolveErrorMessage(error));
+          autoDismiss(this.submitOrderError, null);
+        }
+      });
   }
 
   // --- Erros --------------------------------------------------------------------

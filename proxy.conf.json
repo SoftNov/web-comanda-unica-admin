@@ -5,5 +5,12 @@
     "changeOrigin": true,
     "ws": true,
     "logLevel": "debug"
+  },
+  "/comanda-unica-menu-api": {
+    "target": "http://localhost:8081",
+    "secure": false,
+    "changeOrigin": true,
+    "ws": true,
+    "logLevel": "debug"
   }
 }

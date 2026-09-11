@@ -5,6 +5,10 @@
       Acompanhe as comandas abertas e encerradas de {{ selectedCompany()?.companyName ?? 'sua empresa' }}, com pedidos e pagamentos de cada uma.
     </p>
   </div>
+  <button type="button" class="btn btn--primary" appRipple (click)="openOrderModal()">
+    <span class="material-icons" aria-hidden="true">add_shopping_cart</span>
+    Lançar Pedido
+  </button>
 </div>
 
 <div class="card filters-card">
@@ -619,6 +623,190 @@
           <button type="button" class="btn btn--ghost" [disabled]="isSubmittingRefund()" (click)="cancelRefundConfirmation()">Cancelar</button>
           <button type="button" class="btn btn--danger" [disabled]="isSubmittingRefund()" (click)="confirmRefund()">
             {{ isSubmittingRefund() ? 'Estornando…' : 'Confirmar estorno' }}
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+@if (isOrderModalOpen()) {
+  <div class="modal-backdrop">
+    <div class="modal-card modal-card--lg card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <div>
+          <h2 class="step-heading">Lançar pedido</h2>
+          <p class="field__hint">
+            Para quando o cliente prefere não usar o cardápio digital — escolha a mesa, monte o pedido e envie
+            direto na comanda, sem precisar que o cliente faça login no app.
+          </p>
+        </div>
+        <button type="button" class="icon-btn" (click)="closeOrderModal()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="order-table">Mesa</label>
+        <div class="field__control">
+          <select id="order-table" class="field__input" [value]="orderTableId()" (change)="selectOrderTable($any($event.target).value)">
+            <option value="">Selecione a mesa</option>
+            @for (table of tables(); track table.id) {
+              <option [value]="table.id">Mesa {{ table.number }}{{ table.name ? ' — ' + table.name : '' }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (isLoadingOrderComanda()) {
+        <p class="field__hint">Abrindo comanda da mesa…</p>
+      }
+      @if (orderComandaError()) {
+        <div class="form-alert form-alert--error" role="alert">
+          <span class="material-icons" aria-hidden="true">error_outline</span>
+          {{ orderComandaError() }}
+        </div>
+      }
+
+      @if (orderTableId() && !isLoadingOrderComanda() && !orderComandaError()) {
+        @if (orderComanda(); as comanda) {
+          @if (comanda.items.length > 0) {
+            <section class="comanda-section">
+              <h3 class="comanda-section__title">Já pedido nesta comanda</h3>
+              <p class="field__hint">{{ orderComandaItemsSummary(comanda) }} · Total: {{ formatCurrency(comanda.totalAmount) }}</p>
+            </section>
+          }
+        }
+
+        <section class="comanda-section">
+          <h3 class="comanda-section__title">Itens do pedido</h3>
+
+          @if (orderCategories().length > 0) {
+            <div class="order-category-filters">
+              <button type="button" class="btn btn--sm" [class.btn--primary]="orderCategoryFilter() === ''" [class.btn--ghost]="orderCategoryFilter() !== ''" (click)="setOrderCategoryFilter('')">
+                Todas
+              </button>
+              @for (category of orderCategories(); track category.id) {
+                <button type="button" class="btn btn--sm" [class.btn--primary]="orderCategoryFilter() === category.id" [class.btn--ghost]="orderCategoryFilter() !== category.id" (click)="setOrderCategoryFilter(category.id)">
+                  {{ category.name }}
+                </button>
+              }
+            </div>
+          }
+
+          @if (isLoadingOrderCatalog()) {
+            <p class="field__hint">Carregando cardápio…</p>
+          } @else if (orderCatalogError()) {
+            <div class="form-alert form-alert--error" role="alert">
+              <span class="material-icons" aria-hidden="true">error_outline</span>
+              {{ orderCatalogError() }}
+            </div>
+          } @else {
+            <!-- Mesmo layout de card do cardápio digital do cliente (ver PublicMenuComponent no
+                 web-comanda-unica-menu) — imagem, selo Novo/Destaque, descrição, badges, preço
+                 (com promoção) e botão +/estepper — só que lançando no rascunho do pedido da
+                 equipe em vez do carrinho do cliente. -->
+            <div class="menu-items order-menu-items">
+              @for (item of visibleOrderMenuItems(); track item.id) {
+                <article class="menu-item card" [class.menu-item--in-cart]="getDraftQuantity(item.id) > 0">
+                  <div class="menu-item__image">
+                    @if (hasOrderItemImage(item)) {
+                      <img [src]="item.imageUrl" [alt]="item.name" (error)="onOrderItemImageError(item.id)">
+                    } @else {
+                      <span class="menu-item__image-placeholder material-icons" aria-hidden="true">restaurant</span>
+                    }
+                    @if (item.newItem) {
+                      <span class="menu-item__flag menu-item__flag--new">Novo</span>
+                    } @else if (item.highlight) {
+                      <span class="menu-item__flag menu-item__flag--highlight">Destaque</span>
+                    }
+                  </div>
+
+                  <div class="menu-item__body">
+                    <div class="menu-item__heading">
+                      <h3 class="menu-item__name">{{ item.name }}</h3>
+                      @if (item.spicy) {
+                        <span class="material-icons menu-item__spicy" title="Picante">whatshot</span>
+                      }
+                    </div>
+
+                    @if (item.description) {
+                      <p class="menu-item__description">{{ item.description }}</p>
+                    }
+
+                    @if (orderItemBadges(item).length > 0) {
+                      <div class="menu-item__badges">
+                        @for (badge of orderItemBadges(item); track badge.label) {
+                          <span class="menu-item__badge" [title]="badge.label">
+                            <span class="material-icons">{{ badge.icon }}</span>
+                            {{ badge.label }}
+                          </span>
+                        }
+                      </div>
+                    }
+
+                    @if (item.weight || item.calories) {
+                      <div class="menu-item__meta">
+                        @if (item.weight) {
+                          <span>{{ item.weight }}g</span>
+                        }
+                        @if (item.calories) {
+                          <span>{{ item.calories }} kcal</span>
+                        }
+                      </div>
+                    }
+
+                    <div class="menu-item__footer">
+                      <span class="menu-item__price-group">
+                        @if (hasActivePromotionForOrder(item)) {
+                          <span class="menu-item__price menu-item__price--old">{{ formatCurrency(item.price) }}</span>
+                          <span class="menu-item__price menu-item__price--promo">{{ formatCurrency(item.promotionalPrice) }}</span>
+                        } @else {
+                          <span class="menu-item__price">{{ formatCurrency(item.price) }}</span>
+                        }
+                      </span>
+
+                      @if (getDraftQuantity(item.id) === 0) {
+                        <button type="button" class="menu-item__add" aria-label="Adicionar" (click)="addDraftItem(item)">
+                          <span class="material-icons">add</span>
+                        </button>
+                      } @else {
+                        <div class="menu-item__stepper">
+                          <button type="button" (click)="decrementDraftItem(item.id)" aria-label="Diminuir quantidade">
+                            <span class="material-icons">remove</span>
+                          </button>
+                          <span class="menu-item__stepper-qty">{{ getDraftQuantity(item.id) }}</span>
+                          <button type="button" (click)="addDraftItem(item)" aria-label="Aumentar quantidade">
+                            <span class="material-icons">add</span>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </article>
+              }
+            </div>
+            @if (visibleOrderMenuItems().length === 0) {
+              <p class="field__hint">Nenhum produto disponível nesta categoria.</p>
+            }
+          }
+
+          @if (orderDraftItems().length > 0) {
+            <p class="order-draft-total">Total do pedido: <strong>{{ formatCurrency(orderDraftTotal()) }}</strong></p>
+          }
+        </section>
+
+        @if (submitOrderError()) {
+          <div class="form-alert form-alert--error" role="alert">
+            <span class="material-icons" aria-hidden="true">error_outline</span>
+            {{ submitOrderError() }}
+          </div>
+        }
+
+        <div class="step-actions">
+          <button type="button" class="btn btn--ghost" [disabled]="isSubmittingOrder()" (click)="closeOrderModal()">Fechar</button>
+          <button type="button" class="btn btn--primary" appRipple [disabled]="orderDraftItems().length === 0 || isSubmittingOrder()" (click)="submitOrder()">
+            {{ isSubmittingOrder() ? 'Enviando…' : 'Enviar pedido' }}
           </button>
         </div>
       }
