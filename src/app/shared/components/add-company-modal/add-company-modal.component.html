@@ -1,0 +1,265 @@
+<div class="modal-backdrop" (click)="dismiss()">
+  <div class="modal-card card" (click)="$event.stopPropagation()">
+    <div class="modal-card__header">
+      <h2 class="step-heading">Adicionar nova empresa</h2>
+      <button type="button" class="icon-btn" [disabled]="isSubmitting()" (click)="dismiss()" aria-label="Fechar">
+        <span class="material-icons" aria-hidden="true">close</span>
+      </button>
+    </div>
+    <p class="field__hint">
+      Cadastre uma nova empresa (filial) vinculada à sua conta — você continua responsável (OWNER) também por ela.
+    </p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div formGroupName="company">
+        <h3 class="step-heading">Dados da empresa</h3>
+
+        <div class="field">
+          <label class="field__label" for="add-company-business-name">Nome Fantasia</label>
+          <div class="field__control">
+            <input
+              id="add-company-business-name"
+              type="text"
+              class="field__input"
+              [class.field__input--invalid]="company.controls.businessName.invalid && company.controls.businessName.touched"
+              formControlName="businessName"
+              placeholder="Ex: Restaurante Exemplo — Filial Centro"
+              autocomplete="organization"
+            >
+          </div>
+          @if (company.controls.businessName.invalid && company.controls.businessName.touched) {
+            <span class="field__error">Informe o nome da empresa.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="add-company-cnpj">CNPJ</label>
+          <div class="field__control">
+            <input
+              id="add-company-cnpj"
+              type="text"
+              inputmode="numeric"
+              class="field__input"
+              [class.field__input--invalid]="company.controls.cnpj.invalid && company.controls.cnpj.touched"
+              formControlName="cnpj"
+              placeholder="00.000.000/0000-00"
+              maxlength="18"
+              (input)="onCnpjInput($event)"
+            >
+          </div>
+          @if (company.controls.cnpj.invalid && company.controls.cnpj.touched) {
+            <span class="field__error">
+              {{ company.controls.cnpj.errors?.['required'] ? 'Informe o CNPJ.' : 'Informe um CNPJ válido.' }}
+            </span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="add-company-segment">Segmento</label>
+          <div class="field__control">
+            <select
+              id="add-company-segment"
+              class="field__input"
+              [class.field__input--invalid]="company.controls.segment.invalid && company.controls.segment.touched"
+              formControlName="segment"
+            >
+              <option value="" disabled>Selecione um segmento</option>
+              @for (item of segments; track item) {
+                <option [value]="item">{{ item }}</option>
+              }
+            </select>
+          </div>
+          @if (company.controls.segment.invalid && company.controls.segment.touched) {
+            <span class="field__error">Selecione o segmento desta empresa.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="add-company-phone">Telefone</label>
+          <div class="field__control">
+            <input
+              id="add-company-phone"
+              type="tel"
+              inputmode="numeric"
+              class="field__input"
+              [class.field__input--invalid]="company.controls.businessPhone.invalid && company.controls.businessPhone.touched"
+              formControlName="businessPhone"
+              placeholder="(00) 00000-0000"
+              maxlength="15"
+              autocomplete="tel"
+              (input)="onBusinessPhoneInput($event)"
+            >
+          </div>
+          @if (company.controls.businessPhone.invalid && company.controls.businessPhone.touched) {
+            <span class="field__error">Informe o telefone desta empresa.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="add-company-email">E-mail</label>
+          <div class="field__control">
+            <input
+              id="add-company-email"
+              type="email"
+              class="field__input"
+              [class.field__input--invalid]="company.controls.businessEmail.invalid && company.controls.businessEmail.touched"
+              formControlName="businessEmail"
+              placeholder="contato@seurestaurante.com"
+              autocomplete="email"
+            >
+          </div>
+          @if (company.controls.businessEmail.invalid && company.controls.businessEmail.touched) {
+            <span class="field__error">
+              {{ company.controls.businessEmail.errors?.['required'] ? 'Informe o e-mail desta empresa.' : 'Informe um e-mail válido.' }}
+            </span>
+          }
+        </div>
+      </div>
+
+      <div formGroupName="address">
+        <h3 class="step-heading">Endereço</h3>
+
+        <div class="field">
+          <label class="field__label" for="add-company-cep">CEP</label>
+          <div class="field__control">
+            <input
+              id="add-company-cep"
+              type="text"
+              inputmode="numeric"
+              class="field__input"
+              [class.field__input--invalid]="address.controls.cep.invalid && address.controls.cep.touched"
+              formControlName="cep"
+              placeholder="00000-000"
+              maxlength="9"
+              (input)="onCepInput($event)"
+              (blur)="onCepBlur()"
+            >
+          </div>
+          @if (isLookingUpCep()) {
+            <span class="field__hint">Buscando endereço…</span>
+          } @else if (cepNotFound()) {
+            <span class="field__error">CEP não encontrado. Preencha o endereço manualmente.</span>
+          } @else if (address.controls.cep.invalid && address.controls.cep.touched) {
+            <span class="field__error">
+              {{ address.controls.cep.errors?.['required'] ? 'Informe o CEP.' : 'Informe um CEP válido.' }}
+            </span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="add-company-street">Rua</label>
+          <div class="field__control">
+            <input
+              id="add-company-street"
+              type="text"
+              class="field__input"
+              [class.field__input--invalid]="address.controls.street.invalid && address.controls.street.touched"
+              formControlName="street"
+              placeholder="Nome da rua"
+              autocomplete="address-line1"
+            >
+          </div>
+          @if (address.controls.street.invalid && address.controls.street.touched) {
+            <span class="field__error">Informe a rua.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="add-company-number">Número</label>
+          <div class="field__control">
+            <input
+              id="add-company-number"
+              type="text"
+              class="field__input"
+              [class.field__input--invalid]="address.controls.number.invalid && address.controls.number.touched"
+              formControlName="number"
+              placeholder="Nº"
+            >
+          </div>
+          @if (address.controls.number.invalid && address.controls.number.touched) {
+            <span class="field__error">Informe o número.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="add-company-complement">Complemento <span class="field__optional">(opcional)</span></label>
+          <div class="field__control">
+            <input
+              id="add-company-complement"
+              type="text"
+              class="field__input"
+              formControlName="complement"
+              placeholder="Sala, bloco, referência..."
+            >
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="add-company-neighborhood">Bairro</label>
+          <div class="field__control">
+            <input
+              id="add-company-neighborhood"
+              type="text"
+              class="field__input"
+              [class.field__input--invalid]="address.controls.neighborhood.invalid && address.controls.neighborhood.touched"
+              formControlName="neighborhood"
+              placeholder="Bairro"
+            >
+          </div>
+          @if (address.controls.neighborhood.invalid && address.controls.neighborhood.touched) {
+            <span class="field__error">Informe o bairro.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="add-company-city">Cidade</label>
+          <div class="field__control">
+            <input
+              id="add-company-city"
+              type="text"
+              class="field__input"
+              [class.field__input--invalid]="address.controls.city.invalid && address.controls.city.touched"
+              formControlName="city"
+              placeholder="Cidade"
+            >
+          </div>
+          @if (address.controls.city.invalid && address.controls.city.touched) {
+            <span class="field__error">Informe a cidade.</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="add-company-state">Estado</label>
+          <div class="field__control">
+            <input
+              id="add-company-state"
+              type="text"
+              class="field__input"
+              [class.field__input--invalid]="address.controls.state.invalid && address.controls.state.touched"
+              formControlName="state"
+              placeholder="UF"
+              maxlength="2"
+            >
+          </div>
+          @if (address.controls.state.invalid && address.controls.state.touched) {
+            <span class="field__error">Informe o estado.</span>
+          }
+        </div>
+      </div>
+
+      @if (submitError()) {
+        <div class="form-alert form-alert--error" role="alert">
+          <span class="material-icons" aria-hidden="true">error_outline</span>
+          {{ submitError() }}
+        </div>
+      }
+
+      <div class="step-actions">
+        <button type="button" class="btn btn--ghost" [disabled]="isSubmitting()" (click)="dismiss()">Cancelar</button>
+        <button type="submit" class="btn btn--primary" [disabled]="isSubmitting()">
+          {{ isSubmitting() ? 'Cadastrando…' : 'Cadastrar empresa' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

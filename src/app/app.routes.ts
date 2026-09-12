@@ -35,6 +35,19 @@ export const routes: Routes = [
     title: 'Ativar Conta — Comanda Única'
   },
   {
+    // Fora da árvore de /painel de propósito: AdminLayoutComponent já dispara chamadas com a
+    // empresa selecionada assim que monta (perfil, logo, menu por perfil — ver
+    // AdminLayoutComponent#syncProfileImages), então a escolha precisa acontecer ANTES dele montar,
+    // não como mais uma rota filha dele. Só authGuard (precisa estar logado) — quem chega aqui sem
+    // se enquadrar é mandado de volta ao painel pelo próprio componente (ver
+    // AuthService#shouldChooseCompany).
+    path: 'escolher-empresa',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/auth/pages/choose-company/choose-company.component').then((m) => m.ChooseCompanyComponent),
+    title: 'Escolha sua empresa — Comanda Única'
+  },
+  {
     path: 'painel',
     canActivate: [authGuard],
     canActivateChild: [subscriptionGuard],

@@ -49,6 +49,14 @@ export class LoginComponent {
       next: () => {
         this.isSubmitting.set(false);
         const redirect = this.route.snapshot.queryParamMap.get('redirect');
+        // Sem redirect explícito (fluxo normal de login, não um deep link que exigiu autenticar
+        // primeiro): dono com mais de uma empresa escolhe qual acessar antes de entrar no painel
+        // (ver AuthService#shouldChooseCompany) — o painel só monta depois da escolha, pois já
+        // dispara chamadas com a empresa selecionada assim que monta (ver AdminLayoutComponent).
+        if (!redirect && this.authService.shouldChooseCompany()) {
+          this.router.navigateByUrl('/escolher-empresa');
+          return;
+        }
         this.router.navigateByUrl(redirect || '/painel');
       },
       error: (error: HttpErrorResponse) => {

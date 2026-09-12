@@ -42,10 +42,14 @@ export class RegisterComponent {
   readonly isLookingUpCep = signal(false);
   readonly cepNotFound = signal(false);
 
+  // Precisa bater exatamente com business_type.name (ver ERR_BUSINESS_TYPE_NOT_FOUND em
+  // AccountServiceImpl#create/createAdditionalCompany) — qualquer item aqui tem que existir lá
+  // (ver seed em 01-tabelas-cadastro-empresas.sql + 51-segmentos-cadastro-empresa.sql).
   readonly segments: readonly string[] = [
     'Restaurante',
     'Bar',
     'Lanchonete',
+    'Hamburgueria',
     'Cafeteria',
     'Padaria e Confeitaria',
     'Food Truck',

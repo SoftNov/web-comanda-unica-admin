@@ -1,7 +1,8 @@
 import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { AuthService } from '../../../auth/services/auth.service';
+import { AuthService, CompanyAccessResponse } from '../../../auth/services/auth.service';
 import { AccountsService } from '../../../../shared/services/accounts.service';
+import { AddCompanyModalComponent } from '../../../../shared/components/add-company-modal/add-company-modal.component';
 import { resolveHomeRoute } from '../../../../core/guards/home.guard';
 import { ADMIN_MENU_SEGMENTS, MenuItem, MenuSegment } from '../../config/menu.config';
 import {
@@ -16,7 +17,7 @@ import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetim
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [RouterLink, RouterLinkActive, RouterOutlet, AddCompanyModalComponent],
   templateUrl: './admin-layout.component.html',
   styleUrl: './admin-layout.component.scss'
 })
@@ -34,6 +35,10 @@ export class AdminLayoutComponent {
 
   readonly profileCode = computed(() => this.selectedCompany()?.profileCode ?? null);
   readonly isPlatformAdmin = this.authService.isPlatformAdmin;
+  // Cadastrar mais uma empresa (filial) é uma ação de dono — mesmo critério de outras ações
+  // restritas a OWNER no painel (ver canRefund em comandas.component.ts).
+  readonly canAddCompany = computed(() => this.profileCode() === 'OWNER');
+  readonly isAddCompanyModalOpen = signal(false);
   // Menu organizado por segmento (ver menu.config.ts) — cada seção some inteira se nenhum item
   // dela sobrar visível para o perfil/platform admin atual.
   readonly menuSegments = computed<MenuSegment[]>(() =>
@@ -204,15 +209,34 @@ export class AdminLayoutComponent {
     this.isUserMenuOpen.update((open) => !open);
   }
 
+  // Recarrega a página inteira (não navega dentro da SPA) — trocar de empresa muda o contexto de
+  // praticamente todo o sistema (perfil, permissões, dados de cada tela), e várias páginas guardam
+  // estado em memória que não reage a essa troca (listas já carregadas, cache de perfil, etc.).
+  // Caçar cada tela pra corrigir uma a uma é frágil; um F5 garante que nada "vaza" da empresa
+  // anterior, já que todo o estado em memória do app é recriado do zero.
   selectCompany(companyId: string): void {
     this.authService.selectCompany(companyId);
-    this.accountsService.invalidateProfileCache();
-    this.syncProfileImages();
-    this.isCompanyMenuOpen.set(false);
-    this.router.navigateByUrl(resolveHomeRoute(this.selectedCompany()?.profileCode ?? null));
+    window.location.href = resolveHomeRoute(this.selectedCompany()?.profileCode ?? null);
   }
 
   logout(): void {
     this.authService.logout();
+  }
+
+  openAddCompanyModal(event: Event): void {
+    event.stopPropagation();
+    this.isCompanyMenuOpen.set(false);
+    this.isAddCompanyModalOpen.set(true);
+  }
+
+  closeAddCompanyModal(): void {
+    this.isAddCompanyModalOpen.set(false);
+  }
+
+  // A empresa recém-criada já entra selecionada (ver AuthService#addCompany) — F5 completo pro
+  // painel entrar "limpo" nela, mesmo motivo de selectCompany() ao trocar de empresa manualmente.
+  onCompanyCreated(company: CompanyAccessResponse): void {
+    this.authService.addCompany(company);
+    window.location.href = resolveHomeRoute(company.profileCode);
   }
 }

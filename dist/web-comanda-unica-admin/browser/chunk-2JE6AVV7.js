@@ -1,1 +1,0 @@
-import{a}from"./chunk-3IXBQY4G.js";import"./chunk-FOZ7KJMV.js";import"./chunk-32W5TGJN.js";import"./chunk-IDJUHDGE.js";import"./chunk-QN63HDDB.js";import"./chunk-MME23CZZ.js";import"./chunk-IJDMLZV5.js";import"./chunk-K5CS7VTX.js";import"./chunk-ONKAGGB5.js";import"./chunk-RKYFWIO6.js";export{a as PedidosComponent};

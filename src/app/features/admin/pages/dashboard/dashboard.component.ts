@@ -1,4 +1,4 @@
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, effect, inject, signal, untracked } from '@angular/core';
 import { EMPTY, Subscription, defer, retry, timer } from 'rxjs';
 import { AuthService } from '../../../auth/services/auth.service';
 import { FloorPlanViewerComponent } from '../../../../shared/components/floor-plan-viewer/floor-plan-viewer.component';
@@ -168,10 +168,34 @@ export class DashboardComponent implements OnDestroy {
 
   readonly activeTab = signal<DashboardTabId>('floorplan');
 
+  // Reage à troca de empresa (seletor do topo ou empresa recém-criada — ver
+  // AdminLayoutComponent#selectCompany/onCompanyCreated), não só à primeira montagem: a home
+  // sempre navega para esta mesma rota (/painel/dashboard), então se o usuário já estava aqui a
+  // navegação não remonta o componente — sem reagir ao signal, os dados ficariam presos na
+  // empresa anterior. Ler selectedCompany()/isManagementProfile() aqui é o que faz o efeito
+  // disparar de novo a cada troca; o resto do corpo vai em untracked() para não reagir também às
+  // mudanças de revenueStartDate/revenueEndDate (essas já têm seus próprios gatilhos — ver
+  // applyRevenuePreset/onRevenueStartDateChange — e reagiriam aqui também, duplicando a chamada).
   constructor() {
+    effect(() => {
+      const companyId = this.selectedCompany()?.companyId ?? null;
+      const isManagement = this.isManagementProfile();
+      untracked(() => this.reloadForCompany(companyId, isManagement));
+    });
+  }
+
+  private reloadForCompany(companyId: string | null, isManagement: boolean): void {
+    this.summarySubscription?.unsubscribe();
+    this.summary.set(null);
+    this.summaryError.set(null);
+    this.financialSummary.set(null);
+    this.revenueSeries.set([]);
+    this.stripeCurrentBalance.set(null);
+    this.stripeAvailableBalance.set(null);
+
     this.activeTab.set(this.availableTabs()[0]?.id ?? 'floorplan');
 
-    if (this.isManagementProfile()) {
+    if (isManagement && companyId) {
       this.connectRealtimeSummary();
       this.loadFinancialReport();
     }

@@ -156,6 +156,15 @@ export class AuthService {
     this.router.navigateByUrl('/entrar');
   }
 
+  // Só o dono (OWNER) cadastra mais de uma empresa hoje (ver CompaniesService#createAdditionalCompany
+  // — funcionário é vinculado a uma única empresa por vez). "every" é uma checagem defensiva: se por
+  // algum motivo a lista vier mista (dono numa, funcionário em outra), pula a escolha e cai direto
+  // na empresa padrão, em vez de expor essa tela a quem não é dono.
+  shouldChooseCompany(): boolean {
+    const companies = this.companies();
+    return companies.length > 1 && companies.every((company) => company.profileCode === 'OWNER');
+  }
+
   selectCompany(companyId: string): void {
     const session = this.session();
     if (!session) {
@@ -192,6 +201,18 @@ export class AuthService {
     }
     const companies = session.companies.map((company) => (company.companyId === companyId ? { ...company, logoUrl } : company));
     this.persistSession({ ...session, companies });
+  }
+
+  // Empresa cadastrada agora mesmo (ver CompaniesService#createAdditionalCompany) — some login
+  // novo não é necessário: o token já vale pra ela (o JWT não carrega a lista de empresas, só o
+  // userId), só a sessão local precisa saber que ela existe. Já entra selecionada, como se o
+  // usuário tivesse acabado de trocar para ela.
+  addCompany(company: CompanyAccessResponse): void {
+    const session = this.session();
+    if (!session) {
+      return;
+    }
+    this.persistSession({ ...session, companies: [...session.companies, company], selectedCompanyId: company.companyId });
   }
 
   private persistSession(session: SessionData): void {

@@ -528,6 +528,15 @@ $topbar-height: 68px;
   &--danger:hover {
     color: #f87171;
   }
+
+  // Ação de adicionar empresa, separada da lista de empresas por uma linha (ver
+  // AdminLayoutComponent#canAddCompany) — só aparece pra OWNER.
+  &--action {
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border);
+    color: var(--color-accent-hover);
+  }
 }
 
 .admin-topbar__menu-item-role {

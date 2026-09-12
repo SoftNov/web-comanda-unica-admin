@@ -140,7 +140,7 @@
         </div>
       }
 
-      @if (companies().length > 1) {
+      @if (companies().length > 1 || canAddCompany()) {
         <div class="admin-topbar__dropdown">
           <button type="button" class="admin-topbar__company-btn" (click)="toggleCompanyMenu($event)">
             @if (selectedCompany()?.logoUrl) {
@@ -163,6 +163,12 @@
                 >
                   <span>{{ company.companyName }}</span>
                   <span class="admin-topbar__menu-item-role">{{ company.profileName }}</span>
+                </button>
+              }
+              @if (canAddCompany()) {
+                <button type="button" class="admin-topbar__menu-item admin-topbar__menu-item--action" (click)="openAddCompanyModal($event)">
+                  <span class="material-icons" aria-hidden="true">add_business</span>
+                  Adicionar empresa
                 </button>
               }
             </div>
@@ -201,3 +207,7 @@
     </main>
   </div>
 </div>
+
+@if (isAddCompanyModalOpen()) {
+  <app-add-company-modal (closed)="closeAddCompanyModal()" (created)="onCompanyCreated($event)" />
+}

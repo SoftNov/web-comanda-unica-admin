@@ -1,0 +1,28 @@
+<app-auth-shell
+  eyebrow="Mais de uma empresa"
+  title="Escolha qual empresa acessar"
+  subtitle="Sua conta está vinculada a mais de uma empresa. Selecione qual delas você quer acessar agora — você pode trocar depois pelo menu do painel."
+>
+  <ul class="company-list">
+    @for (company of companies(); track company.companyId) {
+      <li>
+        <button type="button" class="company-option" appRipple (click)="choose(company)">
+          @if (company.logoUrl) {
+            <img class="company-option__logo" [src]="company.logoUrl" alt="">
+          } @else {
+            <span class="company-option__logo company-option__logo--placeholder material-icons" aria-hidden="true">storefront</span>
+          }
+          <span class="company-option__body">
+            <strong>{{ company.companyName }}</strong>
+            <small>{{ company.profileName }}</small>
+          </span>
+          <span class="material-icons company-option__chevron" aria-hidden="true">chevron_right</span>
+        </button>
+      </li>
+    }
+  </ul>
+
+  <p class="form-footer">
+    Não é você? <button type="button" class="field__link field__link--button" (click)="logout()">Sair</button>
+  </p>
+</app-auth-shell>
