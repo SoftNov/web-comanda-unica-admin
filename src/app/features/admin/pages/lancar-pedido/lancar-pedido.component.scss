@@ -1,0 +1,747 @@
+:host {
+  display: block;
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-header--row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: 1.75rem;
+  color: var(--color-text);
+}
+
+.page-subtitle {
+  margin-top: 8px;
+  font-size: 1rem;
+  max-width: 640px;
+}
+
+.field__hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+select.field__input {
+  appearance: none;
+  cursor: pointer;
+}
+
+// --- Cardápio (catálogo de produtos) ---------------------------------------------------------
+.order-category-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 16px 0 16px;
+}
+
+// Cards de produto — mesmo layout do cardápio digital do cliente (ver
+// public-menu.component.css em web-comanda-unica-menu: .menu-item e afins), portado aqui com os
+// mesmos tokens de design (--color-*, --radius-*, --transition-fast) já compartilhados pelos dois
+// apps, pra que o garçom veja o produto igual ao que o cliente veria no app.
+.order-menu-items {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 90px; // espaço pros botões flutuantes não cobrirem o último card
+}
+
+.menu-item {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.menu-item--in-cart {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+.menu-item__image {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--color-bg-elevated);
+}
+
+.menu-item__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.menu-item__image-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: var(--color-text-muted);
+}
+
+.menu-item__flag {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.menu-item__flag--new {
+  background: var(--color-success);
+  color: #06210f;
+}
+
+.menu-item__flag--highlight {
+  background: var(--color-btn-primary-bg);
+  color: #ffffff;
+}
+
+.menu-item__body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.menu-item__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.menu-item__name {
+  font-size: 0.9375rem;
+  color: var(--color-text);
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.menu-item__spicy {
+  font-size: 18px;
+  color: #f87171;
+  flex-shrink: 0;
+}
+
+.menu-item__description {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.menu-item__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.menu-item__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  font-size: 0.6875rem;
+  font-weight: 600;
+
+  .material-icons {
+    font-size: 13px;
+  }
+}
+
+.menu-item__meta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.menu-item__footer {
+  margin-top: auto;
+  padding-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.menu-item__price-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.menu-item__price,
+.menu-item__price--old,
+.menu-item__price--promo {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-item__price {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.menu-item__price--old {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.menu-item__price--promo {
+  color: var(--color-success);
+}
+
+.menu-item__add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--color-btn-primary-bg);
+  color: #ffffff;
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+
+  &:hover {
+    background: var(--color-btn-primary-bg-hover);
+  }
+
+  &:active {
+    transform: scale(0.92);
+  }
+
+  .material-icons {
+    font-size: 18px;
+  }
+}
+
+.menu-item__stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 2px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-bg);
+
+  button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: var(--radius-full);
+    border: none;
+    background: var(--color-btn-primary-bg);
+    color: #ffffff;
+    cursor: pointer;
+    transition: background var(--transition-fast), transform var(--transition-fast);
+
+    &:hover {
+      background: var(--color-btn-primary-bg-hover);
+    }
+
+    &:active {
+      transform: scale(0.92);
+    }
+  }
+
+  .material-icons {
+    font-size: 16px;
+  }
+}
+
+.menu-item__stepper-qty {
+  min-width: 18px;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+// --- Botões flutuantes (comanda + carrinho) — mesmo padrão do cardápio digital do cliente (ver
+// .comanda-fab/.cart-fab em public-menu.component.css) —, só que "Comanda" leva a uma rota do
+// painel em vez da rota pública do cliente.
+.comanda-fab {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 18px 0 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-accent);
+  background: var(--color-bg-card);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-fast), background var(--transition-fast);
+
+  &:hover {
+    background: var(--color-accent-bg);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  .material-icons {
+    font-size: 20px;
+    color: var(--color-accent-hover);
+  }
+}
+
+// Antes do primeiro pedido não há comanda pra ver (ver hasPlacedOrder no componente) — fica
+// visível (ainda dá pra notar que a função existe), só sem interação.
+.comanda-fab--disabled {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+// Acima de 960px o sidebar do painel fica fixo ocupando 260px à esquerda (ver
+// admin-layout.component.scss, $sidebar-width) — desloca o botão pra dentro da área de
+// conteúdo em vez de flutuar por cima do menu de navegação. Abaixo de 960px o sidebar vira
+// off-canvas (escondido por padrão), então o botão já fica livre em left:20px normalmente.
+@media (min-width: 961px) {
+  .comanda-fab {
+    left: calc(260px + 20px);
+  }
+}
+
+.cart-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--color-btn-primary-bg);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-fast), background var(--transition-fast), opacity var(--transition-fast);
+
+  &:hover {
+    background: var(--color-btn-primary-bg-hover);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  .material-icons {
+    font-size: 24px;
+  }
+}
+
+.cart-fab--hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8);
+}
+
+.cart-fab__count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding-inline: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-success);
+  color: #06210f;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--color-bg);
+}
+
+// --- Carrinho (drawer flutuante) — mesma estrutura/classes do carrinho do cliente final (ver
+// cart.component.css em web-comanda-unica-menu), portada aqui com os mesmos tokens de design
+// (os dois apps compartilham --color-*/--radius-*), pra que o garçom monte o pedido com a cara
+// idêntica à que o cliente vê no cardápio digital.
+.cart-overlay {
+  position: fixed;
+  inset: 0;
+  // Acima do sidebar do painel (z-index:110 — ver admin-layout.component.scss), senão o drawer
+  // renderiza atrás dele e a faixa esquerda da tela fica descoberta.
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(4, 8, 20, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.cart-drawer {
+  width: 100%;
+  max-width: 480px;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  animation: cart-slide-up var(--transition-base);
+}
+
+@keyframes cart-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.cart-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.cart-drawer__title {
+  font-size: 1.125rem;
+  color: var(--color-text);
+}
+
+.cart-drawer__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--color-bg-elevated);
+  color: var(--color-text-muted);
+  cursor: pointer;
+
+  .material-icons {
+    font-size: 18px;
+  }
+}
+
+.cart-list {
+  overflow-y: auto;
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.cart-item {
+  display: flex;
+  gap: 12px;
+}
+
+.cart-item__image {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--color-bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+}
+
+.cart-item__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cart-item__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cart-item__name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cart-item__price {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.cart-item__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+}
+
+.cart-item__notes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.cart-item__notes-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.cart-item__notes textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 38px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 0.8125rem;
+  color: var(--color-text);
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+
+  &::placeholder {
+    color: var(--color-text-muted);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+}
+
+.cart-item__stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  padding: 2px 4px;
+  flex-shrink: 0;
+}
+
+.cart-item__stepper button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  cursor: pointer;
+
+  .material-icons {
+    font-size: 14px;
+  }
+}
+
+.cart-item__qty {
+  min-width: 16px;
+  text-align: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.cart-item__total {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.cart-item__remove {
+  align-self: flex-start;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 4px;
+
+  &:hover {
+    color: #f87171;
+  }
+}
+
+.cart-drawer__footer {
+  flex-shrink: 0;
+  padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--color-border);
+}
+
+.cart-drawer__error {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(248, 113, 113, 0.14);
+  color: #f87171;
+  font-size: 0.8125rem;
+
+  .material-icons {
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+}
+
+.cart-drawer__total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  font-size: 0.9375rem;
+  color: var(--color-text);
+
+  strong {
+    font-size: 1.25rem;
+  }
+}
+
+.cart-drawer__submit {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .cart-overlay {
+    align-items: center;
+  }
+
+  .cart-drawer {
+    border-radius: var(--radius-lg);
+    max-height: 78vh;
+  }
+}
+
+// --- Mobile: filtros de categoria em faixa rolável e cards de produto sem foto (nome/preço/
+// estepper numa linha só) — o garçom precisa adicionar itens rápido durante o atendimento, não
+// navegar um catálogo vitrine.
+@media (max-width: 640px) {
+  .order-category-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 12px -16px 16px;
+    padding: 0 16px 4px;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    .btn {
+      flex-shrink: 0;
+    }
+  }
+
+  .order-menu-items {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .menu-item__image {
+    display: none;
+  }
+
+  .menu-item__body {
+    padding: 10px 12px;
+    gap: 6px;
+  }
+
+  .menu-item__name {
+    font-size: 0.875rem;
+  }
+
+  .menu-item__description,
+  .menu-item__badges,
+  .menu-item__meta {
+    display: none;
+  }
+
+  .menu-item__footer {
+    padding-top: 4px;
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .menu-item__add,
+  .menu-item__stepper button {
+    width: 36px;
+    height: 36px;
+  }
+
+  .menu-item__stepper {
+    padding: 3px;
+  }
+
+  .comanda-fab__label {
+    display: none;
+  }
+
+  .comanda-fab {
+    width: 48px;
+    padding: 0;
+    justify-content: center;
+  }
+}

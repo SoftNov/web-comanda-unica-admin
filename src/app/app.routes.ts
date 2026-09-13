@@ -73,6 +73,27 @@ export const routes: Routes = [
         title: 'Comandas — Comanda Única'
       },
       {
+        // Tela própria (não mais um modal por cima de "Comandas") — dá mais espaço pro
+        // fluxo de escolher mesa/montar o pedido, principalmente no celular. Espelha o
+        // cardápio digital do cliente (web-comanda-unica-menu): catálogo + carrinho flutuante
+        // aqui, comanda já lançada numa rota separada (ver comanda/:tableId abaixo).
+        path: 'comandas/lancar-pedido',
+        canActivate: [profileGuard(['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'])],
+        loadComponent: () =>
+          import('./features/admin/pages/lancar-pedido/lancar-pedido.component').then((m) => m.LancarPedidoComponent),
+        title: 'Lançar Pedido — Comanda Única'
+      },
+      {
+        // Equivalente à rota /comanda do cardápio digital do cliente — separada da tela de
+        // montar pedido pra não pesar a mesma página com um catálogo de produtos e uma lista
+        // grande de pedidos já lançados ao mesmo tempo.
+        path: 'comandas/lancar-pedido/comanda/:tableId',
+        canActivate: [profileGuard(['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'])],
+        loadComponent: () =>
+          import('./features/admin/pages/comanda-mesa/comanda-mesa.component').then((m) => m.ComandaMesaComponent),
+        title: 'Comanda da Mesa — Comanda Única'
+      },
+      {
         path: 'mesas',
         canActivate: [profileGuard(['ADMIN', 'OWNER', 'MANAGER'])],
         loadComponent: () => import('./features/admin/pages/tables/tables.component').then((m) => m.TablesComponent),
