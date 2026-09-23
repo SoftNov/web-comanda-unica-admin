@@ -131,8 +131,11 @@ export class SubscriptionService {
     this.cache.set(null);
   }
 
-  createCheckoutSession(): Observable<StripeHostedLinkResponse> {
-    return this.http.post<StripeHostedLinkResponse>(`${this.baseUrl}/checkout-session`, {});
+  // Sem argumento: checkout usa a faixa de preço da quantidade de mesas cadastrada hoje (mesmo
+  // comportamento de antes do seletor de plano existir). Com upToTables: usa a faixa escolhida.
+  createCheckoutSession(upToTables?: number): Observable<StripeHostedLinkResponse> {
+    const body = upToTables != null ? { upToTables } : {};
+    return this.http.post<StripeHostedLinkResponse>(`${this.baseUrl}/checkout-session`, body);
   }
 
   createPortalSession(): Observable<StripeHostedLinkResponse> {

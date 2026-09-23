@@ -57,6 +57,13 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  transition: max-width 0.2s ease;
+}
+
+// Mais larga quando tem o grid de faixas (plan-picker) — 640px deixa os cards espremidos demais
+// com 4 faixas cadastradas.
+.sub-card--wide {
+  max-width: 880px;
 }
 
 .sub-card__head {
@@ -225,6 +232,14 @@
   border-color: var(--color-success);
 }
 
+// Faixa em destaque no seletor da tela de oferta — a que já comporta as mesas cadastradas hoje
+// (ver recommendedUpToTables). Cor de destaque (accent) em vez do verde de "current"/"active": o
+// estabelecimento ainda não assinou, então não é "o plano ativo", só a sugestão de partida.
+.plan-option--recommended {
+  border-color: var(--color-accent);
+  background: var(--color-accent-bg);
+}
+
 .plan-option--blocked {
   opacity: 0.55;
 }
@@ -255,6 +270,11 @@
   font-weight: 600;
   background: var(--color-success-bg);
   color: var(--color-success);
+}
+
+.plan-option__badge--accent {
+  background: var(--color-accent-bg);
+  color: var(--color-accent-hover);
 }
 
 .plan-option__note {

@@ -30,9 +30,17 @@ export class AssinaturaComponent {
   readonly loadError = signal(false);
   // Funcionário sem perfil OWNER/ADMIN — não pode gerenciar a assinatura (o backend responde 403).
   readonly noPermission = signal(false);
-  readonly isRedirecting = signal(false);
+  // Qual botão de redirecionamento (Stripe Checkout/Portal) está com a requisição em voo — 'manage'
+  // (Gerenciar/Regularizar pagamento), 'default' (Assinar agora, sem seletor de faixa) ou
+  // 'plan-<upToTables>' (um card específico do seletor). Null = nenhum. Guardar QUAL botão em vez de
+  // um boolean único evita que todo botão da tela mude de rótulo/fique "em voo" junto quando só um
+  // foi clicado (ex.: clicar em "Assinar este plano" de uma faixa não pode deixar "Gerenciar
+  // pagamento" e as outras faixas do seletor com a mesma aparência de carregando).
+  readonly redirectingTarget = signal<string | null>(null);
   readonly actionError = signal<string | null>(null);
-  readonly isChangingPlan = signal(false);
+  // Mesma lógica do redirectingTarget, para as trocas de plano: 'sync' (botão "Atualizar plano" do
+  // banner planOutdated) ou 'plan-<upToTables>' (confirmação de uma faixa do seletor).
+  readonly changingPlanTarget = signal<string | null>(null);
   readonly changePlanMessage = signal<{ type: 'ok' | 'error'; text: string } | null>(null);
   // Faixa (upToTables) aguardando confirmação no seletor de plano; null = nenhuma.
   readonly pendingPlan = signal<number | null>(null);
@@ -56,6 +64,19 @@ export class AssinaturaComponent {
       return 'active';
     }
     return 'offer';
+  });
+
+  // Há faixas pra montar o seletor de plano (grid de plan-option) — tanto no modo "active"
+  // (upgrade/downgrade) quanto no "offer" (primeira assinatura). Vazio só em setup incomum sem
+  // nenhuma faixa cadastrada, onde a tela cai pro fluxo antigo de plano único.
+  readonly hasPlanPicker = computed(() => (this.status()?.availablePlans?.length ?? 0) > 0);
+
+  // Faixa em destaque no seletor da tela de oferta — a menor que já comporta as mesas cadastradas
+  // hoje (mesma regra do backend em SubscriptionPricingServiceImpl#resolve: a lista vem ordenada
+  // por upToTables crescente). null quando nenhuma faixa comporta (mesas além da maior faixa).
+  readonly recommendedUpToTables = computed(() => {
+    const plans = this.status()?.availablePlans ?? [];
+    return plans.find((p) => p.allowed)?.upToTables ?? null;
   });
 
   readonly courtesyDaysLeft = computed(() => {
@@ -103,8 +124,18 @@ export class AssinaturaComponent {
     });
   }
 
-  subscribe(): void {
-    this.startRedirect(() => this.subscriptionService.createCheckoutSession());
+  // Sem argumento: assina a faixa da quantidade de mesas cadastrada hoje (botão principal). Com
+  // upToTables: assina a faixa escolhida no seletor de plano (modo "offer" — ver plan-picker no
+  // template).
+  subscribe(upToTables?: number): void {
+    const target = upToTables != null ? `plan-${upToTables}` : 'default';
+    this.startRedirect(target, () => this.subscriptionService.createCheckoutSession(upToTables));
+  }
+
+  // Se o botão específico (Assinar este plano/Gerenciar pagamento/Assinar agora) está com a
+  // requisição em voo — usado para o rótulo e o [disabled] de cada botão individualmente.
+  isRedirectingTo(target: string): boolean {
+    return this.redirectingTarget() === target;
   }
 
   loadMovements(): void {
@@ -140,10 +171,11 @@ export class AssinaturaComponent {
 
   // Botão "Atualizar plano" do banner planOutdated — sincroniza ao valor da faixa das mesas atuais.
   changePlan(): void {
-    this.applyPlanChange(undefined);
+    this.applyPlanChange(undefined, 'sync');
   }
 
-  // Seletor de plano: pede confirmação antes de trocar (a proração é cobrada).
+  // Seletor de plano: pede confirmação antes de trocar (a proração é cobrada). Só instancia
+  // pendingPlan — sem chamada de rede ainda, então não mexe em changingPlanTarget.
   requestPlanChange(upToTables: number): void {
     this.changePlanMessage.set(null);
     this.pendingPlan.set(upToTables);
@@ -156,22 +188,32 @@ export class AssinaturaComponent {
   confirmPlanChange(): void {
     const target = this.pendingPlan();
     if (target != null) {
-      this.applyPlanChange(target);
+      this.applyPlanChange(target, `plan-${target}`);
     }
   }
 
-  private applyPlanChange(upToTables: number | undefined): void {
-    this.isChangingPlan.set(true);
+  // true enquanto QUALQUER troca de plano está em voo — usado só pra desabilitar os botões que não
+  // deveriam iniciar uma segunda troca em paralelo (sem mudar o rótulo deles).
+  readonly isChangingPlan = computed(() => this.changingPlanTarget() !== null);
+
+  // Se ESTE botão específico (o banner de sync, ou a confirmação de uma faixa do seletor) é quem
+  // está trocando — usado pro rótulo "Atualizando…"/"Trocando…" aparecer só onde foi clicado.
+  isChangingPlanTo(target: string): boolean {
+    return this.changingPlanTarget() === target;
+  }
+
+  private applyPlanChange(upToTables: number | undefined, target: string): void {
+    this.changingPlanTarget.set(target);
     this.changePlanMessage.set(null);
     this.subscriptionService.changePlan(upToTables).subscribe({
       next: (status) => {
         this.status.set(status);
-        this.isChangingPlan.set(false);
+        this.changingPlanTarget.set(null);
         this.pendingPlan.set(null);
         this.changePlanMessage.set({ type: 'ok', text: 'Plano atualizado. A diferença entra na próxima fatura.' });
       },
       error: (error: unknown) => {
-        this.isChangingPlan.set(false);
+        this.changingPlanTarget.set(null);
         this.pendingPlan.set(null);
         const body = error instanceof HttpErrorResponse ? (error.error as { mensagem?: string } | undefined) : undefined;
         const msg = body?.mensagem
@@ -184,18 +226,22 @@ export class AssinaturaComponent {
   }
 
   manage(): void {
-    this.startRedirect(() => this.subscriptionService.createPortalSession());
+    this.startRedirect('manage', () => this.subscriptionService.createPortalSession());
   }
 
-  private startRedirect(request: () => ReturnType<SubscriptionService['createCheckoutSession']>): void {
-    this.isRedirecting.set(true);
+  private startRedirect(target: string, request: () => ReturnType<SubscriptionService['createCheckoutSession']>): void {
+    this.redirectingTarget.set(target);
     this.actionError.set(null);
     request().subscribe({
       next: ({ url }) => {
         window.location.href = url;
       },
       error: () => {
-        this.isRedirecting.set(false);
+        // Só limpa se ainda for O MESMO alvo — evita que a resposta de um clique antigo apague o
+        // estado "em voo" de um clique mais novo em outro botão.
+        if (this.redirectingTarget() === target) {
+          this.redirectingTarget.set(null);
+        }
         this.actionError.set('Não foi possível abrir o pagamento agora. Tente novamente em instantes.');
       }
     });

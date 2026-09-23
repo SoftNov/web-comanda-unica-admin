@@ -1,3 +1,20 @@
+# Deploy PRD
+
+Guia completo e exclusivo de produção (build, save, scp, load, run, Nginx/domínio): ver
+`README-PRD.md`. Resumo rápido:
+
+```powershell
+docker build --no-cache --build-arg CONFIGURATION=production -t web-comanda-unica-admin:prd .
+docker save -o web-comanda-unica-admin-prd.tar web-comanda-unica-admin:prd
+```
+
+```bash
+scp web-comanda-unica-admin-prd.tar usuario@187.127.23.114:/home/usuario/
+docker load -i web-comanda-unica-admin-prd.tar
+docker rm -f web-comanda-unica-admin-prd
+docker run -d --name web-comanda-unica-admin-prd --restart always -p 3000:80 web-comanda-unica-admin:prd
+```
+
 # Subir Imagem VPS (Homologação)
 
 ## Build e salvar em arquivo (rodar localmente, no PowerShell)

@@ -48,15 +48,24 @@
     </div>
   }
 
-  <div class="card sub-card">
+  <div class="card sub-card" [class.sub-card--wide]="hasPlanPicker()">
     <div class="sub-card__head">
       <div>
-        <span class="sub-card__eyebrow">
-          @if (mode() === 'active') { Plano · {{ tableUsageLabel() }} }
-          @else { Plano · baseado em {{ tableCountLabel() }} }
-        </span>
-        <p class="sub-card__price">{{ planMonthlyLabel() }} <span>/ mês</span></p>
-        <p class="sub-card__price-note">Cobrança mensal com renovação automática.</p>
+        @if (mode() === 'active') {
+          <span class="sub-card__eyebrow">Plano · {{ tableUsageLabel() }}</span>
+          <p class="sub-card__price">{{ planMonthlyLabel() }} <span>/ mês</span></p>
+          <p class="sub-card__price-note">Cobrança mensal com renovação automática.</p>
+        } @else if (hasPlanPicker()) {
+          <span class="sub-card__eyebrow">Assinatura Comanda Única</span>
+          <p class="sub-card__price-note">
+            Seu estabelecimento tem {{ tableCountLabel() }} cadastradas hoje — escolha abaixo o
+            plano com a quantidade de mesas que você quer contratar.
+          </p>
+        } @else {
+          <span class="sub-card__eyebrow">Plano · baseado em {{ tableCountLabel() }}</span>
+          <p class="sub-card__price">{{ planMonthlyLabel() }} <span>/ mês</span></p>
+          <p class="sub-card__price-note">Cobrança mensal com renovação automática.</p>
+        }
       </div>
       <span class="badge"
             [class.badge--success]="status()?.active && !status()?.courtesy"
@@ -87,12 +96,12 @@
         </div>
         <button type="button" class="btn btn--primary btn--sm" appRipple
                 [disabled]="isChangingPlan()" (click)="changePlan()">
-          {{ isChangingPlan() ? 'Atualizando…' : 'Atualizar plano' }}
+          {{ isChangingPlanTo('sync') ? 'Atualizando…' : 'Atualizar plano' }}
         </button>
       </div>
     }
 
-    @if (mode() === 'active' && (status()?.availablePlans?.length ?? 0) > 0) {
+    @if (mode() === 'active' && hasPlanPicker()) {
       <div class="plan-picker">
         <p class="plan-picker__title">Escolha seu plano</p>
         <p class="plan-picker__hint">
@@ -116,7 +125,7 @@
                   <div class="plan-option__confirm-actions">
                     <button type="button" class="btn btn--primary btn--sm" appRipple
                             [disabled]="isChangingPlan()" (click)="confirmPlanChange()">
-                      {{ isChangingPlan() ? 'Trocando…' : 'Confirmar' }}
+                      {{ isChangingPlanTo('plan-' + plan.upToTables) ? 'Trocando…' : 'Confirmar' }}
                     </button>
                     <button type="button" class="btn btn--ghost btn--sm"
                             [disabled]="isChangingPlan()" (click)="cancelPlanChange()">Cancelar</button>
@@ -126,6 +135,40 @@
                 <button type="button" class="btn btn--ghost btn--sm" appRipple
                         [disabled]="isChangingPlan()" (click)="requestPlanChange(plan.upToTables)">
                   Mudar para este plano
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (mode() === 'offer' && hasPlanPicker()) {
+      <div class="plan-picker">
+        <p class="plan-picker__title">Escolha a quantidade de mesas do seu plano</p>
+        <p class="plan-picker__hint">
+          O valor mensal muda conforme a faixa de mesas. Dá para ajustar depois, a qualquer
+          momento, nesta mesma tela.
+        </p>
+        <div class="plan-picker__grid">
+          @for (plan of status()?.availablePlans; track plan.upToTables) {
+            <div class="plan-option"
+                 [class.plan-option--recommended]="plan.upToTables === recommendedUpToTables()"
+                 [class.plan-option--blocked]="!plan.allowed">
+              @if (plan.upToTables === recommendedUpToTables()) {
+                <span class="plan-option__badge plan-option__badge--accent">Sua faixa hoje</span>
+              }
+              <span class="plan-option__tables">Até {{ plan.upToTables }} mesas</span>
+              <span class="plan-option__price">{{ planCardMonthlyLabel(plan.monthlyAmount) }} <span>/ mês</span></span>
+              @if (!plan.allowed) {
+                <span class="plan-option__note">Você tem mais mesas do que este plano comporta</span>
+              } @else {
+                <button type="button" class="btn btn--sm" appRipple
+                        [class.btn--primary]="plan.upToTables === recommendedUpToTables()"
+                        [class.btn--ghost]="plan.upToTables !== recommendedUpToTables()"
+                        [disabled]="isRedirectingTo('plan-' + plan.upToTables)"
+                        (click)="subscribe(plan.upToTables)">
+                  {{ isRedirectingTo('plan-' + plan.upToTables) ? 'Abrindo…' : 'Assinar este plano' }}
                 </button>
               }
             </div>
@@ -171,20 +214,22 @@
 
     <div class="sub-card__actions">
       @if (mode() === 'active') {
-        <button type="button" class="btn btn--primary" appRipple [disabled]="isRedirecting()" (click)="manage()">
-          {{ isRedirecting() ? 'Abrindo…' : 'Gerenciar pagamento' }}
+        <button type="button" class="btn btn--primary" appRipple [disabled]="isRedirectingTo('manage')" (click)="manage()">
+          {{ isRedirectingTo('manage') ? 'Abrindo…' : 'Gerenciar pagamento' }}
         </button>
       } @else if (mode() === 'past-due') {
-        <button type="button" class="btn btn--primary" appRipple [disabled]="isRedirecting()" (click)="manage()">
-          {{ isRedirecting() ? 'Abrindo…' : 'Regularizar pagamento' }}
+        <button type="button" class="btn btn--primary" appRipple [disabled]="isRedirectingTo('manage')" (click)="manage()">
+          {{ isRedirectingTo('manage') ? 'Abrindo…' : 'Regularizar pagamento' }}
         </button>
       } @else {
-        <button type="button" class="btn btn--primary" appRipple [disabled]="isRedirecting()" (click)="subscribe()">
-          {{ isRedirecting() ? 'Abrindo…' : 'Assinar agora' }}
-        </button>
+        @if (!hasPlanPicker()) {
+          <button type="button" class="btn btn--primary" appRipple [disabled]="isRedirectingTo('default')" (click)="subscribe()">
+            {{ isRedirectingTo('default') ? 'Abrindo…' : 'Assinar agora' }}
+          </button>
+        }
         @if (status()?.manageable) {
-          <button type="button" class="btn btn--ghost" [disabled]="isRedirecting()" (click)="manage()">
-            Gerenciar pagamento
+          <button type="button" class="btn btn--ghost" [disabled]="isRedirectingTo('manage')" (click)="manage()">
+            {{ isRedirectingTo('manage') ? 'Abrindo…' : 'Gerenciar pagamento' }}
           </button>
         }
       }
