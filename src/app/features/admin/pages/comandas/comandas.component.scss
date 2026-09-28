@@ -530,3 +530,12 @@ select.field__input {
     cursor: pointer;
   }
 }
+// Campo de valor do pagamento em dinheiro + atalho "Valor total" (preenche o saldo em aberto).
+.payment-amount {
+  gap: 8px;
+
+  .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}

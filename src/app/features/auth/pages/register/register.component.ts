@@ -1,6 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
-import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AbstractControl, FormBuilder, FormControl, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { pairwise, startWith } from 'rxjs';
 import { RouterLink } from '@angular/router';
 import { AuthShellComponent } from '../../components/auth-shell/auth-shell.component';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
@@ -8,7 +10,7 @@ import { AccountsService, ApiErrorResponse, CreateAccountRequest } from '../../.
 import { CepService } from '../../../../shared/services/cep.service';
 import { cepValidator, cnpjValidator, cpfValidator } from '../../../../shared/validators/br-document.validator';
 import { passwordStrengthValidator } from '../../../../shared/validators/password.validator';
-import { formatCEP, formatCNPJ, formatCPF, formatCellphone, onlyDigits } from '../../../../shared/utils/br-format.util';
+import { formatCEP, formatCNPJ, formatCPF, formatCellphone, normalizeCNPJ, onlyDigits } from '../../../../shared/utils/br-format.util';
 import { PasswordRulesComponent } from '../../../../shared/components/password-rules/password-rules.component';
 
 function passwordsMatchValidator(control: AbstractControl): ValidationErrors | null {
@@ -96,6 +98,24 @@ export class RegisterComponent {
     address: this.address,
     acceptTerms: this.acceptTerms
   });
+
+  constructor() {
+    this.mirrorOwnerContact(this.account.controls.phone, this.company.controls.businessPhone);
+    this.mirrorOwnerContact(this.account.controls.email, this.company.controls.businessEmail);
+  }
+
+  // Pré-preenche o contato da empresa com o do sócio administrador enquanto o usuário não
+  // personalizar o campo: só copia se o campo da empresa estiver vazio ou ainda igual ao valor
+  // anterior do sócio. Se o usuário editar, a edição dele é preservada.
+  private mirrorOwnerContact(source: FormControl<string>, target: FormControl<string>): void {
+    source.valueChanges
+      .pipe(startWith(source.value), pairwise(), takeUntilDestroyed())
+      .subscribe(([previous, current]) => {
+        if (!target.value || target.value === previous) {
+          target.setValue(current);
+        }
+      });
+  }
 
   togglePassword(): void {
     this.showPassword.update((v) => !v);
@@ -211,7 +231,7 @@ export class RegisterComponent {
       },
       company: {
         businessName: company.businessName.trim(),
-        cnpj: onlyDigits(company.cnpj),
+        cnpj: normalizeCNPJ(company.cnpj),
         segment: company.segment,
         phone: onlyDigits(company.businessPhone),
         email: company.businessEmail.trim()

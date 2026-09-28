@@ -1,6 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   ApiErrorResponse,
@@ -22,12 +22,18 @@ import {
 import { RestaurantTableResponse, TablesService } from '../../../../shared/services/tables.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
+import { formatCurrencyInput, parseCurrencyInput } from '../../../../shared/utils/br-format.util';
 import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
 import { AuthService } from '../../../auth/services/auth.service';
 
 const PAGE_SIZE = 10;
 
 type StatusFilter = 'all' | ComandaStatus;
+
+function positiveCurrencyValidator(control: AbstractControl<string>): ValidationErrors | null {
+  const amount = parseCurrencyInput(control.value);
+  return control.value && (amount == null || amount <= 0) ? { min: true } : null;
+}
 
 @Component({
   selector: 'app-admin-comandas',
@@ -83,7 +89,8 @@ export class ComandasComponent {
 
   // --- Registrar pagamento em dinheiro --------------------------------------------
   readonly paymentForm = this.fb.nonNullable.group({
-    amount: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
+    // Texto mascarado em BRL ("R$ 12,34", ver formatCurrencyInput) — convertido para número só no envio.
+    amount: this.fb.nonNullable.control('', [Validators.required, positiveCurrencyValidator]),
     method: this.fb.nonNullable.control<ManualComandaPaymentMethod>('CASH_REGISTER', Validators.required)
   });
   readonly isSubmittingPayment = signal(false);
@@ -410,7 +417,7 @@ export class ComandasComponent {
     this.paymentError.set(null);
     this.finalizeError.set(null);
     this.statusForm.reset({ status: comanda.status === 'CLOSED' ? 'OPEN' : 'CLOSED' });
-    this.paymentForm.reset({ amount: null, method: 'CASH_REGISTER' });
+    this.paymentForm.reset({ amount: '', method: 'CASH_REGISTER' });
     this.expandedChargeIds.set(new Set());
     this.cancelRefundModal();
     this.selectedComanda.set(comanda);
@@ -470,6 +477,22 @@ export class ComandasComponent {
   }
 
   // --- Registrar pagamento em dinheiro --------------------------------------------
+  onPaymentAmountInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    this.paymentForm.controls.amount.setValue(formatCurrencyInput(input.value));
+  }
+
+  // Preenche o valor com o saldo em aberto inteiro da comanda (caso mais comum: o cliente
+  // paga tudo de uma vez no caixa/garçom), mantendo o campo editável para pagamento parcial.
+  fillFullPaymentAmount(): void {
+    const comanda = this.selectedComanda();
+    if (!comanda || comanda.amountToCollect <= 0) {
+      return;
+    }
+    this.paymentForm.controls.amount.setValue(formatCurrencyInput(String(Math.round(comanda.amountToCollect * 100))));
+    this.paymentForm.controls.amount.markAsTouched();
+  }
+
   submitPayment(): void {
     const comanda = this.selectedComanda();
     if (!comanda || this.paymentForm.invalid) {
@@ -482,11 +505,11 @@ export class ComandasComponent {
     this.paymentError.set(null);
 
     this.comandasService
-      .registerPayment(comanda.id, { amount: value.amount ?? 0, method: value.method })
+      .registerPayment(comanda.id, { amount: parseCurrencyInput(value.amount) ?? 0, method: value.method })
       .subscribe({
         next: (updated) => {
           this.isSubmittingPayment.set(false);
-          this.paymentForm.reset({ amount: null, method: 'CASH_REGISTER' });
+          this.paymentForm.reset({ amount: '', method: 'CASH_REGISTER' });
           this.applyUpdatedComanda(updated);
         },
         error: (error: HttpErrorResponse) => {

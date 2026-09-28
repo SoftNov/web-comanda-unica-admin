@@ -40,6 +40,16 @@
   }
 }
 
+.stripe-account__warning {
+  margin: 16px 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-danger, #dc2626);
+
+  code {
+    font-weight: 600;
+  }
+}
+
 .step-actions {
   margin-top: 24px;
 }

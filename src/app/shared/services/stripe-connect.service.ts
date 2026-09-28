@@ -12,6 +12,10 @@ export interface StripeAccountStatus {
   payoutsEnabled?: boolean;
   detailsSubmitted?: boolean;
   onboardingCompleted: boolean;
+  // Só vem preenchido quando algo está pendente/bloqueado no Stripe (account.requirements) — motivo
+  // por trás de chargesEnabled=false, direto do Stripe (ex: "requirements.past_due").
+  disabledReason?: string;
+  currentlyDue?: string[];
 }
 
 export interface StripeOnboardingLinkResponse {

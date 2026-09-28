@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/auth/pages/activate-account/activate-account.component.scss"],
+  "sourcesContent": [":host {\n  display: block;\n}\n\n.activation-state {\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  gap: 20px;\n  padding: 32px 0;\n  text-align: center;\n}\n\n.activation-state__text {\n  margin: 0;\n  font-size: 0.9375rem;\n  color: var(--color-text-muted);\n}\n\n.activation-spinner {\n  width: 40px;\n  height: 40px;\n  border-radius: 50%;\n  border: 3px solid var(--color-border-strong);\n  border-top-color: var(--color-accent);\n  animation: activation-spin 800ms linear infinite;\n}\n\n@keyframes activation-spin {\n  to {\n    transform: rotate(360deg);\n  }\n}\n"],
+  "mappings": ";AAAA;AACE,WAAA;;AAGF,CAAA;AACE,WAAA;AACA,kBAAA;AACA,eAAA;AACA,OAAA;AACA,WAAA,KAAA;AACA,cAAA;;AAGF,CAAA;AACE,UAAA;AACA,aAAA;AACA,SAAA,IAAA;;AAGF,CAAA;AACE,SAAA;AACA,UAAA;AACA,iBAAA;AACA,UAAA,IAAA,MAAA,IAAA;AACA,oBAAA,IAAA;AACA,aAAA,gBAAA,MAAA,OAAA;;AAGF,WAHE;AAIA;AACE,eAAA,OAAA;;;",
+  "names": []
+}

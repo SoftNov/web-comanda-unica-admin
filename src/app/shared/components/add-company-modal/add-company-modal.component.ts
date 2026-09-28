@@ -6,7 +6,7 @@ import { ApiErrorResponse } from '../../services/accounts.service';
 import { CepService } from '../../services/cep.service';
 import { CompaniesService } from '../../services/companies.service';
 import { cepValidator, cnpjValidator } from '../../validators/br-document.validator';
-import { formatCEP, formatCNPJ, formatCellphone, onlyDigits } from '../../utils/br-format.util';
+import { formatCEP, formatCNPJ, formatCellphone, normalizeCNPJ, onlyDigits } from '../../utils/br-format.util';
 
 // Versão enxuta de RegisterComponent (só os passos "empresa" + "endereço", sem "responsável pela
 // conta" nem aceite de termos) — usada por quem já tem conta para cadastrar mais uma empresa
@@ -140,7 +140,7 @@ export class AddCompanyModalComponent {
       .createAdditionalCompany({
         company: {
           businessName: company.businessName.trim(),
-          cnpj: onlyDigits(company.cnpj),
+          cnpj: normalizeCNPJ(company.cnpj),
           segment: company.segment,
           phone: onlyDigits(company.businessPhone),
           email: company.businessEmail.trim()

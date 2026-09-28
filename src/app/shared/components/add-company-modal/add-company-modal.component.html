@@ -38,7 +38,7 @@
             <input
               id="add-company-cnpj"
               type="text"
-              inputmode="numeric"
+              autocapitalize="characters"
               class="field__input"
               [class.field__input--invalid]="company.controls.cnpj.invalid && company.controls.cnpj.touched"
               formControlName="cnpj"

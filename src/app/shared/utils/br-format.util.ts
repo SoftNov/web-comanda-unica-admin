@@ -20,13 +20,26 @@ export function maskCPF(value: string | null | undefined): string {
   return `${digits[0]}**.***.**${digits[8]}-*${digits[10]}`;
 }
 
+// CNPJ alfanumérico (Receita Federal, a partir de jul/2026): 12 primeiras posições aceitam
+// letras maiúsculas e dígitos; os 2 dígitos verificadores continuam numéricos. CNPJs
+// numéricos antigos seguem válidos. Retorna só os caracteres válidos, em maiúsculas.
+export function normalizeCNPJ(value: string | null | undefined): string {
+  const chars = (value ?? '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  let result = '';
+  for (const char of chars) {
+    if (result.length >= 14) break;
+    if (result.length >= 12 && !/\d/.test(char)) continue;
+    result += char;
+  }
+  return result;
+}
+
 export function formatCNPJ(value: string): string {
-  return onlyDigits(value)
-    .slice(0, 14)
-    .replace(/(\d{2})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d)/, '$1/$2')
-    .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
+  return normalizeCNPJ(value)
+    .replace(/([A-Z0-9]{2})([A-Z0-9])/, '$1.$2')
+    .replace(/([A-Z0-9]{3})([A-Z0-9])/, '$1.$2')
+    .replace(/([A-Z0-9]{3})([A-Z0-9])/, '$1/$2')
+    .replace(/([A-Z0-9]{4})(\d{1,2})$/, '$1-$2');
 }
 
 export function formatCellphone(value: string): string {
@@ -87,14 +100,15 @@ export function isValidCPF(value: string): boolean {
 }
 
 export function isValidCNPJ(value: string): boolean {
-  const cnpj = onlyDigits(value);
-  if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) {
+  const cnpj = normalizeCNPJ(value);
+  if (!/^[A-Z0-9]{12}\d{2}$/.test(cnpj) || /^(.)\1{13}$/.test(cnpj)) {
     return false;
   }
 
+  // Valor de cada caractere = código ASCII - 48 ('0'..'9' -> 0..9, 'A' -> 17 ... 'Z' -> 42).
   const calcDigit = (base: string): number => {
     const weights = base.length === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-    const sum = base.split('').reduce((acc, digit, index) => acc + Number(digit) * weights[index], 0);
+    const sum = base.split('').reduce((acc, char, index) => acc + (char.charCodeAt(0) - 48) * weights[index], 0);
     const remainder = sum % 11;
     return remainder < 2 ? 0 : 11 - remainder;
   };

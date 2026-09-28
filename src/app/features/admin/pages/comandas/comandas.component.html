@@ -427,17 +427,27 @@
             <div class="field__row">
               <div class="field">
                 <label class="field__label" for="payment-amount">Valor a cobrar (saldo: {{ formatCurrency(comanda.amountToCollect) }})</label>
-                <div class="field__control">
+                <div class="field__control payment-amount">
                   <input
                     id="payment-amount"
-                    type="number"
-                    min="0.01"
-                    step="0.01"
+                    type="text"
+                    inputmode="numeric"
                     class="field__input"
                     [class.field__input--invalid]="paymentForm.controls.amount.invalid && paymentForm.controls.amount.touched"
                     formControlName="amount"
-                    placeholder="0,00"
+                    placeholder="R$ 0,00"
+                    (input)="onPaymentAmountInput($event)"
                   >
+                  <button
+                    type="button"
+                    class="btn btn--ghost btn--sm"
+                    appRipple
+                    [disabled]="comanda.amountToCollect <= 0"
+                    (click)="fillFullPaymentAmount()"
+                    title="Preencher com o saldo em aberto da comanda"
+                  >
+                    Valor total
+                  </button>
                 </div>
                 @if (comanda.discountAmount > 0) {
                   <span class="field__hint">Já inclui desconto da plataforma de {{ formatCurrency(comanda.discountAmount) }}.</span>

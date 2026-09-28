@@ -28,6 +28,15 @@
     </div>
   </dl>
 
+  @if (status.disabledReason) {
+    <p class="stripe-account__warning">
+      Pendência no Stripe: <code>{{ status.disabledReason }}</code>
+      @if (status.currentlyDue?.length) {
+        — documentos/dados pendentes: {{ status.currentlyDue!.join(', ') }}
+      }
+    </p>
+  }
+
   <div class="step-actions">
     <button type="button" class="btn btn--ghost" [disabled]="isOpeningDashboard" appRipple (click)="manage.emit()">
       {{ isOpeningDashboard ? 'Abrindo…' : 'Gerenciar conta Stripe' }}

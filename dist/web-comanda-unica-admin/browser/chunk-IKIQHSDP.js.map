@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/environments/environment.ts"],
+  "sourcesContent": ["export const environment = {\r\n  production: false,\r\n  // Relative path: proxied to http://localhost:8080 by proxy.conf.json (ng serve) to avoid CORS in dev.\r\n  apiBaseUrl: '/comanda-unica-api',\r\n  // API do cardápio digital (api-comanda-unica-menu) — usada pelo painel só para o fluxo de\r\n  // pedido lançado pela equipe (ver StaffOrderService), que reaproveita a lógica de comanda/\r\n  // pedido de lá em vez de duplicá-la na API admin. Proxied to http://localhost:8081.\r\n  menuApiBaseUrl: '/comanda-unica-menu-api'\r\n};\r\n"],
+  "mappings": ";AAAO,IAAM,cAAc;EACzB,YAAY;;EAEZ,YAAY;;;;EAIZ,gBAAgB;;",
+  "names": []
+}
