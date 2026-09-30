@@ -9,6 +9,8 @@ export interface MenuItem {
   // AuthService.isPlatformAdmin). Não se combina com "roles": o painel financeiro da Comanda
   // Única fica fora do modelo de empresas.
   platformAdminOnly?: boolean;
+  // Só aparece quando o estabelecimento usa o cartão de consumo (ver ConsumptionPassesService#enabled).
+  requiresConsumptionPass?: boolean;
   children?: MenuItem[];
 }
 
@@ -46,6 +48,13 @@ export const ADMIN_MENU_SEGMENTS: MenuSegment[] = [
         roles: ['OWNER', 'ADMIN', 'MANAGER', 'WAITER']
       },
       {
+        label: 'Controle de Saída',
+        icon: 'qr_code_scanner',
+        route: '/painel/controle-saida',
+        roles: ['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'],
+        requiresConsumptionPass: true
+      },
+      {
         label: 'Serviços Gerais',
         icon: 'support_agent',
         children: [
@@ -81,6 +90,7 @@ export const ADMIN_MENU_SEGMENTS: MenuSegment[] = [
         ]
       },
       { label: 'Cardápio', icon: 'restaurant_menu', route: '/painel/cardapio', roles: ['ADMIN', 'OWNER', 'MANAGER'] },
+      { label: 'Passes de Consumo', icon: 'qr_code_2', route: '/painel/passes-consumo', roles: ['ADMIN', 'OWNER', 'MANAGER'] },
       { label: 'Funcionários', icon: 'groups', route: '/painel/funcionarios', roles: ['ADMIN', 'OWNER', 'MANAGER'] }
     ]
   },

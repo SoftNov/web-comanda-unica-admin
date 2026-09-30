@@ -108,6 +108,9 @@
             <tr>
               <td>
                 Mesa {{ comanda.tableNumber }}{{ comanda.tableName ? ' — ' + comanda.tableName : '' }}
+                @if (comanda.consumptionPassToken) {
+                  <span class="comanda-guest-hint">Cartão Nº {{ comanda.consumptionPassNumber }} · {{ comanda.consumptionPassToken }}</span>
+                }
                 @if (comanda.guestName) {
                   <span class="comanda-guest-hint">Reserva de {{ comanda.guestName }}</span>
                 }
@@ -168,6 +171,9 @@
           <h2 class="step-heading">
             Comanda — Mesa {{ comanda.tableNumber }}{{ comanda.tableName ? ' — ' + comanda.tableName : '' }}
           </h2>
+          @if (comanda.consumptionPassToken) {
+            <p class="comanda-guest-hint">Comanda individual do cartão de consumo Nº {{ comanda.consumptionPassNumber }} ({{ comanda.consumptionPassToken }})</p>
+          }
           @if (comanda.guestName) {
             <p class="comanda-guest-hint">Aberta pela reserva de {{ comanda.guestName }}</p>
           }

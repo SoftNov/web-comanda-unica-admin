@@ -1,0 +1,170 @@
+<div class="page-header">
+  <h1 class="page-title">Controle de Saída</h1>
+  <p class="page-subtitle">
+    Escaneie o cartão de consumo do cliente na saída. A saída só é liberada com a comanda do cartão quitada — ao liberar,
+    o cartão volta a ficar disponível para outro cliente.
+  </p>
+</div>
+
+@if (!passEnabled()) {
+  <div class="form-alert form-alert--info" role="status">
+    <span class="material-icons" aria-hidden="true">info</span>
+    Este estabelecimento não está usando o cartão de consumo — os clientes pedem direto na comanda da mesa. Para ativar,
+    acesse Cadastros › Passes de Consumo.
+  </div>
+}
+
+<section class="card scan-card">
+  <form class="scan-form" (submit)="$event.preventDefault(); check()">
+    <div class="field scan-form__field">
+      <label class="field__label" for="exit-token">Código do cartão</label>
+      <div class="field__control">
+        <input
+          #tokenInput
+          id="exit-token"
+          type="text"
+          class="field__input scan-form__input"
+          placeholder="CMU-XXXXXXXXXX"
+          autocomplete="off"
+          autocapitalize="characters"
+          spellcheck="false"
+          maxlength="40"
+          [ngModel]="token()"
+          (ngModelChange)="onTokenInput($event)"
+          name="token"
+          [disabled]="isChecking()"
+        >
+      </div>
+      <span class="field__hint">Leitor USB: é só escanear com o cursor neste campo.</span>
+    </div>
+
+    <div class="scan-form__actions">
+      <button type="submit" class="btn btn--primary" appRipple [disabled]="!token().trim() || isChecking()">
+        <span class="material-icons" aria-hidden="true">search</span>
+        {{ isChecking() ? 'Consultando…' : 'Consultar' }}
+      </button>
+      <button type="button" class="btn btn--ghost" appRipple (click)="toggleCamera()">
+        <span class="material-icons" aria-hidden="true">qr_code_scanner</span>
+        {{ scanning() ? 'Fechar câmera' : 'Escanear com câmera' }}
+      </button>
+    </div>
+  </form>
+
+  @if (scanning()) {
+    <div class="scan-card__camera">
+      <app-qr-scanner (scanned)="onScanned($event)" (closed)="scanning.set(false)"></app-qr-scanner>
+    </div>
+  }
+</section>
+
+@if (error()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ error() }}
+  </div>
+}
+
+@if (result(); as r) {
+  <section class="card exit-card" [attr.data-state]="state()">
+    <dl class="exit-card__ids">
+      <div>
+        <dt>Passe</dt>
+        <dd class="exit-card__token">{{ r.token }} <span class="exit-card__number">· Cartão Nº {{ r.number }}</span></dd>
+      </div>
+      @if (r.comandaId) {
+        <div>
+          <dt>Comanda</dt>
+          <dd>{{ shortId(r.comandaId) }}</dd>
+        </div>
+        <div>
+          <dt>Mesa</dt>
+          <dd>{{ tableLabel(r) }}</dd>
+        </div>
+      }
+      @if (r.customerName) {
+        <div>
+          <dt>Cliente</dt>
+          <dd>{{ r.customerName }}</dd>
+        </div>
+      }
+    </dl>
+
+    @if (r.comandaId) {
+      <dl class="exit-card__totals">
+        <div>
+          <dt>Consumo</dt>
+          <dd>{{ formatCurrency(r.totalAmount) }}</dd>
+        </div>
+        <div>
+          <dt>Pago</dt>
+          <dd>{{ formatCurrency(r.paidAmount) }}</dd>
+        </div>
+        <div class="exit-card__balance">
+          <dt>Saldo</dt>
+          <dd>{{ formatCurrency(r.pendingAmount) }}</dd>
+        </div>
+      </dl>
+    }
+
+    @switch (state()) {
+      @case ('PAID') {
+        <div class="exit-status exit-status--ok">
+          <span class="material-icons" aria-hidden="true">check_circle</span>
+          Pagamento confirmado
+        </div>
+        <div class="exit-card__actions">
+          <button type="button" class="btn btn--primary btn--lg" appRipple [disabled]="isReleasing()" (click)="release()">
+            <span class="material-icons" aria-hidden="true">logout</span>
+            {{ isReleasing() ? 'Liberando…' : 'Liberar saída' }}
+          </button>
+        </div>
+      }
+      @case ('PENDING') {
+        <div class="exit-status exit-status--warning">
+          <span class="material-icons" aria-hidden="true">warning</span>
+          Pagamento pendente — saída bloqueada
+        </div>
+        <div class="exit-card__actions">
+          <button type="button" class="btn btn--primary btn--lg" appRipple (click)="goToPayment()">
+            <span class="material-icons" aria-hidden="true">point_of_sale</span>
+            Realizar pagamento
+          </button>
+          <button type="button" class="btn btn--ghost" appRipple [disabled]="isChecking()" (click)="refresh()">
+            <span class="material-icons" aria-hidden="true">refresh</span>
+            Consultar de novo
+          </button>
+        </div>
+      }
+      @case ('RELEASED') {
+        <div class="exit-status exit-status--ok">
+          <span class="material-icons" aria-hidden="true">verified</span>
+          Saída liberada em {{ formatDateTime(r.releasedAt) }}
+        </div>
+        <p class="field__hint exit-card__note">O cartão já está disponível para ser entregue a outro cliente.</p>
+      }
+      @case ('BLOCKED') {
+        <div class="exit-status exit-status--danger">
+          <span class="material-icons" aria-hidden="true">block</span>
+          Cartão bloqueado
+        </div>
+        <p class="field__hint exit-card__note">Este cartão está bloqueado e não tem consumo em andamento. Recolha o cartão.</p>
+      }
+      @case ('NOT_IN_USE') {
+        <div class="exit-status exit-status--muted">
+          <span class="material-icons" aria-hidden="true">info</span>
+          Cartão sem consumo em andamento
+        </div>
+        <p class="field__hint exit-card__note">
+          Este cartão não está vinculado a nenhuma comanda — o cliente não pediu com ele, ou a saída já foi liberada.
+        </p>
+      }
+    }
+
+    <div class="exit-card__footer">
+      <button type="button" class="btn btn--ghost" appRipple (click)="newReading()">
+        <span class="material-icons" aria-hidden="true">qr_code_2</span>
+        Nova leitura
+      </button>
+    </div>
+  </section>
+}

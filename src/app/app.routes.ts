@@ -117,6 +117,21 @@ export const routes: Routes = [
         title: 'Reservas — Comanda Única'
       },
       {
+        // Recepção: leitura do Passe de Consumo na saída (só libera com a comanda quitada).
+        path: 'controle-saida',
+        canActivate: [profileGuard(['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'])],
+        loadComponent: () =>
+          import('./features/admin/pages/controle-saida/controle-saida.component').then((m) => m.ControleSaidaComponent),
+        title: 'Controle de Saída — Comanda Única'
+      },
+      {
+        path: 'passes-consumo',
+        canActivate: [profileGuard(['OWNER', 'ADMIN', 'MANAGER'])],
+        loadComponent: () =>
+          import('./features/admin/pages/passes-consumo/passes-consumo.component').then((m) => m.PassesConsumoComponent),
+        title: 'Passes de Consumo — Comanda Única'
+      },
+      {
         path: 'servicos',
         canActivate: [profileGuard(['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'])],
         loadComponent: () => import('./features/admin/pages/servicos/servicos.component').then((m) => m.ServicosComponent),

@@ -115,6 +115,10 @@ export interface ComandaResponse {
   // Nome do responsável pela reserva que originou esta comanda (check-in por CPF no QR Code) —
   // ausente quando aberta pelo fluxo normal de checkout, sem reserva envolvida.
   guestName?: string;
+  // Preenchidos só na comanda individual de um Passe de Consumo (cartão com QR Code).
+  consumptionPassId?: string;
+  consumptionPassToken?: string;
+  consumptionPassNumber?: number;
   status: ComandaStatus;
   displayStatus: ComandaDisplayStatus;
   totalOrdersAmount: number;

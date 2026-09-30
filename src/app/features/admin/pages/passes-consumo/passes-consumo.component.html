@@ -1,0 +1,388 @@
+<div class="page-header page-header--row">
+  <div>
+    <h1 class="page-title">Passes de Consumo</h1>
+    <p class="page-subtitle">
+      Opcional: cartões com QR Code que identificam cada cliente, como o cartão de consumação de bares e casas noturnas.
+      O cliente escaneia a mesa e depois o cartão; tudo que ele pedir entra numa comanda individual, conferida na saída em
+      Controle de Saída.
+    </p>
+  </div>
+
+  <div class="page-header__actions">
+    <button type="button" class="btn btn--ghost" appRipple (click)="refresh()" [disabled]="isLoading()">
+      <span class="material-icons" aria-hidden="true">refresh</span>
+      Atualizar
+    </button>
+    <button
+      type="button"
+      class="btn btn--ghost"
+      appRipple
+      (click)="downloadAll()"
+      [disabled]="isDownloadingAll() || !settings()?.totalCount"
+      title="Um único PDF com todos os cartões, pronto para imprimir"
+    >
+      <span class="material-icons" aria-hidden="true">download</span>
+      {{ isDownloadingAll() ? 'Gerando PDF…' : 'Baixar todos (PDF)' }}
+    </button>
+    <button type="button" class="btn btn--primary" appRipple (click)="openGenerate()">
+      <span class="material-icons" aria-hidden="true">add</span>
+      Gerar passes
+    </button>
+  </div>
+</div>
+
+@if (actionSuccess()) {
+  <div class="form-alert form-alert--success" role="status">
+    <span class="material-icons" aria-hidden="true">check_circle</span>
+    {{ actionSuccess() }}
+  </div>
+}
+@if (actionError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ actionError() }}
+  </div>
+}
+
+@if (settings(); as s) {
+  <section class="card settings-card">
+    <label class="settings-card__toggle">
+      <input
+        type="checkbox"
+        [checked]="s.required"
+        [disabled]="isSavingSettings()"
+        (change)="toggleRequired($any($event.target).checked, $any($event.target))"
+      >
+      <span>
+        <strong>Usar cartão de consumo neste estabelecimento</strong>
+        @if (s.required) {
+          <span class="field__hint">
+            <span class="badge badge--success">Em uso</span>
+            O cliente só consegue pedir pelo cardápio depois de escanear o cartão entregue na recepção, e a saída é
+            conferida em <a routerLink="/painel/controle-saida">Controle de Saída</a>.
+          </span>
+        } @else {
+          <span class="field__hint">
+            <span class="badge badge--muted">Não utilizado</span>
+            O sistema funciona normalmente, com a comanda compartilhada da mesa. Você pode gerar e imprimir os cartões antes
+            de ativar.
+          </span>
+        }
+      </span>
+    </label>
+
+    <dl class="settings-card__stats">
+      <div><dt>Total</dt><dd>{{ s.totalCount }}</dd></div>
+      <div><dt>Disponíveis</dt><dd class="stat--success">{{ s.availableCount }}</dd></div>
+      <div><dt>Em uso</dt><dd class="stat--warning">{{ s.inUseCount }}</dd></div>
+      <div><dt>Bloqueados</dt><dd class="stat--danger">{{ s.blockedCount }}</dd></div>
+    </dl>
+  </section>
+}
+
+<section class="card filters-card">
+  <form class="filters-row" (submit)="$event.preventDefault(); applyFilters()">
+    <div class="field">
+      <label class="field__label" for="pass-filter-status">Status</label>
+      <div class="field__control">
+        <select id="pass-filter-status" class="field__input" name="status" [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event)">
+          @for (option of statusOptions; track option.value) {
+            <option [value]="option.value">{{ option.label }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="field filters-row__search">
+      <label class="field__label" for="pass-filter-search">Código ou número do cartão</label>
+      <div class="field__control">
+        <input
+          id="pass-filter-search"
+          type="text"
+          class="field__input"
+          name="search"
+          placeholder="Ex.: 12 ou CMU-7F91"
+          autocomplete="off"
+          [ngModel]="filterSearch()"
+          (ngModelChange)="filterSearch.set($event)"
+        >
+      </div>
+    </div>
+
+    <div class="field filters-row__actions">
+      <span class="field__label" aria-hidden="true">Ações</span>
+      <div class="field__control">
+        <button type="submit" class="btn btn--primary" appRipple>Buscar</button>
+        <button type="button" class="btn btn--ghost" appRipple (click)="clearFilters()">Limpar</button>
+      </div>
+    </div>
+  </form>
+</section>
+
+@if (selectedIds().size > 0) {
+  <div class="selection-bar card">
+    <span>{{ selectedIds().size }} cartão(ões) selecionado(s)</span>
+    <div class="selection-bar__actions">
+      <button type="button" class="btn btn--primary" appRipple [disabled]="isPrinting()" (click)="printSelected()">
+        <span class="material-icons" aria-hidden="true">print</span>
+        {{ isPrinting() ? 'Gerando PDF…' : 'Imprimir selecionados' }}
+      </button>
+      <button type="button" class="btn btn--ghost" appRipple (click)="clearSelection()">Limpar seleção</button>
+    </div>
+  </div>
+}
+
+<section class="card table-card">
+  @if (isLoading()) {
+    <p class="field__hint table-card__state">Carregando passes…</p>
+  } @else if (listError()) {
+    <div class="form-alert form-alert--error table-card__state" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      {{ listError() }}
+    </div>
+  } @else {
+    <div class="table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th class="data-table__check-col">
+              <input type="checkbox" aria-label="Selecionar todos desta página" [checked]="allOnPageSelected()" (change)="toggleAllOnPage()">
+            </th>
+            <th>Nº</th>
+            <th>Código</th>
+            <th>Status</th>
+            <th>Uso atual</th>
+            <th class="data-table__actions-col">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (pass of passes(); track pass.id) {
+            <tr>
+              <td class="data-table__check-col">
+                <input type="checkbox" [attr.aria-label]="'Selecionar cartão ' + pass.number" [checked]="isSelected(pass)" (change)="toggleSelected(pass)">
+              </td>
+              <td><strong>{{ pass.number }}</strong></td>
+              <td class="pass-token">{{ pass.token }}</td>
+              <td>
+                <span
+                  class="badge"
+                  [class.badge--success]="pass.status === 'AVAILABLE'"
+                  [class.badge--warning]="pass.status === 'IN_USE'"
+                  [class.badge--danger]="pass.status === 'BLOCKED'"
+                  [class.badge--muted]="pass.status === 'EXPIRED'"
+                >{{ statusLabel(pass.status) }}</span>
+              </td>
+              <td class="pass-usage">
+                @if (pass.status === 'IN_USE') {
+                  {{ tableLabel(pass.tableNumber, pass.tableName) }}
+                  <span class="pass-usage__hint">{{ pass.customerName || 'Cliente' }} · desde {{ formatDateTime(pass.activatedAt) }}</span>
+                } @else if (pass.status === 'BLOCKED') {
+                  <span class="pass-usage__hint">{{ pass.blockedReason || 'Sem motivo informado' }}</span>
+                } @else {
+                  <span class="pass-usage__hint">—</span>
+                }
+              </td>
+              <td class="data-table__actions-col">
+                <button type="button" class="icon-btn" title="Ver QR Code" aria-label="Ver QR Code" (click)="openQr(pass)">
+                  <span class="material-icons" aria-hidden="true">qr_code_2</span>
+                </button>
+                <button type="button" class="icon-btn" title="Histórico" aria-label="Histórico" (click)="openHistory(pass)">
+                  <span class="material-icons" aria-hidden="true">history</span>
+                </button>
+                @if (pass.status === 'BLOCKED' || pass.status === 'EXPIRED') {
+                  <button type="button" class="icon-btn" title="Reativar" aria-label="Reativar" (click)="unblock(pass)">
+                    <span class="material-icons" aria-hidden="true">lock_open</span>
+                  </button>
+                } @else if (pass.status === 'AVAILABLE') {
+                  <button type="button" class="icon-btn" title="Bloquear" aria-label="Bloquear" (click)="openBlock(pass)">
+                    <span class="material-icons" aria-hidden="true">block</span>
+                  </button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="data-table__empty">
+                Nenhum passe encontrado. Use "Gerar passes" para criar os cartões do estabelecimento.
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <span class="pagination__info">{{ totalElements() }} passe(s) · página {{ page() + 1 }} de {{ totalPages() }}</span>
+      <div class="pagination__controls">
+        <button type="button" class="btn btn--ghost" appRipple [disabled]="page() === 0" (click)="previousPage()">Anterior</button>
+        <button type="button" class="btn btn--ghost" appRipple [disabled]="page() >= totalPages() - 1" (click)="nextPage()">Próxima</button>
+      </div>
+    </div>
+  }
+</section>
+
+<!-- Gerar passes -->
+@if (showGenerate()) {
+  <div class="modal-backdrop" (click)="closeGenerate()">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">Gerar passes</h2>
+        <button type="button" class="icon-btn" (click)="closeGenerate()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+      <p class="field__hint">
+        Cada passe recebe um código aleatório e um número sequencial para identificar o cartão físico.
+      </p>
+
+      <form (submit)="$event.preventDefault(); submitGenerate(false)">
+        <div class="field">
+          <label class="field__label" for="generate-quantity">Quantidade</label>
+          <div class="field__control">
+            <input
+              id="generate-quantity"
+              type="number"
+              class="field__input"
+              min="1"
+              max="500"
+              name="quantity"
+              [ngModel]="generateQuantity()"
+              (ngModelChange)="generateQuantity.set($event)"
+            >
+          </div>
+          <span class="field__hint">De 1 a 500 por vez.</span>
+        </div>
+
+        @if (generateError()) {
+          <div class="form-alert form-alert--error" role="alert">
+            <span class="material-icons" aria-hidden="true">error_outline</span>
+            {{ generateError() }}
+          </div>
+        }
+
+        <div class="step-actions">
+          <button type="button" class="btn btn--ghost" appRipple [disabled]="isGenerating()" (click)="submitGenerate(true)">
+            <span class="material-icons" aria-hidden="true">print</span>
+            Gerar e imprimir
+          </button>
+          <button type="submit" class="btn btn--primary" appRipple [disabled]="isGenerating()">
+            {{ isGenerating() ? 'Gerando…' : 'Gerar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- QR Code -->
+@if (qrPass(); as pass) {
+  <div class="modal-backdrop" (click)="closeQr()">
+    <div class="modal-card modal-card--sm card qr-modal" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">Cartão Nº {{ pass.number }}</h2>
+        <button type="button" class="icon-btn" (click)="closeQr()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+      @if (qrImageUrl()) {
+        <img class="qr-modal__image" [src]="qrImageUrl()" [alt]="'QR Code do cartão ' + pass.number">
+      } @else {
+        <p class="field__hint">Carregando QR Code…</p>
+      }
+      <p class="qr-modal__token">{{ pass.token }}</p>
+      <p class="field__hint qr-modal__hint">O QR Code contém só este código — nenhum dado do cliente ou de pagamento.</p>
+      <div class="step-actions">
+        <button type="button" class="btn btn--primary" appRipple [disabled]="isPrinting()" (click)="printQr(pass)">
+          <span class="material-icons" aria-hidden="true">print</span>
+          Imprimir
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Bloquear -->
+@if (blockPass(); as pass) {
+  <div class="modal-backdrop" (click)="closeBlock()">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">Bloquear cartão Nº {{ pass.number }}</h2>
+        <button type="button" class="icon-btn" (click)="closeBlock()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+      <p class="field__hint">Um cartão bloqueado não pode ser vinculado a nenhuma mesa até ser reativado.</p>
+
+      <form (submit)="$event.preventDefault(); submitBlock()">
+        <div class="field">
+          <label class="field__label" for="block-reason">Motivo <span class="field__optional">(opcional)</span></label>
+          <div class="field__control">
+            <input
+              id="block-reason"
+              type="text"
+              class="field__input"
+              maxlength="255"
+              name="reason"
+              placeholder="Ex.: cartão perdido, danificado"
+              [ngModel]="blockReason()"
+              (ngModelChange)="blockReason.set($event)"
+            >
+          </div>
+        </div>
+        <div class="step-actions">
+          <button type="button" class="btn btn--ghost" appRipple (click)="closeBlock()">Cancelar</button>
+          <button type="submit" class="btn btn--danger" appRipple [disabled]="isBlocking()">
+            {{ isBlocking() ? 'Bloqueando…' : 'Bloquear' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Histórico -->
+@if (historyPass(); as pass) {
+  <div class="modal-backdrop" (click)="closeHistory()">
+    <div class="modal-card modal-card--lg card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="step-heading">Histórico — cartão Nº {{ pass.number }} <span class="pass-token">({{ pass.token }})</span></h2>
+        <button type="button" class="icon-btn" (click)="closeHistory()" aria-label="Fechar">
+          <span class="material-icons" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      @if (historyLoading()) {
+        <p class="field__hint">Carregando histórico…</p>
+      } @else if (historyError()) {
+        <div class="form-alert form-alert--error" role="alert">
+          <span class="material-icons" aria-hidden="true">error_outline</span>
+          {{ historyError() }}
+        </div>
+      } @else if (historyEvents().length === 0) {
+        <p class="field__hint">Nenhum evento registrado.</p>
+      } @else {
+        <ol class="timeline">
+          @for (event of historyEvents(); track event.id) {
+            <li class="timeline__item">
+              <div class="timeline__header">
+                <span class="badge badge--{{ eventTone(event.type) }}">{{ eventLabel(event.type) }}</span>
+                <span class="timeline__date">{{ formatDateTime(event.createdAt) }}</span>
+              </div>
+              @if (event.details) {
+                <p class="timeline__details">{{ event.details }}</p>
+              }
+              <p class="timeline__meta">
+                @if (event.tableNumber != null) { <span>{{ tableLabel(event.tableNumber, event.tableName) }}</span> }
+                @if (event.customerName) { <span>Cliente: {{ event.customerName }}</span> }
+                @if (event.userName) { <span>Por: {{ event.userName }}</span> }
+                @if (event.totalAmount != null) { <span>Consumo: {{ formatCurrency(event.totalAmount) }}</span> }
+                @if (event.paidAmount != null) { <span>{{ event.type === 'PAYMENT' ? 'Valor' : 'Pago' }}: {{ formatCurrency(event.paidAmount) }}</span> }
+                @if (event.pendingAmount != null) { <span>Saldo: {{ formatCurrency(event.pendingAmount) }}</span> }
+              </p>
+            </li>
+          }
+        </ol>
+      }
+    </div>
+  </div>
+}

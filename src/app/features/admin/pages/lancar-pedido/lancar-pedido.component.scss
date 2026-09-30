@@ -35,6 +35,148 @@ select.field__input {
   cursor: pointer;
 }
 
+// --- Cartão de consumo --------------------------------------------------------
+.pass-step {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 480px;
+  margin-top: 8px;
+  padding: 20px;
+}
+
+.pass-step__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pass-step__icon {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+  font-size: 24px;
+}
+
+.pass-step__title {
+  margin: 0;
+  font-size: 1.0625rem;
+  color: var(--color-text);
+}
+
+.pass-step__subtitle {
+  margin: 2px 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.pass-step__form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+// Prefixo "CMU-" fixo dentro do campo: a borda fica no container, o input só recebe o sufixo.
+.pass-step__field {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg);
+  font-family: ui-monospace, 'Roboto Mono', monospace;
+  font-size: 1.0625rem;
+  letter-spacing: 0.06em;
+  cursor: text;
+
+  &:focus-within {
+    border-color: var(--color-accent);
+  }
+}
+
+.pass-step__field--disabled {
+  opacity: 0.7;
+}
+
+.pass-step__prefix {
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  user-select: none;
+}
+
+.pass-step__input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: uppercase;
+
+  &:focus {
+    outline: none;
+  }
+
+  &::placeholder {
+    color: var(--color-text-muted);
+    opacity: 0.5;
+  }
+}
+
+.pass-step__actions {
+  display: flex;
+  gap: 8px;
+
+  .btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
+.pass-chip {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 8px 0 16px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+
+  > .material-icons {
+    font-size: 20px;
+    color: var(--color-success);
+  }
+
+  strong {
+    color: var(--color-text);
+  }
+}
+
+.pass-chip__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.pass-chip__token {
+  margin-left: 4px;
+  font-family: ui-monospace, 'Roboto Mono', monospace;
+  font-size: 0.8125rem;
+}
+
 // --- Cardápio (catálogo de produtos) ---------------------------------------------------------
 .order-category-filters {
   display: flex;

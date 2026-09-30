@@ -37,6 +37,11 @@ export interface StaffComandaResponse {
   remainingAmount: number;
   discountAmount: number;
   amountToPay: number;
+  // Estabelecimento exige o cartão de consumo: openOrEnter não abre a comanda compartilhada da
+  // mesa e o pedido vai para a comanda individual do cartão (ver enterWithPass).
+  consumptionPassRequired?: boolean;
+  consumptionPassToken?: string;
+  consumptionPassNumber?: number;
 }
 
 export interface StaffOrderItemRequest {
@@ -48,6 +53,7 @@ export interface StaffOrderItemRequest {
 export interface CreateStaffOrderRequest {
   items: StaffOrderItemRequest[];
   notes?: string;
+  consumptionPassToken?: string;
 }
 
 export interface CancelOrderRequest {
@@ -79,6 +85,12 @@ export class StaffOrderService {
 
   openOrEnter(tableId: string): Observable<StaffComandaResponse> {
     return this.http.get<StaffComandaResponse>(`${this.baseUrl}/api/v1/staff/tables/${tableId}/comanda`);
+  }
+
+  // Lê/vincula o cartão de consumo do cliente e entra na comanda individual dele — cartão livre é
+  // vinculado na hora pela equipe (ver StaffOrderServiceImpl#enterWithPass na API).
+  enterWithPass(tableId: string, token: string): Observable<StaffComandaResponse> {
+    return this.http.post<StaffComandaResponse>(`${this.baseUrl}/api/v1/staff/tables/${tableId}/comanda/pass`, { token });
   }
 
   createOrder(tableId: string, payload: CreateStaffOrderRequest): Observable<StaffComandaResponse> {

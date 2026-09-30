@@ -8,6 +8,7 @@ import { MenuCategoryResponse, MenuCategoriesService } from '../../../../shared/
 import { MenuItemResponse, MenuItemsService } from '../../../../shared/services/menu-items.service';
 import { StaffComandaResponse, StaffOrderService } from '../../../../shared/services/staff-order.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
+import { QrScannerComponent } from '../../../../shared/components/qr-scanner/qr-scanner.component';
 import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
 import { parseApiDate } from '../../../../shared/utils/datetime.util';
 
@@ -24,6 +25,9 @@ interface OrderDraftItem {
   notes: string;
 }
 
+// Todo cartão de consumo tem esse prefixo (ver ConsumptionPassServiceImpl na API admin).
+const PASS_TOKEN_PREFIX = 'CMU-';
+
 interface OrderItemBadge {
   icon: string;
   label: string;
@@ -37,7 +41,7 @@ interface OrderItemBadge {
 @Component({
   selector: 'app-lancar-pedido',
   standalone: true,
-  imports: [RippleDirective, RouterLink, FormsModule],
+  imports: [RippleDirective, RouterLink, FormsModule, QrScannerComponent],
   templateUrl: './lancar-pedido.component.html',
   styleUrl: './lancar-pedido.component.scss'
 })
@@ -61,6 +65,22 @@ export class LancarPedidoComponent {
   // Mesmo papel do "hasPlacedOrder" do PublicMenuComponent: só pra habilitar o botão flutuante
   // "Comanda" — a lista em si só é buscada/renderizada na página separada (ComandaMesaComponent).
   readonly hasPlacedOrder = computed(() => (this.orderComanda()?.items.length ?? 0) > 0);
+
+  // Cartão de consumo: com o estabelecimento exigindo o cartão (a API avisa em openOrEnter), o
+  // pedido vai para a comanda individual do cartão do cliente — a equipe precisa ler/digitar o
+  // cartão antes de lançar. Cartão livre é vinculado na hora pela API.
+  readonly passRequired = computed(() => !!this.orderComanda()?.consumptionPassRequired);
+  readonly linkedPass = computed(() => {
+    const comanda = this.orderComanda();
+    return comanda?.consumptionPassToken
+      ? { token: comanda.consumptionPassToken, number: comanda.consumptionPassNumber ?? null }
+      : null;
+  });
+  readonly needsPass = computed(() => this.passRequired() && !this.linkedPass());
+  readonly passTokenSuffix = signal('');
+  readonly isScanningPass = signal(false);
+  readonly isLinkingPass = signal(false);
+  readonly passError = signal<string | null>(null);
 
   readonly orderCategories = signal<MenuCategoryResponse[]>([]);
   readonly orderMenuItems = signal<MenuItemResponse[]>([]);
@@ -179,6 +199,7 @@ export class LancarPedidoComponent {
     this.orderComandaError.set(null);
     this.orderDraftItems.set([]);
     this.isCartOpen.set(false);
+    this.resetPassForm();
 
     if (!tableId) {
       return;
@@ -195,6 +216,75 @@ export class LancarPedidoComponent {
         this.orderComandaError.set(this.resolveErrorMessage(error));
       }
     });
+  }
+
+  // --- Cartão de consumo -------------------------------------------------------
+  // O campo mostra o "CMU-" fixo e guarda só o sufixo — colar o código inteiro (ou leitor USB,
+  // que "digita" o código completo) também funciona.
+  onPassTokenInput(value: string): void {
+    this.passTokenSuffix.set(this.toPassSuffix(value));
+  }
+
+  onPassScanned(value: string): void {
+    this.isScanningPass.set(false);
+    this.passTokenSuffix.set(this.toPassSuffix(value));
+    this.linkPass();
+  }
+
+  linkPass(): void {
+    const tableId = this.orderTableId();
+    const suffix = this.passTokenSuffix().trim();
+    if (!tableId || !suffix || this.isLinkingPass()) {
+      return;
+    }
+
+    this.isLinkingPass.set(true);
+    this.passError.set(null);
+    this.staffOrderService.enterWithPass(tableId, PASS_TOKEN_PREFIX + suffix).subscribe({
+      next: (comanda) => {
+        this.isLinkingPass.set(false);
+        this.orderComanda.set(comanda);
+        this.resetPassForm();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isLinkingPass.set(false);
+        this.passError.set(this.resolveErrorMessage(error));
+      }
+    });
+  }
+
+  // Próximo cliente da mesa: volta para a leitura do cartão, descartando o rascunho (que era do
+  // cartão anterior).
+  changePass(): void {
+    if (this.isSubmittingOrder()) {
+      return;
+    }
+    const comanda = this.orderComanda();
+    if (!comanda) {
+      return;
+    }
+    this.orderComanda.set({
+      ...comanda,
+      id: null,
+      status: null,
+      items: [],
+      consumptionPassToken: undefined,
+      consumptionPassNumber: undefined
+    });
+    this.orderDraftItems.set([]);
+    this.isCartOpen.set(false);
+    this.resetPassForm();
+  }
+
+  private resetPassForm(): void {
+    this.passTokenSuffix.set('');
+    this.isScanningPass.set(false);
+    this.passError.set(null);
+  }
+
+  // Só letras e números, sem o prefixo "CMU" (o token é hexadecimal, então nunca começa com "CMU").
+  private toPassSuffix(value: string): string {
+    return (value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^CMU/, '');
   }
 
   // Mesma exibição do cardápio digital do cliente (ver PublicMenuComponent#hasImage/getBadges/
@@ -319,7 +409,8 @@ export class LancarPedidoComponent {
           menuItemId: item.menuItemId,
           quantity: item.quantity,
           notes: item.notes.trim() || undefined
-        }))
+        })),
+        consumptionPassToken: this.linkedPass()?.token
       })
       .subscribe({
         next: (comanda) => {

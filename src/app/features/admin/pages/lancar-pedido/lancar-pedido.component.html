@@ -34,7 +34,77 @@
   </div>
 }
 
-@if (orderTableId() && !isLoadingOrderComanda() && !orderComandaError()) {
+@if (orderTableId() && !isLoadingOrderComanda() && !orderComandaError() && needsPass()) {
+  <!-- Estabelecimento com cartão de consumo: o pedido vai para a comanda individual do cartão
+       do cliente, então o cartão é lido antes de mostrar o cardápio. -->
+  <section class="card pass-step" aria-labelledby="pass-step-title">
+    <div class="pass-step__header">
+      <span class="pass-step__icon material-icons" aria-hidden="true">qr_code_2</span>
+      <div>
+        <h2 id="pass-step-title" class="pass-step__title">Cartão de consumo do cliente</h2>
+        <p class="pass-step__subtitle">Os itens vão para a comanda do cartão. Cartão livre é vinculado agora.</p>
+      </div>
+    </div>
+
+    @if (isScanningPass()) {
+      <app-qr-scanner (scanned)="onPassScanned($event)" (closed)="isScanningPass.set(false)"></app-qr-scanner>
+    } @else {
+      <form class="pass-step__form" (submit)="$event.preventDefault(); linkPass()">
+        <label class="pass-step__field" [class.pass-step__field--disabled]="isLinkingPass()">
+          <span class="pass-step__prefix" aria-hidden="true">CMU-</span>
+          <input
+            type="text"
+            class="pass-step__input"
+            aria-label="Código do cartão, depois de CMU-"
+            placeholder="XXXXXXXXXX"
+            maxlength="20"
+            autocomplete="off"
+            autocapitalize="characters"
+            spellcheck="false"
+            name="passToken"
+            [ngModel]="passTokenSuffix()"
+            (ngModelChange)="onPassTokenInput($event)"
+            [disabled]="isLinkingPass()">
+        </label>
+        <div class="pass-step__actions">
+          <button type="submit" class="btn btn--primary" appRipple [disabled]="!passTokenSuffix().trim() || isLinkingPass()">
+            {{ isLinkingPass() ? 'Abrindo comanda…' : 'Continuar' }}
+          </button>
+          <button type="button" class="btn btn--ghost" appRipple [disabled]="isLinkingPass()" (click)="isScanningPass.set(true)">
+            <span class="material-icons" aria-hidden="true">qr_code_scanner</span>
+            Escanear
+          </button>
+        </div>
+        <span class="field__hint">Leitor USB: é só escanear com o cursor no campo.</span>
+      </form>
+    }
+
+    @if (passError()) {
+      <div class="form-alert form-alert--error" role="alert">
+        <span class="material-icons" aria-hidden="true">error_outline</span>
+        {{ passError() }}
+      </div>
+    }
+  </section>
+}
+
+@if (orderTableId() && !isLoadingOrderComanda() && !orderComandaError() && !needsPass()) {
+  @if (linkedPass(); as pass) {
+    <div class="pass-chip">
+      <span class="material-icons" aria-hidden="true">verified</span>
+      <span class="pass-chip__text">
+        Lançando no cartão <strong>{{ pass.number ? 'Nº ' + pass.number : pass.token }}</strong>
+        @if (pass.number) {
+          <span class="pass-chip__token">{{ pass.token }}</span>
+        }
+        · comanda {{ formatCurrency(orderComanda()?.totalAmount) }}
+      </span>
+      <button type="button" class="btn btn--ghost btn--sm" [disabled]="isSubmittingOrder()" (click)="changePass()">
+        Trocar cartão
+      </button>
+    </div>
+  }
+
   @if (orderCategories().length > 0) {
     <div class="order-category-filters">
       <button type="button" class="btn btn--sm" [class.btn--primary]="orderCategoryFilter() === ''" [class.btn--ghost]="orderCategoryFilter() !== ''" (click)="setOrderCategoryFilter('')">
@@ -148,6 +218,9 @@
   <!-- Botões flutuantes — mesmo padrão do cardápio digital do cliente (ver comanda-fab/cart-fab
        em public-menu.component.html): "Comanda" (esquerda) leva pra página separada com o que já
        foi lançado; "Carrinho" (direita) abre o drawer com o rascunho. -->
+  <!-- Com cartão, a página da comanda (da mesa) não mostraria a comanda individual do cartão —
+       o total dela já aparece no chip acima. -->
+  @if (!passRequired()) {
   <a
     class="comanda-fab"
     [class.comanda-fab--disabled]="!hasPlacedOrder()"
@@ -158,6 +231,7 @@
     <span class="material-icons">receipt_long</span>
     <span class="comanda-fab__label">Comanda</span>
   </a>
+  }
 
   <button
     type="button"
