@@ -11,6 +11,9 @@ export interface MenuItem {
   platformAdminOnly?: boolean;
   // Só aparece quando o estabelecimento usa o cartão de consumo (ver ConsumptionPassesService#enabled).
   requiresConsumptionPass?: boolean;
+  // Só aparece com o pagamento online ativo (ver PaymentSettingsService#onlinePaymentsEnabled) —
+  // telas que leem a conta Stripe. O platform admin vê sempre.
+  requiresOnlinePayments?: boolean;
   children?: MenuItem[];
 }
 
@@ -97,7 +100,7 @@ export const ADMIN_MENU_SEGMENTS: MenuSegment[] = [
   {
     label: 'Financeiro',
     items: [
-      { label: 'Financeiro', icon: 'payments', route: '/painel/financeiro' },
+      { label: 'Financeiro', icon: 'payments', route: '/painel/financeiro', requiresOnlinePayments: true },
       { label: 'Assinatura', icon: 'card_membership', route: '/painel/assinatura', roles: ['OWNER', 'ADMIN'] },
       {
         label: 'Financeiro Comanda Única',

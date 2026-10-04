@@ -5,8 +5,13 @@
       @if (table(); as t) {
         — Mesa {{ t.number }}{{ t.name ? ' — ' + t.name : '' }}
       }
+      @if (orderComanda()?.consumptionPassNumber; as passNumber) {
+        — Cartão {{ passNumber }}
+      }
     </h1>
-    <p class="page-subtitle">Todos os pedidos já lançados nesta mesa.</p>
+    <p class="page-subtitle">
+      {{ passToken ? 'Todos os pedidos já lançados neste cartão.' : 'Todos os pedidos já lançados nesta mesa.' }}
+    </p>
   </div>
   <button type="button" class="btn btn--ghost" (click)="goToMenu()">
     <span class="material-icons" aria-hidden="true">restaurant_menu</span>

@@ -1,4 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { PaymentSettingsService } from '../../../../../../shared/services/payment-settings.service';
 import { StripeAccountStatus, StripeConnectService } from '../../../../../../shared/services/stripe-connect.service';
 import { OwnerStripeAccountCardComponent } from './components/owner-stripe-account-card.component';
 import { OwnerStripeConnectionCardComponent, StripeConnectionCardState } from './components/owner-stripe-connection-card.component';
@@ -24,6 +25,13 @@ import { OwnerStripeStatusCardComponent } from './components/owner-stripe-status
 })
 export class OwnerStripePageComponent {
   private readonly stripeConnectService = inject(StripeConnectService);
+  private readonly paymentSettingsService = inject(PaymentSettingsService);
+
+  // Liga/desliga o pagamento pelo cardápio digital — desligado, os cards da Stripe somem desta tela.
+  readonly onlinePaymentsEnabled = this.paymentSettingsService.onlinePaymentsEnabled;
+  readonly isLoadingSettings = signal(true);
+  readonly isSavingSettings = signal(false);
+  readonly settingsError = signal<string | null>(null);
 
   readonly isLoading = signal(true);
   readonly loadError = signal(false);
@@ -41,7 +49,37 @@ export class OwnerStripePageComponent {
   });
 
   constructor() {
+    this.loadSettings();
     this.loadStatus();
+  }
+
+  toggleOnlinePayments(enabled: boolean, checkbox?: HTMLInputElement): void {
+    if (
+      !enabled &&
+      !confirm('Desativar pagamentos na comanda? Os clientes passam a pagar só no caixa ou com o garçom.')
+    ) {
+      if (checkbox) {
+        checkbox.checked = true;
+      }
+      return;
+    }
+    this.isSavingSettings.set(true);
+    this.settingsError.set(null);
+    this.paymentSettingsService.updateSettings(enabled).subscribe({
+      next: () => {
+        this.isSavingSettings.set(false);
+        if (enabled) {
+          this.loadStatus();
+        }
+      },
+      error: () => {
+        this.isSavingSettings.set(false);
+        this.settingsError.set('Não foi possível salvar a configuração de pagamentos.');
+        if (checkbox) {
+          checkbox.checked = !enabled;
+        }
+      }
+    });
   }
 
   connect(): void {
@@ -98,6 +136,17 @@ export class OwnerStripePageComponent {
       },
       error: () => {
         this.isOpeningDashboard.set(false);
+      }
+    });
+  }
+
+  private loadSettings(): void {
+    this.isLoadingSettings.set(true);
+    this.paymentSettingsService.getSettings().subscribe({
+      next: () => this.isLoadingSettings.set(false),
+      error: () => {
+        this.isLoadingSettings.set(false);
+        this.settingsError.set('Não foi possível carregar a configuração de pagamentos.');
       }
     });
   }

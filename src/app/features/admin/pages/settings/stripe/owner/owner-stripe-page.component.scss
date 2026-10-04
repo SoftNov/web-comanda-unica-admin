@@ -96,3 +96,29 @@
     min-width: 220px;
   }
 }
+
+.payments-toggle {
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.payments-toggle__label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 640px;
+  cursor: pointer;
+
+  input {
+    margin-top: 4px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    accent-color: var(--color-accent);
+  }
+
+  strong {
+    display: block;
+    color: var(--color-text);
+  }
+}

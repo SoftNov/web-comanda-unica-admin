@@ -36,28 +36,56 @@
           }
         </h2>
         <div class="revenue-section__totals">
-          <div class="revenue-section__total">
-            <span class="revenue-section__total-value">{{ isLoadingRevenue() ? '—' : formatCurrency(revenueTotal()) }}</span>
-            <span class="revenue-section__total-label">faturado no período</span>
-          </div>
-          <div class="revenue-section__total">
-            <span class="revenue-section__total-value revenue-section__total-value--net">
-              {{ isLoadingRevenue() ? '—' : formatCurrency(revenueNetTotal()) }}
-            </span>
-            <span class="revenue-section__total-label">líquido recebido</span>
-          </div>
-          <div class="revenue-section__total">
-            <span class="revenue-section__total-value">
-              {{ isLoadingStripeBalance() ? '—' : (stripeCurrentBalance() != null ? formatCurrency(stripeCurrentBalance()) : '—') }}
-            </span>
-            <span class="revenue-section__total-label">saldo atual na Stripe</span>
-          </div>
-          <div class="revenue-section__total">
-            <span class="revenue-section__total-value">
-              {{ isLoadingStripeBalance() ? '—' : (stripeAvailableBalance() != null ? formatCurrency(stripeAvailableBalance()) : '—') }}
-            </span>
-            <span class="revenue-section__total-label">saldo liberado</span>
-          </div>
+          @if (isPlatformAdmin()) {
+            <div class="revenue-section__total">
+              <span class="revenue-section__total-value">{{ isLoadingRevenue() ? '—' : formatCurrency(revenueTotal()) }}</span>
+              <span class="revenue-section__total-label">faturado no período</span>
+            </div>
+            <div class="revenue-section__total">
+              <span class="revenue-section__total-value revenue-section__total-value--net">
+                {{ isLoadingRevenue() ? '—' : formatCurrency(revenueNetTotal()) }}
+              </span>
+              <span class="revenue-section__total-label">líquido recebido</span>
+            </div>
+          } @else {
+            <div class="revenue-section__total">
+              <span class="revenue-section__total-value">{{ isLoadingRevenue() ? '—' : formatCurrency(overallRevenueTotal()) }}</span>
+              <span class="revenue-section__total-label">faturamento total</span>
+              <span class="revenue-section__total-detail">{{ onlinePaymentsEnabled() ? 'Stripe, caixa e garçom' : 'caixa e garçom' }}</span>
+            </div>
+            @if (onlinePaymentsEnabled()) {
+              <div class="revenue-section__total">
+                <span class="revenue-section__total-value">{{ isLoadingRevenue() ? '—' : formatCurrency(revenueTotal()) }}</span>
+                <span class="revenue-section__total-label">faturamento Stripe</span>
+              </div>
+            }
+            <!-- Pagamentos registrados pela equipe (fora da Stripe), pelo valor cheio. -->
+            <div class="revenue-section__total">
+              <span class="revenue-section__total-value revenue-section__total-value--net">
+                {{ isLoadingRevenue() ? '—' : formatCurrency(staffReceivedTotal()) }}
+              </span>
+              <span class="revenue-section__total-label">faturamento caixa e garçom</span>
+              @if (!isLoadingRevenue()) {
+                <span class="revenue-section__total-detail">
+                  caixa {{ formatCurrency(cashRegisterAmount() ?? 0) }} · garçom {{ formatCurrency(cashWaiterAmount() ?? 0) }}
+                </span>
+              }
+            </div>
+          }
+          @if (showStripeIndicators()) {
+            <div class="revenue-section__total">
+              <span class="revenue-section__total-value">
+                {{ isLoadingStripeBalance() ? '—' : (stripeCurrentBalance() != null ? formatCurrency(stripeCurrentBalance()) : '—') }}
+              </span>
+              <span class="revenue-section__total-label">saldo atual na Stripe</span>
+            </div>
+            <div class="revenue-section__total">
+              <span class="revenue-section__total-value">
+                {{ isLoadingStripeBalance() ? '—' : (stripeAvailableBalance() != null ? formatCurrency(stripeAvailableBalance()) : '—') }}
+              </span>
+              <span class="revenue-section__total-label">saldo liberado</span>
+            </div>
+          }
           @if (isPlatformAdmin()) {
             <div class="revenue-section__total">
               <span class="revenue-section__total-value">
@@ -134,7 +162,7 @@
       </div>
     } @else if (isLoadingRevenue() && revenueSeries().length === 0) {
       <p class="field__hint">Carregando faturamento…</p>
-    } @else {
+    } @else if (showStripeIndicators()) {
       <div class="revenue-section__chart-wrapper">
         @if (isLoadingRevenue()) {
           <div class="revenue-section__chart-loading" aria-hidden="true">

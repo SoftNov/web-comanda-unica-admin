@@ -44,6 +44,9 @@ export class ComandaMesaComponent {
 
   readonly tableId = this.route.snapshot.paramMap.get('tableId') ?? '';
   readonly table = signal<RestaurantTableResponse | null>(null);
+  // Estabelecimento com cartão de consumo: a tela de lançar pedido manda o token do cartão
+  // (?cartao=) e esta página mostra a comanda individual do cartão, não a compartilhada da mesa.
+  readonly passToken = this.route.snapshot.queryParamMap.get('cartao');
 
   readonly orderComanda = signal<StaffComandaResponse | null>(null);
   readonly isLoading = signal(true);
@@ -115,7 +118,10 @@ export class ComandaMesaComponent {
     this.isLoading.set(true);
     this.loadError.set(null);
 
-    this.staffOrderService.openOrEnter(this.tableId).subscribe({
+    const request$ = this.passToken
+      ? this.staffOrderService.enterWithPass(this.tableId, this.passToken)
+      : this.staffOrderService.openOrEnter(this.tableId);
+    request$.subscribe({
       next: (comanda) => {
         this.isLoading.set(false);
         this.orderComanda.set(comanda);
@@ -128,7 +134,9 @@ export class ComandaMesaComponent {
   }
 
   goToMenu(): void {
-    this.router.navigate(['/painel/comandas/lancar-pedido'], { queryParams: { mesa: this.tableId } });
+    this.router.navigate(['/painel/comandas/lancar-pedido'], {
+      queryParams: { mesa: this.tableId, cartao: this.passToken || null }
+    });
   }
 
   formatCurrency(value: number | undefined | null): string {

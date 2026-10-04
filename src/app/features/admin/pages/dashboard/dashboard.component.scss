@@ -145,6 +145,12 @@
   color: var(--color-text-muted);
 }
 
+.revenue-section__total-detail {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  opacity: 0.85;
+}
+
 .revenue-section__controls {
   display: flex;
   flex-direction: column;

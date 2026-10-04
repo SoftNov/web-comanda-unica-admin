@@ -113,6 +113,10 @@ export class LancarPedidoComponent {
   // em template reativo diretamente, só consultado a cada render via hasOrderItemImage).
   private readonly brokenOrderImageIds = new Set<string>();
 
+  // Voltando da página da comanda do cartão (?cartao=, ver ComandaMesaComponent#goToMenu): reabre
+  // o mesmo cartão em vez de pedir a leitura de novo. Consumido uma vez só, no primeiro openOrEnter.
+  private passTokenFromLink: string | null = null;
+
   constructor() {
     this.loadOrderCatalog();
 
@@ -123,6 +127,7 @@ export class LancarPedidoComponent {
     // o valor certo no signal — o mesmo motivo, aliás, por que o rascunho ficava "perdido"
     // visualmente ao voltar da página da comanda.
     const tableIdFromLink = this.route.snapshot.queryParamMap.get('mesa');
+    this.passTokenFromLink = this.route.snapshot.queryParamMap.get('cartao');
     this.loadTables(tableIdFromLink);
   }
 
@@ -189,7 +194,7 @@ export class LancarPedidoComponent {
     // mantém a mesma mesa selecionada em vez de voltar pro select vazio.
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { mesa: tableId || null },
+      queryParams: { mesa: tableId || null, cartao: null },
       queryParamsHandling: 'merge',
       replaceUrl: true
     });
@@ -210,6 +215,12 @@ export class LancarPedidoComponent {
       next: (comanda) => {
         this.isLoadingOrderComanda.set(false);
         this.orderComanda.set(comanda);
+        const passToken = this.passTokenFromLink;
+        this.passTokenFromLink = null;
+        if (passToken && comanda.consumptionPassRequired) {
+          this.passTokenSuffix.set(this.toPassSuffix(passToken));
+          this.linkPass();
+        }
       },
       error: (error: HttpErrorResponse) => {
         this.isLoadingOrderComanda.set(false);

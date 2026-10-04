@@ -218,20 +218,19 @@
   <!-- Botões flutuantes — mesmo padrão do cardápio digital do cliente (ver comanda-fab/cart-fab
        em public-menu.component.html): "Comanda" (esquerda) leva pra página separada com o que já
        foi lançado; "Carrinho" (direita) abre o drawer com o rascunho. -->
-  <!-- Com cartão, a página da comanda (da mesa) não mostraria a comanda individual do cartão —
-       o total dela já aparece no chip acima. -->
-  @if (!passRequired()) {
+  <!-- Com cartão, leva o token junto (?cartao=) pra página abrir a comanda individual do cartão
+       em vez da compartilhada da mesa (ver ComandaMesaComponent#loadComanda). -->
   <a
     class="comanda-fab"
     [class.comanda-fab--disabled]="!hasPlacedOrder()"
     [routerLink]="hasPlacedOrder() ? ['/painel/comandas/lancar-pedido/comanda', orderTableId()] : null"
+    [queryParams]="linkedPass() ? { cartao: linkedPass()!.token } : null"
     [attr.aria-disabled]="!hasPlacedOrder()"
     [attr.title]="!hasPlacedOrder() ? 'Lance o primeiro pedido para ver a comanda da mesa' : null"
     aria-label="Ver comanda da mesa">
     <span class="material-icons">receipt_long</span>
     <span class="comanda-fab__label">Comanda</span>
   </a>
-  }
 
   <button
     type="button"

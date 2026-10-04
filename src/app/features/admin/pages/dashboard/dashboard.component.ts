@@ -10,6 +10,7 @@ import { PedidosComponent } from '../pedidos/pedidos.component';
 import { ServicosComponent } from '../servicos/servicos.component';
 import { SubscriptionBannerComponent } from '../../../../shared/components/subscription-banner/subscription-banner.component';
 import { SubscriptionService } from '../../../../shared/services/subscription.service';
+import { PaymentSettingsService } from '../../../../shared/services/payment-settings.service';
 
 const MANAGEMENT_PROFILES = ['ADMIN', 'OWNER', 'MANAGER'];
 // Perfis operacionais que vivem na fila de pedidos no dia a dia — a home entra direto na mesma
@@ -60,6 +61,7 @@ export class DashboardComponent implements OnDestroy {
   private readonly floorPlansService = inject(FloorPlansService);
   private readonly dashboardService = inject(DashboardService);
   private readonly subscriptionService = inject(SubscriptionService);
+  private readonly paymentSettingsService = inject(PaymentSettingsService);
 
   // Crédito da assinatura — vem do SubscriptionService (REST, já carregado pelo subscriptionGuard),
   // NÃO do resumo operacional do WebSocket: o crédito não é métrica de tempo real e o payload do
@@ -74,6 +76,11 @@ export class DashboardComponent implements OnDestroy {
   // conta Stripe da própria plataforma (ver DashboardApi#getFinancialReport) — aqui só serve para
   // deixar isso visível na tela, não para decidir qual endpoint chamar.
   readonly isPlatformAdmin = this.authService.isPlatformAdmin;
+  // Pagamento online desligado (Configurações > Pagamentos): somem o card "faturamento Stripe", os
+  // saldos da Stripe e o gráfico (série só da Stripe) — fica o recebido no caixa/garçom. A conta
+  // plataforma vê sempre.
+  readonly onlinePaymentsEnabled = this.paymentSettingsService.onlinePaymentsEnabled;
+  readonly showStripeIndicators = computed(() => this.isPlatformAdmin() || this.onlinePaymentsEnabled());
   readonly revenuePresets = REVENUE_PRESETS;
 
   // As métricas administrativas (faturamento, comandas, ocupação de mesas, funcionários) só
@@ -139,6 +146,13 @@ export class DashboardComponent implements OnDestroy {
   // Stripe ainda detém (disponível + pendente); "liberado" é só a parte já disponível para saque.
   readonly stripeCurrentBalance = signal<number | null>(null);
   readonly stripeAvailableBalance = signal<number | null>(null);
+  // Card "recebido no caixa e garçom": pagamentos registrados pela equipe no período, pelo valor
+  // cheio (a taxa da Comanda Única desses fica pendente e é cobrada em outra cobrança online).
+  readonly cashRegisterAmount = signal<number | null>(null);
+  readonly cashWaiterAmount = signal<number | null>(null);
+  readonly staffReceivedTotal = computed(() => (this.cashRegisterAmount() ?? 0) + (this.cashWaiterAmount() ?? 0));
+  // Faturamento total do período: bruto da Stripe (revenueTotal) + recebido pela equipe.
+  readonly overallRevenueTotal = computed(() => this.revenueTotal() + this.staffReceivedTotal());
   readonly isLoadingStripeBalance = signal(false);
 
   readonly floorPlans = signal<FloorPlanResponse[]>([]);
@@ -305,6 +319,8 @@ export class DashboardComponent implements OnDestroy {
       next: (report) => {
         this.revenueSeries.set(report.dailySeries);
         this.financialSummary.set(report.summary);
+        this.cashRegisterAmount.set(report.cashRegisterAmount ?? null);
+        this.cashWaiterAmount.set(report.cashWaiterAmount ?? null);
         this.isLoadingRevenue.set(false);
         this.stripeCurrentBalance.set(report.balance.currentAmount);
         this.stripeAvailableBalance.set(report.balance.availableAmount);
@@ -314,6 +330,8 @@ export class DashboardComponent implements OnDestroy {
         this.isLoadingRevenue.set(false);
         this.revenueError.set('Não foi possível carregar o faturamento do período selecionado.');
         this.financialSummary.set(null);
+        this.cashRegisterAmount.set(null);
+        this.cashWaiterAmount.set(null);
         this.stripeCurrentBalance.set(null);
         this.stripeAvailableBalance.set(null);
         this.isLoadingStripeBalance.set(false);

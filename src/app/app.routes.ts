@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { homeGuard } from './core/guards/home.guard';
+import { onlinePaymentsGuard } from './core/guards/online-payments.guard';
 import { platformAdminGuard } from './core/guards/platform-admin.guard';
 import { profileGuard } from './core/guards/profile.guard';
 import { profileOrPlatformAdminGuard } from './core/guards/profile-or-platform-admin.guard';
@@ -139,7 +140,7 @@ export const routes: Routes = [
       },
       {
         path: 'financeiro',
-        canActivate: [profileOrPlatformAdminGuard(['ADMIN', 'OWNER', 'MANAGER'])],
+        canActivate: [profileOrPlatformAdminGuard(['ADMIN', 'OWNER', 'MANAGER']), onlinePaymentsGuard],
         loadComponent: () =>
           import('./features/admin/pages/extrato-financeiro/extrato-financeiro.component').then((m) => m.ExtratoFinanceiroComponent),
         title: 'Extrato Financeiro — Comanda Única'

@@ -3,6 +3,7 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { AuthService, CompanyAccessResponse } from '../../../auth/services/auth.service';
 import { AccountsService } from '../../../../shared/services/accounts.service';
 import { ConsumptionPassesService } from '../../../../shared/services/consumption-passes.service';
+import { PaymentSettingsService } from '../../../../shared/services/payment-settings.service';
 import { AddCompanyModalComponent } from '../../../../shared/components/add-company-modal/add-company-modal.component';
 import { resolveHomeRoute } from '../../../../core/guards/home.guard';
 import { ADMIN_MENU_SEGMENTS, MenuItem, MenuSegment } from '../../config/menu.config';
@@ -27,6 +28,7 @@ export class AdminLayoutComponent {
   private readonly accountsService = inject(AccountsService);
   private readonly notificationsService = inject(NotificationsService);
   private readonly consumptionPassesService = inject(ConsumptionPassesService);
+  private readonly paymentSettingsService = inject(PaymentSettingsService);
   private readonly router = inject(Router);
 
   private readonly timeFormatter = brDateTimeFormat({ timeStyle: 'short' });
@@ -46,7 +48,13 @@ export class AdminLayoutComponent {
   readonly menuSegments = computed<MenuSegment[]>(() =>
     ADMIN_MENU_SEGMENTS.map((segment) => ({
       ...segment,
-      items: this.filterMenuByProfile(segment.items, this.profileCode(), this.isPlatformAdmin(), this.consumptionPassesService.enabled())
+      items: this.filterMenuByProfile(
+        segment.items,
+        this.profileCode(),
+        this.isPlatformAdmin(),
+        this.consumptionPassesService.enabled(),
+        this.paymentSettingsService.onlinePaymentsEnabled()
+      )
     })).filter((segment) => segment.items.length > 0)
   );
 
@@ -79,6 +87,7 @@ export class AdminLayoutComponent {
   constructor() {
     this.syncProfileImages();
     this.consumptionPassesService.refreshEnabled();
+    this.paymentSettingsService.refreshEnabled();
   }
 
   get userInitials(): string {
@@ -173,15 +182,17 @@ export class AdminLayoutComponent {
     items: MenuItem[],
     profileCode: string | null,
     isPlatformAdmin: boolean,
-    consumptionPassEnabled: boolean
+    consumptionPassEnabled: boolean,
+    onlinePaymentsEnabled: boolean
   ): MenuItem[] {
     return items
       .filter((item) => !item.roles || (!!profileCode && item.roles.includes(profileCode)))
       .filter((item) => !item.platformAdminOnly || isPlatformAdmin)
       .filter((item) => !item.requiresConsumptionPass || consumptionPassEnabled)
+      .filter((item) => !item.requiresOnlinePayments || onlinePaymentsEnabled || isPlatformAdmin)
       .map((item) =>
         item.children
-          ? { ...item, children: this.filterMenuByProfile(item.children, profileCode, isPlatformAdmin, consumptionPassEnabled) }
+          ? { ...item, children: this.filterMenuByProfile(item.children, profileCode, isPlatformAdmin, consumptionPassEnabled, onlinePaymentsEnabled) }
           : item
       )
       .filter((item) => !item.children || item.children.length > 0);

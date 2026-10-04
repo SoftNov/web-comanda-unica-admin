@@ -94,6 +94,9 @@ export interface StripeFinancialReport {
   balance: StripeAccountBalance;
   summary: StripeFinancialSummary;
   dailySeries: RevenuePoint[];
+  // Recebido pela equipe no período (valor cheio, fora da Stripe) — null para o platform admin.
+  cashRegisterAmount: number | null;
+  cashWaiterAmount: number | null;
   transactions: StripeFinancialTransaction[];
   page: StripeFinancialPage;
 }
