@@ -11,8 +11,8 @@ import {
   SubscriptionStatusResponse
 } from '../../../../shared/services/subscription.service';
 import { parseApiDate } from '../../../../shared/utils/datetime.util';
-import { loadStripeJs } from '../../../../shared/utils/stripe-js.loader';
-import { BillingCardFormComponent } from './billing-card-form.component';
+import { loadStripeJs, stripeErrorMessage } from '../../../../shared/utils/stripe-js.loader';
+import { BillingCardFormComponent, BillingCardFormSummary } from './billing-card-form.component';
 
 type ViewMode = 'offer' | 'active' | 'past-due';
 
@@ -44,6 +44,9 @@ export class AssinaturaComponent {
   readonly actionSuccess = signal<string | null>(null);
   // Formulário de cadastro/troca do cartão de cobrança aberto.
   readonly cardFormOpen = signal(false);
+  // Destaca o cartão de cobrança por alguns segundos logo depois de salvar.
+  readonly cardJustSaved = signal(false);
+  private cardJustSavedTimer: ReturnType<typeof setTimeout> | null = null;
   // Assinatura pedida antes de haver cartão: depois de salvar o cartão, assina direto.
   // undefined = nenhuma; null = faixa da quantidade de mesas atual; número = faixa escolhida.
   private readonly pendingSubscription = signal<number | null | undefined>(undefined);
@@ -170,6 +173,35 @@ export class AssinaturaComponent {
     this.cardFormOpen.set(false);
   }
 
+  cardFormHeading(): string {
+    if (this.pendingSubscription() !== undefined) {
+      return 'Último passo: cartão de cobrança';
+    }
+    return this.status()?.paymentMethod ? 'Trocar cartão de cobrança' : 'Cadastrar cartão de cobrança';
+  }
+
+  // Contexto mostrado no topo do formulário: o plano que vai ser assinado logo depois de salvar, ou
+  // o aviso de que a cobrança pendente vai ser refeita no cartão novo.
+  readonly cardFormSummary = computed<BillingCardFormSummary | null>(() => {
+    const pending = this.pendingSubscription();
+    if (pending !== undefined) {
+      const plan = pending != null ? this.status()?.availablePlans?.find((p) => p.upToTables === pending) : undefined;
+      return {
+        title: plan ? `Plano até ${plan.upToTables} mesas` : `Plano para ${this.tableCountLabel()}`,
+        amount: plan ? this.currencyFormatter.format(plan.monthlyAmount) : this.planMonthlyLabel(),
+        note: 'A primeira mensalidade é cobrada assim que o cartão for salvo. Renovação mensal, cancele quando quiser.'
+      };
+    }
+    if (this.mode() === 'past-due') {
+      return {
+        title: 'Pagamento pendente',
+        amount: this.planMonthlyLabel(),
+        note: 'Ao salvar, a cobrança em aberto é tentada de novo no cartão novo.'
+      };
+    }
+    return null;
+  });
+
   cardFormSubmitLabel(): string {
     if (this.pendingSubscription() !== undefined) {
       return 'Salvar cartão e assinar';
@@ -180,6 +212,7 @@ export class AssinaturaComponent {
   onCardSaved(status: SubscriptionStatusResponse): void {
     this.status.set(status);
     this.cardFormOpen.set(false);
+    this.flashSavedCard();
     const pending = this.pendingSubscription();
     this.pendingSubscription.set(undefined);
     if (pending !== undefined) {
@@ -189,6 +222,14 @@ export class AssinaturaComponent {
     this.actionSuccess.set(status.status === 'PAST_DUE'
       ? 'Cartão salvo. Se o pagamento pendente não for aprovado em instantes, confira o cartão com o banco.'
       : 'Cartão de cobrança salvo. As próximas cobranças serão lançadas nele.');
+  }
+
+  private flashSavedCard(): void {
+    if (this.cardJustSavedTimer) {
+      clearTimeout(this.cardJustSavedTimer);
+    }
+    this.cardJustSaved.set(true);
+    this.cardJustSavedTimer = setTimeout(() => this.cardJustSaved.set(false), 2400);
   }
 
   private doSubscribe(upToTables?: number): void {
@@ -223,13 +264,16 @@ export class AssinaturaComponent {
       return;
     }
     loadStripeJs()
-      .then((Stripe) => Stripe(publishableKey).confirmCardPayment(clientSecret, {
+      .then((Stripe) => Stripe(publishableKey, { locale: 'pt-BR' }).confirmCardPayment(clientSecret, {
         payment_method: res.paymentMethodId ?? undefined
       }))
       .then((result: any) => {
         this.subscribingTarget.set(null);
         if (result.error) {
-          this.actionError.set(`${result.error.message ?? 'O pagamento não foi aprovado.'} Confira o cartão ou cadastre outro e tente novamente.`);
+          this.actionError.set(result.error.type === 'card_error'
+            ? `${result.error.message ?? 'O pagamento não foi aprovado.'} Confira o cartão ou cadastre outro e tente novamente.`
+            : stripeErrorMessage(result.error, 'Não foi possível processar o pagamento agora por um problema no processamento '
+              + 'de pagamentos. Tente novamente mais tarde ou fale com o suporte da Comanda Única.'));
           return;
         }
         this.actionSuccess.set('Pagamento confirmado! Ativando sua assinatura…');

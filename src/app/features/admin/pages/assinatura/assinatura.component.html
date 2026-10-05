@@ -206,35 +206,44 @@
       </dl>
     }
 
-    <div class="billing-card">
-      <div class="billing-card__info">
-        <span class="material-icons" aria-hidden="true">credit_card</span>
-        @if (status()?.paymentMethod; as pm) {
-          <div>
-            <p class="billing-card__title">{{ cardLabel(pm) }}</p>
-            <p class="billing-card__detail">
-              Validade {{ cardExpiryLabel(pm) }} · usado na mensalidade e nas taxas da Comanda Única
-            </p>
-          </div>
-        } @else {
-          <div>
-            <p class="billing-card__title">Nenhum cartão de cobrança cadastrado</p>
-            <p class="billing-card__detail">
-              Cadastre um cartão de crédito para assinar. Ele também é usado na cobrança semanal das
-              taxas que o crédito da assinatura não cobrir.
-            </p>
-          </div>
+    @if (status()?.paymentMethod || !cardFormOpen()) {
+      <div class="billing-card" [class.billing-card--saved]="cardJustSaved()" [class.billing-card--empty]="!status()?.paymentMethod">
+        <div class="billing-card__info">
+          <span class="material-icons billing-card__icon" aria-hidden="true">
+            {{ cardJustSaved() ? 'check_circle' : 'credit_card' }}
+          </span>
+          @if (status()?.paymentMethod; as pm) {
+            <div>
+              <p class="billing-card__title">
+                {{ cardLabel(pm) }}
+                @if (cardFormOpen()) { <span class="billing-card__tag">Cartão atual</span> }
+              </p>
+              <p class="billing-card__detail">
+                Validade {{ cardExpiryLabel(pm) }} · usado na mensalidade e nas taxas da Comanda Única
+              </p>
+            </div>
+          } @else {
+            <div>
+              <p class="billing-card__title">Nenhum cartão de cobrança cadastrado</p>
+              <p class="billing-card__detail">
+                Cadastre um cartão de crédito para assinar. Ele também é usado na cobrança semanal das
+                taxas que o crédito da assinatura não cobrir.
+              </p>
+            </div>
+          }
+        </div>
+        @if (!cardFormOpen()) {
+          <button type="button" class="btn btn--ghost btn--sm" appRipple [disabled]="isSubscribing()" (click)="openCardForm()">
+            <span class="material-icons" aria-hidden="true">{{ status()?.paymentMethod ? 'sync' : 'add_card' }}</span>
+            {{ status()?.paymentMethod ? 'Trocar cartão' : 'Cadastrar cartão' }}
+          </button>
         }
       </div>
-      @if (!cardFormOpen()) {
-        <button type="button" class="btn btn--ghost btn--sm" appRipple [disabled]="isSubscribing()" (click)="openCardForm()">
-          {{ status()?.paymentMethod ? 'Trocar cartão' : 'Cadastrar cartão' }}
-        </button>
-      }
-    </div>
+    }
 
     @if (cardFormOpen()) {
-      <app-billing-card-form [submitLabel]="cardFormSubmitLabel()"
+      <app-billing-card-form [heading]="cardFormHeading()" [summary]="cardFormSummary()"
+                             [submitLabel]="cardFormSubmitLabel()"
                              (saved)="onCardSaved($event)" (cancel)="closeCardForm()" />
     }
 

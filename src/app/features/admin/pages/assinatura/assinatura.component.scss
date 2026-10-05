@@ -413,8 +413,47 @@
 }
 
 .billing-card__title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   font-weight: 600;
   color: var(--color-text);
+}
+
+.billing-card__tag {
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-muted);
+}
+
+.billing-card {
+  transition: border-color var(--transition-base), background var(--transition-base);
+
+  .btn .material-icons {
+    font-size: 16px;
+    vertical-align: -3px;
+    margin-right: 4px;
+  }
+}
+
+// Sem cartão: borda tracejada, convida a cadastrar.
+.billing-card--empty {
+  border-style: dashed;
+  border-color: var(--color-border-strong);
+}
+
+// Destaque rápido logo depois de salvar o cartão.
+.billing-card--saved {
+  border-color: rgba(34, 197, 94, 0.5);
+  background: var(--color-success-bg);
+
+  .billing-card__icon {
+    color: var(--color-success);
+  }
 }
 
 .billing-card__detail {
