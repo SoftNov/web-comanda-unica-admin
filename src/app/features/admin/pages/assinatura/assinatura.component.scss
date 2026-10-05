@@ -385,3 +385,40 @@
 .credit-movements__value--in {
   color: var(--color-success);
 }
+
+// --- cartão de cobrança salvo ------------------------------------------
+.billing-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.billing-card__info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+  flex: 1 1 260px;
+
+  .material-icons {
+    color: var(--color-accent);
+    flex-shrink: 0;
+  }
+}
+
+.billing-card__title {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.billing-card__detail {
+  margin-top: 2px;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}

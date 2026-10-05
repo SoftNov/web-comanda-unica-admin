@@ -44,7 +44,8 @@
   } @else if (mode() === 'past-due') {
     <div class="form-alert form-alert--error" role="alert">
       <span class="material-icons" aria-hidden="true">warning_amber</span>
-      O pagamento da renovação não foi concluído. Regularize para manter o acesso ao sistema.
+      O pagamento da renovação não foi aprovado no cartão salvo. Atualize o cartão de cobrança para
+      manter o acesso ao sistema.
     </div>
   }
 
@@ -78,8 +79,8 @@
     <ul class="sub-card__benefits">
       <li><span class="material-icons" aria-hidden="true">check</span> Comandas, mesas, cardápio e pedidos</li>
       <li><span class="material-icons" aria-hidden="true">check</span> Dashboard e relatórios financeiros</li>
-      <li><span class="material-icons" aria-hidden="true">check</span> Renovação automática todo mês — sem precisar acessar o Stripe</li>
-      <li><span class="material-icons" aria-hidden="true">check</span> Cobrança segura pelo Stripe — nenhum dado de cartão passa pela Comanda Única</li>
+      <li><span class="material-icons" aria-hidden="true">check</span> Renovação automática todo mês no cartão de cobrança salvo</li>
+      <li><span class="material-icons" aria-hidden="true">check</span> Cartão guardado com segurança pelo Stripe — número e CVV nunca passam pela Comanda Única</li>
     </ul>
 
     @if (mode() === 'active' && status()?.planOutdated) {
@@ -166,9 +167,9 @@
                 <button type="button" class="btn btn--sm" appRipple
                         [class.btn--primary]="plan.upToTables === recommendedUpToTables()"
                         [class.btn--ghost]="plan.upToTables !== recommendedUpToTables()"
-                        [disabled]="isRedirectingTo('plan-' + plan.upToTables)"
+                        [disabled]="isSubscribing() || cardFormOpen()"
                         (click)="subscribe(plan.upToTables)">
-                  {{ isRedirectingTo('plan-' + plan.upToTables) ? 'Abrindo…' : 'Assinar este plano' }}
+                  {{ isSubscribingTo('plan-' + plan.upToTables) ? 'Assinando…' : 'Assinar este plano' }}
                 </button>
               }
             </div>
@@ -205,6 +206,38 @@
       </dl>
     }
 
+    <div class="billing-card">
+      <div class="billing-card__info">
+        <span class="material-icons" aria-hidden="true">credit_card</span>
+        @if (status()?.paymentMethod; as pm) {
+          <div>
+            <p class="billing-card__title">{{ cardLabel(pm) }}</p>
+            <p class="billing-card__detail">
+              Validade {{ cardExpiryLabel(pm) }} · usado na mensalidade e nas taxas da Comanda Única
+            </p>
+          </div>
+        } @else {
+          <div>
+            <p class="billing-card__title">Nenhum cartão de cobrança cadastrado</p>
+            <p class="billing-card__detail">
+              Cadastre um cartão de crédito para assinar. Ele também é usado na cobrança semanal das
+              taxas que o crédito da assinatura não cobrir.
+            </p>
+          </div>
+        }
+      </div>
+      @if (!cardFormOpen()) {
+        <button type="button" class="btn btn--ghost btn--sm" appRipple [disabled]="isSubscribing()" (click)="openCardForm()">
+          {{ status()?.paymentMethod ? 'Trocar cartão' : 'Cadastrar cartão' }}
+        </button>
+      }
+    </div>
+
+    @if (cardFormOpen()) {
+      <app-billing-card-form [submitLabel]="cardFormSubmitLabel()"
+                             (saved)="onCardSaved($event)" (cancel)="closeCardForm()" />
+    }
+
     @if (actionError()) {
       <div class="form-alert form-alert--error" role="alert">
         <span class="material-icons" aria-hidden="true">error_outline</span>
@@ -212,32 +245,34 @@
       </div>
     }
 
+    @if (actionSuccess()) {
+      <div class="form-alert form-alert--success" role="status">
+        <span class="material-icons" aria-hidden="true">check_circle</span>
+        {{ actionSuccess() }}
+      </div>
+    }
+
     <div class="sub-card__actions">
-      @if (mode() === 'active') {
-        <button type="button" class="btn btn--primary" appRipple [disabled]="isRedirectingTo('manage')" (click)="manage()">
-          {{ isRedirectingTo('manage') ? 'Abrindo…' : 'Gerenciar pagamento' }}
+      @if (mode() === 'past-due' && !cardFormOpen()) {
+        <button type="button" class="btn btn--primary" appRipple (click)="openCardForm()">
+          Regularizar pagamento
         </button>
-      } @else if (mode() === 'past-due') {
-        <button type="button" class="btn btn--primary" appRipple [disabled]="isRedirectingTo('manage')" (click)="manage()">
-          {{ isRedirectingTo('manage') ? 'Abrindo…' : 'Regularizar pagamento' }}
+      } @else if (mode() === 'offer' && !hasPlanPicker()) {
+        <button type="button" class="btn btn--primary" appRipple [disabled]="isSubscribing() || cardFormOpen()" (click)="subscribe()">
+          {{ isSubscribingTo('default') ? 'Assinando…' : 'Assinar agora' }}
         </button>
-      } @else {
-        @if (!hasPlanPicker()) {
-          <button type="button" class="btn btn--primary" appRipple [disabled]="isRedirectingTo('default')" (click)="subscribe()">
-            {{ isRedirectingTo('default') ? 'Abrindo…' : 'Assinar agora' }}
-          </button>
-        }
-        @if (status()?.manageable) {
-          <button type="button" class="btn btn--ghost" [disabled]="isRedirectingTo('manage')" (click)="manage()">
-            {{ isRedirectingTo('manage') ? 'Abrindo…' : 'Gerenciar pagamento' }}
-          </button>
-        }
+      }
+      @if (status()?.manageable && mode() !== 'offer') {
+        <button type="button" class="btn btn--ghost" [disabled]="isRedirectingTo('manage')" (click)="manage()">
+          {{ isRedirectingTo('manage') ? 'Abrindo…' : 'Faturas e cancelamento' }}
+        </button>
       }
     </div>
 
     <p class="sub-card__fineprint">
-      Você será levado para uma página segura do Stripe para concluir. A cobrança é mensal com
-      renovação automática e pode ser cancelada a qualquer momento pelo painel de pagamento.
+      A mensalidade é cobrada automaticamente no cartão de cobrança salvo, com renovação mensal, e
+      pode ser cancelada a qualquer momento em "Faturas e cancelamento". As taxas da Comanda Única que
+      o crédito da assinatura não cobrir também são lançadas nesse cartão, semanalmente.
     </p>
   </div>
 

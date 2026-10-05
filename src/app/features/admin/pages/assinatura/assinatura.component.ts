@@ -5,17 +5,21 @@ import { AuthService } from '../../../auth/services/auth.service';
 import {
   CreditMovement,
   CreditMovementType,
+  SavedPaymentMethod,
+  SubscribeResponse,
   SubscriptionService,
   SubscriptionStatusResponse
 } from '../../../../shared/services/subscription.service';
 import { parseApiDate } from '../../../../shared/utils/datetime.util';
+import { loadStripeJs } from '../../../../shared/utils/stripe-js.loader';
+import { BillingCardFormComponent } from './billing-card-form.component';
 
 type ViewMode = 'offer' | 'active' | 'past-due';
 
 @Component({
   selector: 'app-admin-assinatura',
   standalone: true,
-  imports: [RippleDirective],
+  imports: [RippleDirective, BillingCardFormComponent],
   templateUrl: './assinatura.component.html',
   styleUrl: './assinatura.component.scss'
 })
@@ -30,14 +34,19 @@ export class AssinaturaComponent {
   readonly loadError = signal(false);
   // Funcionário sem perfil OWNER/ADMIN — não pode gerenciar a assinatura (o backend responde 403).
   readonly noPermission = signal(false);
-  // Qual botão de redirecionamento (Stripe Checkout/Portal) está com a requisição em voo — 'manage'
-  // (Gerenciar/Regularizar pagamento), 'default' (Assinar agora, sem seletor de faixa) ou
-  // 'plan-<upToTables>' (um card específico do seletor). Null = nenhum. Guardar QUAL botão em vez de
-  // um boolean único evita que todo botão da tela mude de rótulo/fique "em voo" junto quando só um
-  // foi clicado (ex.: clicar em "Assinar este plano" de uma faixa não pode deixar "Gerenciar
-  // pagamento" e as outras faixas do seletor com a mesma aparência de carregando).
+  // Botão do Customer Portal (faturas / cancelamento) com a requisição em voo — 'manage' ou null.
   readonly redirectingTarget = signal<string | null>(null);
+  // Qual botão de assinar está em voo — 'default' (Assinar agora, sem seletor de faixa) ou
+  // 'plan-<upToTables>' (um card do seletor). Guardar QUAL botão evita que todos mudem de rótulo
+  // juntos quando só um foi clicado.
+  readonly subscribingTarget = signal<string | null>(null);
   readonly actionError = signal<string | null>(null);
+  readonly actionSuccess = signal<string | null>(null);
+  // Formulário de cadastro/troca do cartão de cobrança aberto.
+  readonly cardFormOpen = signal(false);
+  // Assinatura pedida antes de haver cartão: depois de salvar o cartão, assina direto.
+  // undefined = nenhuma; null = faixa da quantidade de mesas atual; número = faixa escolhida.
+  private readonly pendingSubscription = signal<number | null | undefined>(undefined);
   // Mesma lógica do redirectingTarget, para as trocas de plano: 'sync' (botão "Atualizar plano" do
   // banner planOutdated) ou 'plan-<upToTables>' (confirmação de uma faixa do seletor).
   readonly changingPlanTarget = signal<string | null>(null);
@@ -126,16 +135,132 @@ export class AssinaturaComponent {
 
   // Sem argumento: assina a faixa da quantidade de mesas cadastrada hoje (botão principal). Com
   // upToTables: assina a faixa escolhida no seletor de plano (modo "offer" — ver plan-picker no
-  // template).
+  // template). A mensalidade é cobrada no cartão salvo; sem cartão, abre o cadastro primeiro e
+  // assina logo depois de salvar.
   subscribe(upToTables?: number): void {
-    const target = upToTables != null ? `plan-${upToTables}` : 'default';
-    this.startRedirect(target, () => this.subscriptionService.createCheckoutSession(upToTables));
+    this.actionError.set(null);
+    this.actionSuccess.set(null);
+    if (!this.status()?.paymentMethod) {
+      this.pendingSubscription.set(upToTables ?? null);
+      this.cardFormOpen.set(true);
+      return;
+    }
+    this.doSubscribe(upToTables);
   }
 
-  // Se o botão específico (Assinar este plano/Gerenciar pagamento/Assinar agora) está com a
-  // requisição em voo — usado para o rótulo e o [disabled] de cada botão individualmente.
   isRedirectingTo(target: string): boolean {
     return this.redirectingTarget() === target;
+  }
+
+  isSubscribingTo(target: string): boolean {
+    return this.subscribingTarget() === target;
+  }
+
+  readonly isSubscribing = computed(() => this.subscribingTarget() !== null);
+
+  openCardForm(): void {
+    this.actionError.set(null);
+    this.actionSuccess.set(null);
+    this.pendingSubscription.set(undefined);
+    this.cardFormOpen.set(true);
+  }
+
+  closeCardForm(): void {
+    this.pendingSubscription.set(undefined);
+    this.cardFormOpen.set(false);
+  }
+
+  cardFormSubmitLabel(): string {
+    if (this.pendingSubscription() !== undefined) {
+      return 'Salvar cartão e assinar';
+    }
+    return this.mode() === 'past-due' ? 'Salvar cartão e pagar' : 'Salvar cartão';
+  }
+
+  onCardSaved(status: SubscriptionStatusResponse): void {
+    this.status.set(status);
+    this.cardFormOpen.set(false);
+    const pending = this.pendingSubscription();
+    this.pendingSubscription.set(undefined);
+    if (pending !== undefined) {
+      this.doSubscribe(pending ?? undefined);
+      return;
+    }
+    this.actionSuccess.set(status.status === 'PAST_DUE'
+      ? 'Cartão salvo. Se o pagamento pendente não for aprovado em instantes, confira o cartão com o banco.'
+      : 'Cartão de cobrança salvo. As próximas cobranças serão lançadas nele.');
+  }
+
+  private doSubscribe(upToTables?: number): void {
+    const target = upToTables != null ? `plan-${upToTables}` : 'default';
+    this.subscribingTarget.set(target);
+    this.subscriptionService.subscribe(upToTables).subscribe({
+      next: (res) => {
+        this.status.set(res.subscription);
+        if (!res.requiresConfirmation) {
+          this.subscribingTarget.set(null);
+          this.actionSuccess.set('Assinatura confirmada! A mensalidade foi cobrada no cartão salvo.');
+          this.waitForActivation();
+          return;
+        }
+        this.confirmFirstPayment(res);
+      },
+      error: (error: unknown) => {
+        this.subscribingTarget.set(null);
+        const body = error instanceof HttpErrorResponse ? (error.error as { mensagem?: string } | undefined) : undefined;
+        this.actionError.set(body?.mensagem ?? 'Não foi possível concluir a assinatura agora. Tente novamente em instantes.');
+      }
+    });
+  }
+
+  // O banco pediu autenticação (3D Secure) ou recusou a 1ª tentativa: o Stripe.js abre a
+  // autenticação do banco / tenta de novo no cartão salvo. A ativação chega pelo webhook.
+  private confirmFirstPayment(res: SubscribeResponse): void {
+    const { clientSecret, publishableKey } = res;
+    if (!clientSecret || !publishableKey) {
+      this.subscribingTarget.set(null);
+      this.actionError.set('O pagamento não foi aprovado. Confira o cartão ou cadastre outro e tente novamente.');
+      return;
+    }
+    loadStripeJs()
+      .then((Stripe) => Stripe(publishableKey).confirmCardPayment(clientSecret, {
+        payment_method: res.paymentMethodId ?? undefined
+      }))
+      .then((result: any) => {
+        this.subscribingTarget.set(null);
+        if (result.error) {
+          this.actionError.set(`${result.error.message ?? 'O pagamento não foi aprovado.'} Confira o cartão ou cadastre outro e tente novamente.`);
+          return;
+        }
+        this.actionSuccess.set('Pagamento confirmado! Ativando sua assinatura…');
+        this.waitForActivation();
+      })
+      .catch(() => {
+        this.subscribingTarget.set(null);
+        this.actionError.set('Não foi possível confirmar o pagamento agora. Tente novamente em instantes.');
+      });
+  }
+
+  // A ativação definitiva vem do webhook do Stripe (invoice.paid concede o crédito) — re-busca o
+  // estado algumas vezes até a assinatura aparecer ativa.
+  private waitForActivation(attempt = 0): void {
+    const companyId = this.authService.selectedCompany()?.companyId;
+    const s = this.status();
+    if (!companyId || attempt >= 6 || (s?.status === 'ACTIVE' && !s.courtesy && s.credit)) {
+      return;
+    }
+    setTimeout(() => {
+      this.subscriptionService.refresh(companyId).subscribe({
+        next: (status) => {
+          this.status.set(status);
+          if (status.credit) {
+            this.loadMovements();
+          }
+          this.waitForActivation(attempt + 1);
+        },
+        error: () => this.waitForActivation(attempt + 1)
+      });
+    }, 2000);
   }
 
   loadMovements(): void {
@@ -225,14 +350,12 @@ export class AssinaturaComponent {
     });
   }
 
+  // Customer Portal do Stripe — faturas e cancelamento da renovação.
   manage(): void {
-    this.startRedirect('manage', () => this.subscriptionService.createPortalSession());
-  }
-
-  private startRedirect(target: string, request: () => ReturnType<SubscriptionService['createCheckoutSession']>): void {
+    const target = 'manage';
     this.redirectingTarget.set(target);
     this.actionError.set(null);
-    request().subscribe({
+    this.subscriptionService.createPortalSession().subscribe({
       next: ({ url }) => {
         window.location.href = url;
       },
@@ -242,9 +365,32 @@ export class AssinaturaComponent {
         if (this.redirectingTarget() === target) {
           this.redirectingTarget.set(null);
         }
-        this.actionError.set('Não foi possível abrir o pagamento agora. Tente novamente em instantes.');
+        this.actionError.set('Não foi possível abrir as faturas agora. Tente novamente em instantes.');
       }
     });
+  }
+
+  private static readonly BRAND_LABELS: Record<string, string> = {
+    visa: 'Visa',
+    mastercard: 'Mastercard',
+    amex: 'American Express',
+    elo: 'Elo',
+    hipercard: 'Hipercard',
+    diners: 'Diners Club',
+    discover: 'Discover',
+    jcb: 'JCB'
+  };
+
+  cardLabel(pm: SavedPaymentMethod): string {
+    const brand = pm.brand ? (AssinaturaComponent.BRAND_LABELS[pm.brand] ?? pm.brand) : 'Cartão';
+    return pm.last4 ? `${brand} •••• ${pm.last4}` : brand;
+  }
+
+  cardExpiryLabel(pm: SavedPaymentMethod): string {
+    if (pm.expMonth == null || pm.expYear == null) {
+      return '—';
+    }
+    return `${String(pm.expMonth).padStart(2, '0')}/${pm.expYear}`;
   }
 
   planMonthlyLabel(): string {

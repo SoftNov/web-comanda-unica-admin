@@ -43,8 +43,10 @@ export interface SubscriptionStatusResponse {
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
   autoRenew: boolean;
-  // Já tem Customer no Stripe — pode abrir o Customer Portal.
+  // Já tem Customer no Stripe — pode abrir o Customer Portal (faturas / cancelamento).
   manageable: boolean;
+  // Cartão de cobrança salvo (assinatura + taxas semanais). null quando nenhum foi cadastrado.
+  paymentMethod: SavedPaymentMethod | null;
   // Resumo do crédito da assinatura do período vigente. null quando nunca houve crédito
   // (cortesia / nunca assinou).
   credit: CreditSummary | null;
@@ -101,6 +103,30 @@ export interface StripeHostedLinkResponse {
   url: string;
 }
 
+// Cartão de cobrança salvo — só dados de exibição; o cartão em si fica tokenizado no Stripe.
+export interface SavedPaymentMethod {
+  brand: string | null;
+  last4: string | null;
+  expMonth: number | null;
+  expYear: number | null;
+}
+
+// SetupIntent para cadastrar/trocar o cartão no Stripe Element (espelho de SetupIntentResponse).
+export interface SetupIntentResponse {
+  clientSecret: string;
+  publishableKey: string;
+}
+
+// Resultado de POST /subscribe (espelho de SubscribeResponse). requiresConfirmation: o banco pediu
+// 3D Secure ou recusou a 1ª tentativa — o front confirma com stripe.confirmCardPayment.
+export interface SubscribeResponse {
+  requiresConfirmation: boolean;
+  clientSecret: string | null;
+  paymentMethodId: string | null;
+  publishableKey: string | null;
+  subscription: SubscriptionStatusResponse;
+}
+
 // Estado da assinatura mantido em memória para o guard não bater na API a cada navegação. É
 // re-buscado quando a empresa selecionada muda, quando passa o TTL curto, ou quando o interceptor
 // recebe um 402 (ver auth.interceptor).
@@ -131,11 +157,25 @@ export class SubscriptionService {
     this.cache.set(null);
   }
 
-  // Sem argumento: checkout usa a faixa de preço da quantidade de mesas cadastrada hoje (mesmo
-  // comportamento de antes do seletor de plano existir). Com upToTables: usa a faixa escolhida.
-  createCheckoutSession(upToTables?: number): Observable<StripeHostedLinkResponse> {
+  // Inicia o cadastro/troca do cartão de cobrança: o cartão é digitado num Stripe Element e
+  // confirmado direto com o Stripe — a API só recebe depois o id do PaymentMethod.
+  createSetupIntent(): Observable<SetupIntentResponse> {
+    return this.http.post<SetupIntentResponse>(`${this.baseUrl}/payment-method/setup-intent`, {});
+  }
+
+  savePaymentMethod(paymentMethodId: string): Observable<SubscriptionStatusResponse> {
+    return this.http.put<SubscriptionStatusResponse>(`${this.baseUrl}/payment-method`, { paymentMethodId }).pipe(
+      tap((data) => this.updateCache(data))
+    );
+  }
+
+  // Assina cobrando no cartão salvo. Sem argumento: faixa de preço da quantidade de mesas
+  // cadastrada hoje. Com upToTables: a faixa escolhida no seletor.
+  subscribe(upToTables?: number): Observable<SubscribeResponse> {
     const body = upToTables != null ? { upToTables } : {};
-    return this.http.post<StripeHostedLinkResponse>(`${this.baseUrl}/checkout-session`, body);
+    return this.http.post<SubscribeResponse>(`${this.baseUrl}/subscribe`, body).pipe(
+      tap((res) => this.updateCache(res.subscription))
+    );
   }
 
   createPortalSession(): Observable<StripeHostedLinkResponse> {
@@ -155,13 +195,15 @@ export class SubscriptionService {
   changePlan(upToTables?: number): Observable<SubscriptionStatusResponse> {
     const body = upToTables != null ? { upToTables } : {};
     return this.http.post<SubscriptionStatusResponse>(`${this.baseUrl}/change-plan`, body).pipe(
-      tap((data) => {
-        const cached = this.cache();
-        if (cached) {
-          this.cache.set({ ...cached, fetchedAt: Date.now(), data });
-        }
-      })
+      tap((data) => this.updateCache(data))
     );
+  }
+
+  private updateCache(data: SubscriptionStatusResponse): void {
+    const cached = this.cache();
+    if (cached) {
+      this.cache.set({ ...cached, fetchedAt: Date.now(), data });
+    }
   }
 
   private fetch(companyId: string): Observable<SubscriptionStatusResponse> {
