@@ -358,7 +358,7 @@ export class AssinaturaComponent {
     this.applyPlanChange(undefined, 'sync');
   }
 
-  // Seletor de plano: pede confirmação antes de trocar (a proração é cobrada). Só instancia
+  // Seletor de plano: pede confirmação antes de trocar (a mensalidade do plano novo é cobrada na hora). Só instancia
   // pendingPlan — sem chamada de rede ainda, então não mexe em changingPlanTarget.
   requestPlanChange(upToTables: number): void {
     this.changePlanMessage.set(null);
@@ -394,7 +394,7 @@ export class AssinaturaComponent {
         this.status.set(status);
         this.changingPlanTarget.set(null);
         this.pendingPlan.set(null);
-        this.changePlanMessage.set({ type: 'ok', text: 'Plano atualizado. O novo valor vale a partir da próxima mensalidade.' });
+        this.changePlanMessage.set({ type: 'ok', text: 'Plano atualizado. A mensalidade do novo plano foi cobrada no cartão e o crédito foi renovado.' });
       },
       error: (error: unknown) => {
         this.changingPlanTarget.set(null);

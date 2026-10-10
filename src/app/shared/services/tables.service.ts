@@ -48,6 +48,18 @@ export interface TablePayload {
 }
 
 export type CreateTableRequest = TablePayload;
+
+// Várias mesas iguais de uma vez, numeradas em sequência a partir de startNumber (sem ele, a API
+// continua do maior número já cadastrado).
+export interface CreateTablesBatchRequest {
+  sectorId: string;
+  quantity: number;
+  startNumber?: number;
+  capacity: number;
+  status: TableStatus;
+  allowQr: boolean;
+  notes?: string;
+}
 export type UpdateTableRequest = TablePayload;
 
 export interface TableListParams {
@@ -97,6 +109,10 @@ export class TablesService {
 
   create(payload: CreateTableRequest): Observable<RestaurantTableResponse> {
     return this.http.post<RestaurantTableResponse>(this.baseUrl, payload);
+  }
+
+  createBatch(payload: CreateTablesBatchRequest): Observable<RestaurantTableResponse[]> {
+    return this.http.post<RestaurantTableResponse[]>(`${this.baseUrl}/batch`, payload);
   }
 
   update(id: string, payload: UpdateTableRequest): Observable<RestaurantTableResponse> {

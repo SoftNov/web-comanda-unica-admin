@@ -5,6 +5,7 @@ import { Subject, debounceTime, distinctUntilChanged, forkJoin, map } from 'rxjs
 import {
   ApiErrorResponse,
   CreateTableRequest,
+  CreateTablesBatchRequest,
   RestaurantTableResponse,
   TableListParams,
   TableStatus,
@@ -23,6 +24,8 @@ import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetim
 import { AuthService } from '../../../auth/services/auth.service';
 
 const PAGE_SIZE = 12;
+// Mesmo teto da API (CreateRestaurantTableBatchRequest.MAX_QUANTITY).
+const MAX_BATCH_TABLES = 100;
 
 type ModalMode = 'create' | 'edit';
 type TabId = 'mesas' | 'setores';
@@ -86,6 +89,7 @@ export class TablesComponent {
   readonly editingTable = signal<RestaurantTableResponse | null>(null);
   readonly isSubmittingTable = signal(false);
   readonly tableFormError = signal<string | null>(null);
+  readonly maxBatchTables = MAX_BATCH_TABLES;
 
   readonly tableToRegenerateQr = signal<RestaurantTableResponse | null>(null);
   readonly isRegeneratingQr = signal(false);
@@ -105,6 +109,8 @@ export class TablesComponent {
 
   readonly tableForm = this.fb.nonNullable.group({
     sectorId: ['', Validators.required],
+    // Só no cadastro: > 1 cria várias mesas iguais, numeradas a partir de `number`.
+    quantity: this.fb.nonNullable.control(1, [Validators.required, Validators.min(1), Validators.max(MAX_BATCH_TABLES)]),
     number: this.fb.control<number | null>(null, [Validators.required, Validators.min(1)]),
     name: ['', Validators.maxLength(50)],
     capacity: this.fb.control<number | null>(null, [Validators.required, Validators.min(1)]),
@@ -285,6 +291,7 @@ export class TablesComponent {
     this.editingTable.set(null);
     this.tableFormError.set(null);
     this.tableForm.reset({
+      quantity: 1,
       sectorId: '',
       number: null,
       name: '',
@@ -301,6 +308,7 @@ export class TablesComponent {
     this.editingTable.set(table);
     this.tableFormError.set(null);
     this.tableForm.reset({
+      quantity: 1,
       sectorId: table.sectorId,
       number: table.number,
       name: table.name ?? '',
@@ -326,6 +334,22 @@ export class TablesComponent {
 
     this.tableFormError.set(null);
     this.isSubmittingTable.set(true);
+
+    if (this.tableModalMode() === 'create' && this.isBatchCreate()) {
+      this.tablesService.createBatch(this.buildBatchPayload()).subscribe({
+        next: () => {
+          this.isSubmittingTable.set(false);
+          this.isTableModalOpen.set(false);
+          this.loadTables(0);
+        },
+        error: (error: HttpErrorResponse) => {
+          this.isSubmittingTable.set(false);
+          this.tableFormError.set(this.resolveErrorMessage(error, 'table'));
+          autoDismiss(this.tableFormError, null);
+        }
+      });
+      return;
+    }
 
     if (this.tableModalMode() === 'create') {
       this.tablesService.create(this.buildTablePayload() as CreateTableRequest).subscribe({
@@ -630,6 +654,34 @@ export class TablesComponent {
     if (this.qrModalTable()?.id === updated.id) {
       this.qrModalTable.set(updated);
     }
+  }
+
+  // Cadastro em lote: quantidade > 1 no modal de nova mesa.
+  isBatchCreate(): boolean {
+    return this.tableModalMode() === 'create' && this.tableForm.controls.quantity.value > 1;
+  }
+
+  // "Mesas 10 a 14" — prévia do intervalo que o lote vai criar.
+  batchRangeLabel(): string | null {
+    const start = this.tableForm.controls.number.value;
+    const quantity = this.tableForm.controls.quantity.value;
+    if (!start || start < 1 || !quantity || quantity < 2) {
+      return null;
+    }
+    return `Serão criadas ${quantity} mesas: nº ${start} a ${start + quantity - 1}.`;
+  }
+
+  private buildBatchPayload(): CreateTablesBatchRequest {
+    const value = this.tableForm.getRawValue();
+    return {
+      sectorId: value.sectorId,
+      quantity: value.quantity,
+      startNumber: value.number ?? undefined,
+      capacity: value.capacity ?? 0,
+      status: value.status,
+      allowQr: value.allowQr,
+      notes: value.notes.trim() || undefined
+    };
   }
 
   private buildTablePayload(): CreateTableRequest {

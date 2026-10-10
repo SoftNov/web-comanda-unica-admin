@@ -273,16 +273,38 @@
   <div class="modal-backdrop">
     <div class="modal-card card" (click)="$event.stopPropagation()">
       <div class="modal-card__header">
-        <h2 class="step-heading">{{ tableModalMode() === 'create' ? 'Nova mesa' : 'Editar mesa' }}</h2>
+        <h2 class="step-heading">{{ tableModalMode() === 'create' ? (isBatchCreate() ? 'Novas mesas' : 'Nova mesa') : 'Editar mesa' }}</h2>
         <button type="button" class="icon-btn" (click)="closeTableModal()" aria-label="Fechar">
           <span class="material-icons" aria-hidden="true">close</span>
         </button>
       </div>
 
       <form (submit)="$event.preventDefault(); submitTable()" novalidate [formGroup]="tableForm">
+        @if (tableModalMode() === 'create') {
+          <div class="field">
+            <label class="field__label" for="table-quantity">Quantidade de mesas</label>
+            <div class="field__control">
+              <input
+                id="table-quantity"
+                type="number"
+                min="1"
+                [max]="maxBatchTables"
+                class="field__input"
+                [class.field__input--invalid]="tableForm.controls.quantity.invalid && tableForm.controls.quantity.touched"
+                formControlName="quantity"
+              >
+            </div>
+            @if (tableForm.controls.quantity.invalid && tableForm.controls.quantity.touched) {
+              <span class="field__error">Informe de 1 a {{ maxBatchTables }} mesas.</span>
+            } @else {
+              <span class="field__hint">Para criar várias mesas iguais de uma vez (mesmo setor e capacidade), numeradas em sequência.</span>
+            }
+          </div>
+        }
+
         <div class="field__row">
           <div class="field">
-            <label class="field__label" for="table-number">Número da mesa</label>
+            <label class="field__label" for="table-number">{{ isBatchCreate() ? 'Número da primeira mesa' : 'Número da mesa' }}</label>
             <div class="field__control">
               <input
                 id="table-number"
@@ -296,15 +318,19 @@
             </div>
             @if (tableForm.controls.number.invalid && tableForm.controls.number.touched) {
               <span class="field__error">Informe o número da mesa.</span>
+            } @else if (batchRangeLabel()) {
+              <span class="field__hint">{{ batchRangeLabel() }}</span>
             }
           </div>
 
-          <div class="field">
-            <label class="field__label" for="table-name">Nome/Apelido</label>
-            <div class="field__control">
-              <input id="table-name" type="text" class="field__input" formControlName="name" placeholder="Opcional">
+          @if (!isBatchCreate()) {
+            <div class="field">
+              <label class="field__label" for="table-name">Nome/Apelido</label>
+              <div class="field__control">
+                <input id="table-name" type="text" class="field__input" formControlName="name" placeholder="Opcional">
+              </div>
             </div>
-          </div>
+          }
         </div>
 
         <div class="field">
@@ -383,7 +409,7 @@
 
         <div class="step-actions">
           <button type="submit" class="btn btn--primary" appRipple [disabled]="isSubmittingTable()">
-            {{ isSubmittingTable() ? 'Salvando…' : 'Salvar' }}
+            {{ isSubmittingTable() ? 'Salvando…' : (isBatchCreate() ? 'Criar ' + tableForm.controls.quantity.value + ' mesas' : 'Salvar') }}
           </button>
           <button type="button" class="btn btn--ghost" (click)="closeTableModal()">Cancelar</button>
         </div>
