@@ -247,115 +247,23 @@
       </div>
 
       @if (comanda.fees; as fees) {
-        @if (fees.pendingFeeAmount > 0) {
-          <section class="comanda-section">
-            <h3 class="comanda-section__title">Taxa da Comanda Única pendente</h3>
-            <p class="field__hint">
-              Gerada por pagamento fora da Stripe (dinheiro) — será somada automaticamente à próxima
-              cobrança online deste estabelecimento.
-            </p>
-            <dl class="comanda-fees">
-              <div>
-                <dt>Valor pendente</dt>
-                <dd>{{ formatCurrency(fees.pendingFeeAmount) }}</dd>
-              </div>
-            </dl>
-          </section>
-        }
-
-        @if (fees.charges.length > 0) {
         <section class="comanda-section">
-          <h3 class="comanda-section__title">Pagamentos online</h3>
-          <p class="field__hint">Pagamentos feitos pelo cliente direto no app (cartão ou Pix).</p>
-
+          <h3 class="comanda-section__title">Taxa da Comanda Única</h3>
+          <p class="field__hint">
+            Gerada sobre os pagamentos desta comanda e cobrada semanalmente no cartão de cobrança do
+            estabelecimento (abatendo antes o crédito da assinatura).
+          </p>
           <dl class="comanda-fees">
             <div>
-              <dt>Total pago pelos clientes</dt>
-              <dd>{{ formatCurrency(fees.grossOnlineAmount) }}</dd>
+              <dt>Total de taxas</dt>
+              <dd>{{ formatCurrency(fees.platformFeeAmount) }}</dd>
+            </div>
+            <div>
+              <dt>Ainda a cobrar</dt>
+              <dd>{{ formatCurrency(fees.pendingFeeAmount) }}</dd>
             </div>
           </dl>
-
-          <div class="payment-cards">
-            @for (charge of fees.charges; track charge.id) {
-              <div class="payment-card" [class.payment-card--refundable]="canRefund() && charge.refundable">
-                <div class="payment-card__header">
-                  <span class="payment-card__method">
-                    <span class="material-icons" aria-hidden="true">{{ charge.method === 'PIX' ? 'pix' : 'credit_card' }}</span>
-                    {{ chargeMethodLabel(charge.method) }}
-                  </span>
-                  <span class="badge" [class]="chargeStatusBadgeClass(charge.status)">{{ chargeStatusLabel(charge.status) }}</span>
-                </div>
-
-                <p class="payment-card__meta">
-                  {{ charge.customerName ?? '—' }} · {{ formatDateTime(charge.paidAt) }}
-                </p>
-
-                <dl class="payment-card__stats">
-                  <div>
-                    <dt>Valor pago</dt>
-                    <dd>{{ formatCurrency(charge.amount) }}</dd>
-                  </div>
-                  <div>
-                    <dt>Já estornado</dt>
-                    <dd>{{ formatCurrency(charge.refundedAmount) }}</dd>
-                  </div>
-                  <div>
-                    <dt>Disponível</dt>
-                    <dd>{{ formatCurrency(charge.availableAmount) }}</dd>
-                  </div>
-                </dl>
-
-                <div class="payment-card__actions">
-                  <button type="button" class="btn btn--ghost btn--sm" (click)="toggleChargeDetails(charge.id)">
-                    <span class="material-icons" aria-hidden="true">{{ isChargeExpanded(charge.id) ? 'expand_less' : 'expand_more' }}</span>
-                    Ver detalhes
-                  </button>
-                  @if (canRefund() && charge.refundable) {
-                    <button type="button" class="btn btn--danger btn--sm" (click)="openRefundModal(charge)">
-                      <span class="material-icons" aria-hidden="true">undo</span>
-                      Estornar
-                    </button>
-                  }
-                </div>
-
-                @if (isChargeExpanded(charge.id)) {
-                  <div class="charge-details">
-                    <p class="field__hint">
-                      PaymentIntent: {{ charge.stripePaymentIntentId ?? '—' }}
-                      @if (charge.stripeChargeId) {
-                        <span> · Charge: {{ charge.stripeChargeId }}</span>
-                      }
-                    </p>
-                    @if (charge.refunds.length === 0) {
-                      <p class="field__hint">Nenhum estorno registrado para esta cobrança.</p>
-                    } @else {
-                      <ul class="refund-history">
-                        @for (refund of charge.refunds; track refund.id) {
-                          <li>
-                            <span class="badge" [class]="refundStatusBadgeClass(refund.status)">{{ refundStatusLabel(refund.status) }}</span>
-                            <strong>{{ formatCurrency(refund.amount) }}</strong>
-                            <span>{{ refundReasonLabel(refund.reason) }}</span>
-                            @if (refund.requestedByUserName) {
-                              <span>por {{ refund.requestedByUserName }}</span>
-                            }
-                            <span>{{ formatDateTime(refund.createdAt) }}</span>
-                            @if (refund.description) {
-                              <span class="refund-history__description">{{ refund.description }}</span>
-                            }
-                            @if (refund.failureReason) {
-                              <span class="refund-history__description refund-history__description--error">{{ refund.failureReason }}</span>
-                            }
-                          </li>
-                        }
-                      </ul>
-                    }
-                  </div>
-                }
-              </div>
-            }
-          </div>
         </section>
-        }
       }
 
       <section class="comanda-section">
@@ -403,7 +311,7 @@
                   <th>Método</th>
                   <th>Tipo</th>
                   <th>Valor</th>
-                  <th>Taxa pendente</th>
+                  <th>Taxa Comanda Única</th>
                   <th>Horário</th>
                 </tr>
               </thead>
@@ -426,8 +334,8 @@
 
       @if (comanda.status === 'OPEN') {
         <section class="comanda-section">
-          <h3 class="comanda-section__title">Registrar pagamento em dinheiro</h3>
-          <p class="field__hint">Use quando o cliente optar por pagar em dinheiro no caixa ou diretamente com o garçom, em vez de pelo app.</p>
+          <h3 class="comanda-section__title">Registrar pagamento</h3>
+          <p class="field__hint">Registre o que o cliente pagou no caixa ou com o garçom (dinheiro, Pix ou maquininha do estabelecimento).</p>
 
           <form (submit)="$event.preventDefault(); submitPayment()" novalidate [formGroup]="paymentForm">
             <div class="field__row">
@@ -467,8 +375,8 @@
                 <label class="field__label" for="payment-method">Onde foi pago</label>
                 <div class="field__control">
                   <select id="payment-method" class="field__input" formControlName="method">
-                    <option value="CASH_REGISTER">Dinheiro no caixa</option>
-                    <option value="CASH_WAITER">Dinheiro com o garçom</option>
+                    <option value="CASH_REGISTER">No caixa</option>
+                    <option value="CASH_WAITER">Com o garçom</option>
                   </select>
                 </div>
               </div>
@@ -525,123 +433,3 @@
   </div>
 }
 
-@if (chargeToRefund(); as charge) {
-  <div class="modal-backdrop">
-    <div class="modal-card card" (click)="$event.stopPropagation()">
-      @if (!confirmingRefund()) {
-        <div class="modal-card__header">
-          <h2 class="step-heading">Estornar pagamento</h2>
-          <button type="button" class="icon-btn" (click)="cancelRefundModal()" aria-label="Fechar">
-            <span class="material-icons" aria-hidden="true">close</span>
-          </button>
-        </div>
-
-        <form (submit)="$event.preventDefault(); askRefundConfirmation()" novalidate [formGroup]="refundForm">
-          <p class="field__hint">Disponível para estorno: <strong>{{ formatCurrency(charge.availableAmount) }}</strong></p>
-
-          <div class="field">
-            <label class="field__label">Tipo</label>
-            <div class="refund-type-options">
-              <label class="refund-type-option">
-                <input type="radio" name="refund-type" value="TOTAL" [checked]="refundForm.controls.type.value === 'TOTAL'" (change)="onRefundTypeChange('TOTAL')">
-                Total
-              </label>
-              <label class="refund-type-option">
-                <input type="radio" name="refund-type" value="PARTIAL" [checked]="refundForm.controls.type.value === 'PARTIAL'" (change)="onRefundTypeChange('PARTIAL')">
-                Parcial
-              </label>
-            </div>
-          </div>
-
-          <div class="field">
-            <label class="field__label" for="refund-amount">Valor</label>
-            <div class="field__control">
-              <input
-                id="refund-amount"
-                type="number"
-                min="0.01"
-                step="0.01"
-                [max]="charge.availableAmount"
-                class="field__input"
-                [class.field__input--invalid]="refundForm.controls.amount.invalid && refundForm.controls.amount.touched"
-                formControlName="amount"
-                [readOnly]="refundForm.controls.type.value === 'TOTAL'"
-                placeholder="0,00"
-              >
-            </div>
-            @if (refundForm.controls.amount.invalid && refundForm.controls.amount.touched) {
-              <span class="field__error">Informe um valor maior que zero e até o disponível.</span>
-            }
-          </div>
-
-          <div class="field">
-            <label class="field__label" for="refund-reason">Motivo</label>
-            <div class="field__control">
-              <select id="refund-reason" class="field__input" formControlName="reason">
-                <option value="CUSTOMER_REQUEST">Solicitação do cliente</option>
-                <option value="ORDER_CANCELLED">Pedido cancelado</option>
-                <option value="DUPLICATE_CHARGE">Cobrança duplicada</option>
-                <option value="OPERATIONAL_ERROR">Erro operacional</option>
-                <option value="OTHER">Outro</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="field">
-            <label class="field__label" for="refund-description">Observação (opcional)</label>
-            <div class="field__control">
-              <textarea id="refund-description" class="field__input" rows="2" maxlength="500" formControlName="description"></textarea>
-            </div>
-          </div>
-
-          @if (refundError()) {
-            <div class="form-alert form-alert--error" role="alert">
-              <span class="material-icons" aria-hidden="true">error_outline</span>
-              {{ refundError() }}
-            </div>
-          }
-
-          <div class="step-actions">
-            <button type="button" class="btn btn--ghost" (click)="cancelRefundModal()">Cancelar</button>
-            <button type="submit" class="btn btn--danger">Continuar</button>
-          </div>
-        </form>
-      } @else {
-        <div class="modal-card__header">
-          <h2 class="step-heading">Confirmar estorno?</h2>
-        </div>
-
-        <p class="field__hint">Você está prestes a estornar:</p>
-        <dl class="comanda-summary__stats">
-          <div>
-            <dt>Método</dt>
-            <dd>{{ chargeMethodLabel(charge.method) }}</dd>
-          </div>
-          <div>
-            <dt>Valor</dt>
-            <dd>{{ formatCurrency(refundForm.getRawValue().amount ?? 0) }}</dd>
-          </div>
-          <div>
-            <dt>Motivo</dt>
-            <dd>{{ refundReasonLabel(refundForm.getRawValue().reason) }}</dd>
-          </div>
-        </dl>
-        <p class="field__hint">Essa operação não poderá ser desfeita.</p>
-
-        @if (refundError()) {
-          <div class="form-alert form-alert--error" role="alert">
-            <span class="material-icons" aria-hidden="true">error_outline</span>
-            {{ refundError() }}
-          </div>
-        }
-
-        <div class="step-actions">
-          <button type="button" class="btn btn--ghost" [disabled]="isSubmittingRefund()" (click)="cancelRefundConfirmation()">Cancelar</button>
-          <button type="button" class="btn btn--danger" [disabled]="isSubmittingRefund()" (click)="confirmRefund()">
-            {{ isSubmittingRefund() ? 'Estornando…' : 'Confirmar estorno' }}
-          </button>
-        </div>
-      }
-    </div>
-  </div>
-}

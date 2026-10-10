@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -17,9 +17,8 @@ export type ComandaDisplayStatus = 'OPEN' | 'OPEN_PARTIAL' | 'CLOSED';
 export type ComandaOrderStatus = 'RECEIVED' | 'IN_PREPARATION' | 'READY' | 'DELIVERED' | 'CLOSED' | 'CANCELLED';
 export type ComandaPaymentType = 'FULL' | 'PARTIAL' | 'OWN_BILL';
 export type ComandaPaymentMethod = 'ONLINE' | 'CASH_REGISTER' | 'CASH_WAITER';
-export type ComandaChargeMethod = 'CREDIT_CARD' | 'PIX';
-// Métodos aceitos para registro manual (ver ComandaApi#registerPayment no backend) — ONLINE é
-// exclusivo do fluxo do app do cliente, não pode ser selecionado pela equipe.
+// Métodos aceitos para registro (ver ComandaApi#registerPayment no backend) — ONLINE só existe em
+// pagamentos antigos, de quando o cardápio processava pagamentos.
 export type ManualComandaPaymentMethod = Extract<ComandaPaymentMethod, 'CASH_REGISTER' | 'CASH_WAITER'>;
 
 export interface ComandaOrderItemResponse {
@@ -47,64 +46,16 @@ export interface ComandaPaymentResponse {
   // Parcela de amount que é o valor base (sem a taxa da plataforma embutida) — só para auditoria.
   baseAmount?: number;
   paidAt: string;
-  // Taxa da Comanda Única gerada por este pagamento fora da Stripe — nulo para pagamentos online
-  // (a taxa já sai direto da cobrança Stripe, ver ComandaChargeFeeResponse.platformFeeAmount).
+  // Taxa da Comanda Única gerada por este pagamento (cobrada na cobrança semanal) — nulo quando
+  // não gerou taxa.
   pendingFeeAmount?: number;
 }
 
-// PAID/PARTIALLY_REFUNDED/REFUNDED — derivado pelo backend (ver PaymentChargeDisplayStatus),
-// nunca o status bruto do PaymentIntent.
-export type ComandaChargeDisplayStatus = 'PAID' | 'PARTIALLY_REFUNDED' | 'REFUNDED';
-export type RefundReason = 'CUSTOMER_REQUEST' | 'ORDER_CANCELLED' | 'DUPLICATE_CHARGE' | 'OPERATIONAL_ERROR' | 'OTHER';
-export type RefundStatus = 'PROCESSING' | 'SUCCEEDED' | 'FAILED' | 'CANCELED';
-
-export interface PaymentRefundHistoryResponse {
-  id: string;
-  amount: number;
-  reason: RefundReason;
-  description?: string;
-  status: RefundStatus;
-  requestedByUserId?: string;
-  requestedByUserName?: string;
-  stripeRefundId?: string;
-  failureReason?: string;
-  createdAt: string;
-  completedAt?: string;
-}
-
-export interface ComandaChargeFeeResponse {
-  id: string;
-  customerName?: string;
-  method: ComandaChargeMethod;
-  type: ComandaPaymentType;
-  amount: number;
-  // Nulos enquanto o Stripe não confirmou a repartição (webhook), ou em cobranças antigas.
-  stripeFeeAmount?: number;
-  platformFeeAmount?: number;
-  // Parcela de platformFeeAmount que é taxa PENDENTE de pagamentos manuais anteriores, liquidada
-  // junto nesta cobrança — nulo/zero quando esta cobrança não reservou nenhuma taxa pendente.
-  pendingFeeAmountIncluded?: number;
-  netAmount?: number;
-  paidAt: string;
-  stripePaymentIntentId?: string;
-  stripeChargeId?: string;
-  status: ComandaChargeDisplayStatus;
-  refundedAmount: number;
-  availableAmount: number;
-  refundable: boolean;
-  refunds: PaymentRefundHistoryResponse[];
-}
-
+// Taxas da Comanda Única sobre os pagamentos da comanda (espelho de ComandaFeesResponse).
 export interface ComandaFeesResponse {
-  grossOnlineAmount: number;
-  stripeFeeAmount: number;
   platformFeeAmount: number;
-  netToEstablishmentAmount: number;
-  hasPendingBreakdown: boolean;
-  // Soma das taxas de pagamento manual (dinheiro) ainda não liquidadas — pode existir mesmo sem
-  // nenhuma cobrança online (comanda paga só em dinheiro).
+  // Parte ainda não liquidada — entra na próxima cobrança semanal no cartão do estabelecimento.
   pendingFeeAmount: number;
-  charges: ComandaChargeFeeResponse[];
 }
 
 export interface ComandaResponse {
@@ -135,7 +86,7 @@ export interface ComandaResponse {
   closedByUserName?: string;
   orders: ComandaOrderResponse[];
   payments: ComandaPaymentResponse[];
-  // Repartição das taxas dos pagamentos online (cartão/Pix) — ausente quando não houve nenhum.
+  // Taxas da Comanda Única sobre os pagamentos — ausente quando nenhum pagamento gerou taxa.
   fees?: ComandaFeesResponse;
 }
 
@@ -157,21 +108,6 @@ export interface RegisterComandaPaymentRequest {
   method: ManualComandaPaymentMethod;
 }
 
-export interface RefundPaymentRequest {
-  amount: number;
-  reason: RefundReason;
-  description?: string;
-}
-
-export interface RefundPaymentResponse {
-  paymentId: string;
-  refundId: string;
-  stripeRefundId?: string;
-  amount: number;
-  status: RefundStatus;
-  createdAt: string;
-}
-
 export interface ApiErrorResponse {
   titulo?: string;
   mensagem?: string;
@@ -183,7 +119,6 @@ export interface ApiErrorResponse {
 export class ComandasService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}/api/v1/comandas`;
-  private readonly paymentsBaseUrl = `${environment.apiBaseUrl}/api/v1/payments`;
 
   list(params: ComandaListParams): Observable<PageResponse<ComandaResponse>> {
     const httpParams: Record<string, string | number> = {
@@ -215,14 +150,4 @@ export class ComandasService {
     return this.http.post<ComandaResponse>(`${this.baseUrl}/${id}/payments`, payload);
   }
 
-  // idempotencyKey: gerado uma vez ao abrir o modal de estorno e reaproveitado em qualquer reenvio
-  // (timeout, duplo clique) — ver PaymentApi no backend. Sem isso, um reenvio criaria um segundo
-  // Refund na Stripe.
-  refundPayment(paymentId: string, payload: RefundPaymentRequest, idempotencyKey: string): Observable<RefundPaymentResponse> {
-    return this.http.post<RefundPaymentResponse>(
-      `${this.paymentsBaseUrl}/${paymentId}/refund`,
-      payload,
-      { headers: new HttpHeaders({ 'Idempotency-Key': idempotencyKey }) }
-    );
-  }
 }

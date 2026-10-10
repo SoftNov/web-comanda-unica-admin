@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { homeGuard } from './core/guards/home.guard';
-import { onlinePaymentsGuard } from './core/guards/online-payments.guard';
 import { platformAdminGuard } from './core/guards/platform-admin.guard';
 import { profileGuard } from './core/guards/profile.guard';
 import { profileOrPlatformAdminGuard } from './core/guards/profile-or-platform-admin.guard';
@@ -140,10 +139,17 @@ export const routes: Routes = [
       },
       {
         path: 'financeiro',
-        canActivate: [profileOrPlatformAdminGuard(['ADMIN', 'OWNER', 'MANAGER']), onlinePaymentsGuard],
+        canActivate: [profileOrPlatformAdminGuard(['ADMIN', 'OWNER', 'MANAGER'])],
         loadComponent: () =>
           import('./features/admin/pages/extrato-financeiro/extrato-financeiro.component').then((m) => m.ExtratoFinanceiroComponent),
         title: 'Extrato Financeiro — Comanda Única'
+      },
+      {
+        path: 'cobrancas-plataforma',
+        canActivate: [platformAdminGuard],
+        loadComponent: () =>
+          import('./features/admin/pages/cobrancas-plataforma/cobrancas-plataforma.component').then((m) => m.CobrancasPlataformaComponent),
+        title: 'Cobranças da Plataforma — Comanda Única'
       },
       {
         path: 'financeiro-plataforma',
@@ -173,22 +179,6 @@ export const routes: Routes = [
         path: 'configuracoes/redefinir-senha',
         loadComponent: () => import('./features/admin/pages/settings/security/security.component').then((m) => m.SecurityComponent),
         title: 'Redefinir Senha — Comanda Única'
-      },
-      {
-        path: 'configuracoes/pagamentos',
-        canActivate: [profileGuard(['OWNER', 'ADMIN'])],
-        loadComponent: () =>
-          import('./features/admin/pages/settings/stripe/owner/owner-stripe-page.component').then((m) => m.OwnerStripePageComponent),
-        title: 'Pagamentos — Comanda Única'
-      },
-      {
-        path: 'configuracoes/stripe-plataforma',
-        canActivate: [platformAdminGuard],
-        loadComponent: () =>
-          import('./features/admin/pages/settings/stripe/admin/admin-stripe-config-page.component').then(
-            (m) => m.AdminStripeConfigPageComponent
-          ),
-        title: 'Stripe da Plataforma — Comanda Única'
       },
       {
         path: 'configuracoes/assinatura-plataforma',

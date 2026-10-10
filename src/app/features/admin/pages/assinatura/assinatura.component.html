@@ -80,7 +80,7 @@
       <li><span class="material-icons" aria-hidden="true">check</span> Comandas, mesas, cardápio e pedidos</li>
       <li><span class="material-icons" aria-hidden="true">check</span> Dashboard e relatórios financeiros</li>
       <li><span class="material-icons" aria-hidden="true">check</span> Renovação automática todo mês no cartão de cobrança salvo</li>
-      <li><span class="material-icons" aria-hidden="true">check</span> Cartão guardado com segurança pelo Stripe — número e CVV nunca passam pela Comanda Única</li>
+      <li><span class="material-icons" aria-hidden="true">check</span> Cartão tokenizado com segurança pela Asaas — a Comanda Única não guarda o número nem o CVV</li>
     </ul>
 
     @if (mode() === 'active' && status()?.planOutdated) {
@@ -106,8 +106,8 @@
       <div class="plan-picker">
         <p class="plan-picker__title">Escolha seu plano</p>
         <p class="plan-picker__hint">
-          O upgrade é cobrado proporcionalmente na próxima fatura. O downgrade só é possível se as
-          mesas cadastradas couberem no plano menor.
+          O novo valor vale a partir da próxima mensalidade. O downgrade só é possível se as mesas
+          cadastradas couberem no plano menor.
         </p>
         <div class="plan-picker__grid">
           @for (plan of status()?.availablePlans; track plan.upToTables) {
@@ -271,19 +271,69 @@
           {{ isSubscribingTo('default') ? 'Assinando…' : 'Assinar agora' }}
         </button>
       }
-      @if (status()?.manageable && mode() !== 'offer') {
-        <button type="button" class="btn btn--ghost" [disabled]="isRedirectingTo('manage')" (click)="manage()">
-          {{ isRedirectingTo('manage') ? 'Abrindo…' : 'Faturas e cancelamento' }}
-        </button>
+      @if (status()?.cancellable && !confirmingCancel()) {
+        <button type="button" class="btn btn--ghost" (click)="requestCancel()">Cancelar renovação</button>
       }
     </div>
 
+    @if (confirmingCancel()) {
+      <div class="form-alert form-alert--error" role="alert">
+        <span class="material-icons" aria-hidden="true">warning_amber</span>
+        <span>
+          Cancelar a renovação? Nenhuma nova mensalidade será cobrada e o acesso continua até
+          {{ dateLabel(status()?.currentPeriodEnd) }}.
+        </span>
+        <button type="button" class="btn btn--primary btn--sm" [disabled]="isCancelling()" (click)="confirmCancel()">
+          {{ isCancelling() ? 'Cancelando…' : 'Sim, cancelar' }}
+        </button>
+        <button type="button" class="btn btn--ghost btn--sm" [disabled]="isCancelling()" (click)="abortCancel()">Voltar</button>
+      </div>
+    }
+
     <p class="sub-card__fineprint">
       A mensalidade é cobrada automaticamente no cartão de cobrança salvo, com renovação mensal, e
-      pode ser cancelada a qualquer momento em "Faturas e cancelamento". As taxas da Comanda Única que
-      o crédito da assinatura não cobrir também são lançadas nesse cartão, semanalmente.
+      pode ser cancelada a qualquer momento em "Cancelar renovação". As taxas da Comanda Única que o
+      crédito da assinatura não cobrir também são lançadas nesse cartão, semanalmente.
     </p>
   </div>
+
+  @if (status()?.exists) {
+    <div class="card credit-card">
+      <div class="credit-card__head">
+        <div>
+          <span class="sub-card__eyebrow">Faturas</span>
+          <p class="sub-card__price-note">Mensalidades e taxas semanais cobradas no cartão de cobrança.</p>
+        </div>
+      </div>
+      <div class="credit-movements">
+        @if (isLoadingCharges()) {
+          <p class="field__hint">Carregando…</p>
+        } @else if (chargesLoadError()) {
+          <p class="field__hint">Não foi possível carregar as faturas.
+            <button type="button" class="btn btn--ghost btn--sm" (click)="loadCharges()">Tentar de novo</button>
+          </p>
+        } @else if (charges().length === 0) {
+          <p class="field__hint">Nenhuma fatura ainda.</p>
+        } @else {
+          <ul class="credit-movements__list">
+            @for (c of charges(); track c.id) {
+              <li class="credit-movements__item">
+                <span class="credit-movements__desc">
+                  {{ chargeKindLabel(c) }}
+                  <span class="credit-movements__detail">— {{ chargeStatusLabel(c) }}</span>
+                  @if (c.receiptUrl || c.invoiceUrl) {
+                    <a class="credit-movements__detail" [href]="c.receiptUrl || c.invoiceUrl" target="_blank" rel="noopener">comprovante</a>
+                  }
+                </span>
+                <span class="credit-movements__value" [class.credit-movements__value--in]="c.paid">{{ amountLabel(c.value) }}</span>
+                <span class="credit-movements__date">{{ dateLabel(c.paidAt || c.createdAt) }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  }
 
   @if (status()?.credit; as credit) {
     <div class="card credit-card">

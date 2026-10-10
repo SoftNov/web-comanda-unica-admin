@@ -11,9 +11,6 @@ export interface MenuItem {
   platformAdminOnly?: boolean;
   // Só aparece quando o estabelecimento usa o cartão de consumo (ver ConsumptionPassesService#enabled).
   requiresConsumptionPass?: boolean;
-  // Só aparece com o pagamento online ativo (ver PaymentSettingsService#onlinePaymentsEnabled) —
-  // telas que leem a conta Stripe. O platform admin vê sempre.
-  requiresOnlinePayments?: boolean;
   children?: MenuItem[];
 }
 
@@ -100,18 +97,18 @@ export const ADMIN_MENU_SEGMENTS: MenuSegment[] = [
   {
     label: 'Financeiro',
     items: [
-      { label: 'Financeiro', icon: 'payments', route: '/painel/financeiro', requiresOnlinePayments: true },
+      { label: 'Financeiro', icon: 'payments', route: '/painel/financeiro', roles: ['ADMIN', 'OWNER', 'MANAGER'] },
       { label: 'Assinatura', icon: 'card_membership', route: '/painel/assinatura', roles: ['OWNER', 'ADMIN'] },
+      {
+        label: 'Cobranças da Plataforma',
+        icon: 'receipt_long',
+        route: '/painel/cobrancas-plataforma',
+        platformAdminOnly: true
+      },
       {
         label: 'Financeiro Comanda Única',
         icon: 'account_balance',
         route: '/painel/financeiro-plataforma',
-        platformAdminOnly: true
-      },
-      {
-        label: 'Stripe da Plataforma',
-        icon: 'credit_card',
-        route: '/painel/configuracoes/stripe-plataforma',
         platformAdminOnly: true
       },
       {
@@ -131,13 +128,7 @@ export const ADMIN_MENU_SEGMENTS: MenuSegment[] = [
         children: [
           { label: 'Geral', icon: 'tune', route: '/painel/configuracoes' },
           { label: 'Meu perfil', icon: 'person', route: '/painel/configuracoes/perfil' },
-          { label: 'Redefinir senha', icon: 'lock_reset', route: '/painel/configuracoes/redefinir-senha' },
-          {
-            label: 'Pagamentos',
-            icon: 'account_balance_wallet',
-            route: '/painel/configuracoes/pagamentos',
-            roles: ['OWNER', 'ADMIN']
-          }
+          { label: 'Redefinir senha', icon: 'lock_reset', route: '/painel/configuracoes/redefinir-senha' }
         ]
       }
     ]

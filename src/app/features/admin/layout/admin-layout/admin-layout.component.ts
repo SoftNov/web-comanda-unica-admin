@@ -3,7 +3,6 @@ import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/rou
 import { AuthService, CompanyAccessResponse } from '../../../auth/services/auth.service';
 import { AccountsService } from '../../../../shared/services/accounts.service';
 import { ConsumptionPassesService } from '../../../../shared/services/consumption-passes.service';
-import { PaymentSettingsService } from '../../../../shared/services/payment-settings.service';
 import { AddCompanyModalComponent } from '../../../../shared/components/add-company-modal/add-company-modal.component';
 import { resolveHomeRoute } from '../../../../core/guards/home.guard';
 import { ADMIN_MENU_SEGMENTS, MenuItem, MenuSegment } from '../../config/menu.config';
@@ -28,7 +27,6 @@ export class AdminLayoutComponent {
   private readonly accountsService = inject(AccountsService);
   private readonly notificationsService = inject(NotificationsService);
   private readonly consumptionPassesService = inject(ConsumptionPassesService);
-  private readonly paymentSettingsService = inject(PaymentSettingsService);
   private readonly router = inject(Router);
 
   private readonly timeFormatter = brDateTimeFormat({ timeStyle: 'short' });
@@ -40,7 +38,7 @@ export class AdminLayoutComponent {
   readonly profileCode = computed(() => this.selectedCompany()?.profileCode ?? null);
   readonly isPlatformAdmin = this.authService.isPlatformAdmin;
   // Cadastrar mais uma empresa (filial) é uma ação de dono — mesmo critério de outras ações
-  // restritas a OWNER no painel (ver canRefund em comandas.component.ts).
+  // restritas a OWNER no painel.
   readonly canAddCompany = computed(() => this.profileCode() === 'OWNER');
   readonly isAddCompanyModalOpen = signal(false);
   // Menu organizado por segmento (ver menu.config.ts) — cada seção some inteira se nenhum item
@@ -52,8 +50,7 @@ export class AdminLayoutComponent {
         segment.items,
         this.profileCode(),
         this.isPlatformAdmin(),
-        this.consumptionPassesService.enabled(),
-        this.paymentSettingsService.onlinePaymentsEnabled()
+        this.consumptionPassesService.enabled()
       )
     })).filter((segment) => segment.items.length > 0)
   );
@@ -87,7 +84,6 @@ export class AdminLayoutComponent {
   constructor() {
     this.syncProfileImages();
     this.consumptionPassesService.refreshEnabled();
-    this.paymentSettingsService.refreshEnabled();
   }
 
   get userInitials(): string {
@@ -182,17 +178,15 @@ export class AdminLayoutComponent {
     items: MenuItem[],
     profileCode: string | null,
     isPlatformAdmin: boolean,
-    consumptionPassEnabled: boolean,
-    onlinePaymentsEnabled: boolean
+    consumptionPassEnabled: boolean
   ): MenuItem[] {
     return items
       .filter((item) => !item.roles || (!!profileCode && item.roles.includes(profileCode)))
       .filter((item) => !item.platformAdminOnly || isPlatformAdmin)
       .filter((item) => !item.requiresConsumptionPass || consumptionPassEnabled)
-      .filter((item) => !item.requiresOnlinePayments || onlinePaymentsEnabled || isPlatformAdmin)
       .map((item) =>
         item.children
-          ? { ...item, children: this.filterMenuByProfile(item.children, profileCode, isPlatformAdmin, consumptionPassEnabled, onlinePaymentsEnabled) }
+          ? { ...item, children: this.filterMenuByProfile(item.children, profileCode, isPlatformAdmin, consumptionPassEnabled) }
           : item
       )
       .filter((item) => !item.children || item.children.length > 0);

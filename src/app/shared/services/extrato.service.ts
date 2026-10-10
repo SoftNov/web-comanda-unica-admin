@@ -3,114 +3,66 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-// Tipo de movimentação — espelha StripeTransactionType do backend.
-export type ExtratoTipo =
-  | 'CHARGE'
-  | 'PAYMENT'
-  | 'REFUND'
-  | 'PAYMENT_REFUND'
-  | 'PAYOUT'
-  | 'TRANSFER'
-  | 'APPLICATION_FEE'
-  | 'APPLICATION_FEE_REFUND'
-  | 'DISPUTE'
-  | 'ADJUSTMENT'
-  | 'STRIPE_FEE'
-  | 'OTHER';
+// Onde o pagamento foi recebido — espelha PaymentMethod do backend. ONLINE só aparece em
+// pagamentos antigos, de quando o cardápio processava pagamentos.
+export type ExtratoMetodo = 'CASH_REGISTER' | 'CASH_WAITER' | 'ONLINE';
 
-// Uma Balance Transaction só tem esses dois status na Stripe — ver ExtratoStatus no backend.
-export type ExtratoStatusFiltro = 'AVAILABLE' | 'PENDING';
+// Situação da taxa da Comanda Única sobre o pagamento — espelha PendingPlatformFeeStatus.
+export type ExtratoStatusTaxa = 'PENDING' | 'PROCESSING' | 'SETTLED' | 'FAILED' | 'CANCELED';
 
 export interface ExtratoResumo {
-  saldoDisponivel: number;
-  saldoPendente: number;
-  entradas: number;
-  saidas: number;
-  taxasStripe: number;
-  // Repasses/taxas pagos à Comanda Única (application_fee confirmado na nossa base).
+  totalRecebido: number;
+  quantidadePagamentos: number;
+  recebidoCaixa: number;
+  recebidoGarcom: number;
+  recebidoOnline: number;
   taxasComandaUnica: number;
-  estornos: number;
   liquido: number;
-}
-
-export interface ExtratoStripeRef {
-  balanceTransactionId: string;
-  paymentIntentId: string | null;
-  chargeId: string | null;
-}
-
-// Sem pedidoId/numeroPedido: uma cobrança Stripe quita o saldo de uma comanda, não de um pedido
-// específico neste sistema (ver o backend, ExtratoComandaUnicaRefResponse).
-export interface ExtratoComandaUnicaRef {
-  vinculado: boolean;
-  estabelecimentoId: string | null;
-  comandaId: string | null;
-  numeroComanda: string | null;
-  mesa: number | null;
-  cliente: string | null;
+  // Saldo ATUAL de taxas ainda não pagas (independe do período).
+  taxasPendentes: number;
 }
 
 export interface ExtratoTransacao {
   id: string;
-  tipo: ExtratoTipo;
-  // Status da Balance Transaction na Stripe (liberação de saldo p/ saque) — NÃO indica se o
-  // pagamento foi concluído. Ver pagamentoConfirmado para isso (confrontado com a nossa base).
-  status: ExtratoStatusFiltro;
-  // payment_charge.status == SUCCEEDED na nossa base — reflete o mesmo "Concluído" que aparece no
-  // Dashboard da própria Stripe para a cobrança, independente do prazo de liberação do saldo.
-  pagamentoConfirmado: boolean;
-  // Mesma ideia acima, mas para estornos (payment_refund.status == SUCCEEDED) — só se aplica a
-  // REFUND/PAYMENT_REFUND. Ver statusLabel no componente.
-  estornoConfirmado: boolean;
   data: string;
-  descricao: string | null;
-  valorBruto: number;
-  taxaStripe: number;
-  // Taxa da Comanda Única confirmada (nunca inferida da taxa da Stripe) — null para categorias que
-  // não são recebimento (payout/transfer/etc).
+  comandaId: string;
+  mesaNumero: number | null;
+  mesaNome: string | null;
+  cliente: string | null;
+  metodo: ExtratoMetodo;
+  tipo: 'FULL' | 'PARTIAL' | 'OWN_BILL' | null;
+  valor: number;
   taxaComandaUnica: number | null;
-  valorLiquido: number;
-  moeda: string;
-  stripe: ExtratoStripeRef;
-  comandaUnica: ExtratoComandaUnicaRef;
+  statusTaxa: ExtratoStatusTaxa | null;
+  liquido: number;
+  registradoPor: string | null;
 }
 
-export interface ExtratoPaginacao {
-  hasMore: boolean;
-  nextCursor: string | null;
+export interface ExtratoPage {
+  content: ExtratoTransacao[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
+  last: boolean;
 }
 
 export interface ExtratoResponse {
   resumo: ExtratoResumo;
-  transacoes: ExtratoTransacao[];
-  paginacao: ExtratoPaginacao;
+  transacoes: ExtratoPage;
 }
 
 export interface ExtratoFiltros {
   startDate?: string;
   endDate?: string;
-  type?: ExtratoTipo;
-  status?: ExtratoStatusFiltro;
-  search?: string;
-  cursor?: string;
-  limit?: number;
+  method?: ExtratoMetodo | null;
+  page?: number;
+  size?: number;
 }
 
-// Espelha ExtratoExportJobStatus no backend — ciclo de vida do job assíncrono de exportação.
-export type ExtratoExportJobStatus = 'PENDING' | 'PROCESSING' | 'DONE' | 'FAILED';
-
-// Espelha ExtratoExportJobResponse no backend. downloadUrl só vem preenchido quando
-// status == DONE; error só quando status == FAILED.
-export interface ExtratoExportJobResponse {
-  jobId: string;
-  status: ExtratoExportJobStatus;
-  downloadUrl: string | null;
-  error: string | null;
-}
-
-// Extrato financeiro da conta Stripe Connect de um estabelecimento (ver
-// GET /api/v1/companies/{companyId}/extrato no backend) — a Stripe é a fonte oficial dos valores;
-// o banco da Comanda Única só enriquece com dados de negócio (comanda/mesa/cliente).
+// Extrato financeiro do estabelecimento a partir da base da Comanda Única (ver
+// GET /api/v1/companies/{companyId}/extrato no backend): pagamentos registrados nas comandas e a
+// taxa da plataforma sobre cada um.
 @Injectable({ providedIn: 'root' })
 export class ExtratoService {
   private readonly http = inject(HttpClient);
@@ -120,32 +72,21 @@ export class ExtratoService {
     return this.http.get<ExtratoResponse>(`${this.baseUrl}/${companyId}/extrato`, { params: this.toHttpParams(filtros) });
   }
 
-  // Sem cursor/limit — a exportação sempre traz todas as transações do período filtrado.
-  // Assíncrona: responde na hora com um jobId e processa em segundo plano (fila
-  // tarefa.extrato.exportacao.csv.queue) — evita segurar a requisição HTTP durante a varredura
-  // completa da Stripe. Acompanhar com getExportJob.
-  exportCsvAsync(companyId: string, filtros: Omit<ExtratoFiltros, 'cursor' | 'limit'> = {}): Observable<ExtratoExportJobResponse> {
-    return this.http.post<ExtratoExportJobResponse>(
-      `${this.baseUrl}/${companyId}/extrato/export/async`,
-      null,
-      { params: this.toHttpParams(filtros) }
-    );
-  }
-
-  // Polling do job criado por exportCsvAsync.
-  getExportJob(companyId: string, jobId: string): Observable<ExtratoExportJobResponse> {
-    return this.http.get<ExtratoExportJobResponse>(`${this.baseUrl}/${companyId}/extrato/export/${jobId}`);
+  // Mesmos filtros do extrato, sem paginação — CSV gerado na hora pelo backend.
+  exportCsv(companyId: string, filtros: Omit<ExtratoFiltros, 'page' | 'size'> = {}): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/${companyId}/extrato/export`, {
+      params: this.toHttpParams(filtros),
+      responseType: 'blob'
+    });
   }
 
   private toHttpParams(filtros: ExtratoFiltros): Record<string, string> {
     const params: Record<string, string> = {};
     if (filtros.startDate) params['startDate'] = filtros.startDate;
     if (filtros.endDate) params['endDate'] = filtros.endDate;
-    if (filtros.type) params['type'] = filtros.type;
-    if (filtros.status) params['status'] = filtros.status;
-    if (filtros.search) params['search'] = filtros.search;
-    if (filtros.cursor) params['cursor'] = filtros.cursor;
-    if (filtros.limit) params['limit'] = String(filtros.limit);
+    if (filtros.method) params['method'] = filtros.method;
+    if (filtros.page != null) params['page'] = String(filtros.page);
+    if (filtros.size != null) params['size'] = String(filtros.size);
     return params;
   }
 }

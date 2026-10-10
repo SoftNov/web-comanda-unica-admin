@@ -43,8 +43,8 @@ export interface SubscriptionStatusResponse {
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
   autoRenew: boolean;
-  // Já tem Customer no Stripe — pode abrir o Customer Portal (faturas / cancelamento).
-  manageable: boolean;
+  // Há uma assinatura paga renovando — pode cancelar a renovação (POST /subscription/cancel).
+  cancellable: boolean;
   // Cartão de cobrança salvo (assinatura + taxas semanais). null quando nenhum foi cadastrado.
   paymentMethod: SavedPaymentMethod | null;
   // Resumo do crédito da assinatura do período vigente. null quando nunca houve crédito
@@ -99,11 +99,7 @@ export interface PlanOption {
   allowed: boolean;
 }
 
-export interface StripeHostedLinkResponse {
-  url: string;
-}
-
-// Cartão de cobrança salvo — só dados de exibição; o cartão em si fica tokenizado no Stripe.
+// Cartão de cobrança salvo — só dados de exibição; o cartão em si fica tokenizado na Asaas.
 export interface SavedPaymentMethod {
   brand: string | null;
   last4: string | null;
@@ -111,20 +107,44 @@ export interface SavedPaymentMethod {
   expYear: number | null;
 }
 
-// SetupIntent para cadastrar/trocar o cartão no Stripe Element (espelho de SetupIntentResponse).
-export interface SetupIntentResponse {
-  clientSecret: string;
-  publishableKey: string;
+// Cartão + titular enviados uma única vez para a API tokenizar na Asaas (espelho de
+// SaveCreditCardRequest no backend). Número e CVV não são guardados pela Comanda Única.
+export interface SaveCreditCardRequest {
+  holderName: string;
+  number: string;
+  expiryMonth: string;
+  expiryYear: string;
+  ccv: string;
+  cpfCnpj: string;
+  email: string;
+  postalCode: string;
+  addressNumber: string;
+  addressComplement?: string | null;
+  phone: string;
 }
 
-// Resultado de POST /subscribe (espelho de SubscribeResponse). requiresConfirmation: o banco pediu
-// 3D Secure ou recusou a 1ª tentativa — o front confirma com stripe.confirmCardPayment.
-export interface SubscribeResponse {
-  requiresConfirmation: boolean;
-  clientSecret: string | null;
-  paymentMethodId: string | null;
-  publishableKey: string | null;
-  subscription: SubscriptionStatusResponse;
+export type PlatformChargeKind = 'SUBSCRIPTION' | 'PLATFORM_FEE';
+
+// Uma cobrança da Comanda Única na Asaas — mensalidade ou taxas semanais (espelho de
+// PlatformChargeResponse). companyName só vem no extrato da plataforma.
+export interface PlatformCharge {
+  id: string;
+  companyId: string | null;
+  companyName: string | null;
+  kind: PlatformChargeKind;
+  description: string | null;
+  status: string;
+  paid: boolean;
+  value: number;
+  netValue: number | null;
+  dueDate: string | null;
+  paidAt: string | null;
+  createdAt: string;
+  cardBrand: string | null;
+  cardLast4: string | null;
+  invoiceUrl: string | null;
+  receiptUrl: string | null;
+  asaasPaymentId: string;
 }
 
 // Estado da assinatura mantido em memória para o guard não bater na API a cada navegação. É
@@ -157,29 +177,35 @@ export class SubscriptionService {
     this.cache.set(null);
   }
 
-  // Inicia o cadastro/troca do cartão de cobrança: o cartão é digitado num Stripe Element e
-  // confirmado direto com o Stripe — a API só recebe depois o id do PaymentMethod.
-  createSetupIntent(): Observable<SetupIntentResponse> {
-    return this.http.post<SetupIntentResponse>(`${this.baseUrl}/payment-method/setup-intent`, {});
-  }
-
-  savePaymentMethod(paymentMethodId: string): Observable<SubscriptionStatusResponse> {
-    return this.http.put<SubscriptionStatusResponse>(`${this.baseUrl}/payment-method`, { paymentMethodId }).pipe(
+  // Cadastra/troca o cartão de cobrança: a API tokeniza na Asaas e guarda só o token e
+  // bandeira/final/validade.
+  savePaymentMethod(card: SaveCreditCardRequest): Observable<SubscriptionStatusResponse> {
+    return this.http.put<SubscriptionStatusResponse>(`${this.baseUrl}/payment-method`, card).pipe(
       tap((data) => this.updateCache(data))
     );
   }
 
-  // Assina cobrando no cartão salvo. Sem argumento: faixa de preço da quantidade de mesas
-  // cadastrada hoje. Com upToTables: a faixa escolhida no seletor.
-  subscribe(upToTables?: number): Observable<SubscribeResponse> {
+  // Assina cobrando no cartão salvo (a 1ª mensalidade é cobrada na hora). Sem argumento: faixa de
+  // preço da quantidade de mesas cadastrada hoje. Com upToTables: a faixa escolhida no seletor.
+  subscribe(upToTables?: number): Observable<SubscriptionStatusResponse> {
     const body = upToTables != null ? { upToTables } : {};
-    return this.http.post<SubscribeResponse>(`${this.baseUrl}/subscribe`, body).pipe(
-      tap((res) => this.updateCache(res.subscription))
+    return this.http.post<SubscriptionStatusResponse>(`${this.baseUrl}/subscribe`, body).pipe(
+      tap((data) => this.updateCache(data))
     );
   }
 
-  createPortalSession(): Observable<StripeHostedLinkResponse> {
-    return this.http.post<StripeHostedLinkResponse>(`${this.baseUrl}/portal-session`, {});
+  // Cancela a renovação — o acesso segue até o fim do período já pago.
+  cancelRenewal(): Observable<SubscriptionStatusResponse> {
+    return this.http.post<SubscriptionStatusResponse>(`${this.baseUrl}/cancel`, {}).pipe(
+      tap((data) => this.updateCache(data))
+    );
+  }
+
+  // Faturas (mensalidades e taxas semanais) na Asaas, mais recentes primeiro.
+  getCharges(page = 0, size = 10): Observable<PagedResponse<PlatformCharge>> {
+    return this.http.get<PagedResponse<PlatformCharge>>(`${this.baseUrl}/charges`, {
+      params: { page: String(page), size: String(size) }
+    });
   }
 
   // Movimentações de crédito (concessão / consumo / devolução / expiração), mais recentes primeiro.
@@ -189,7 +215,7 @@ export class SubscriptionService {
     });
   }
 
-  // Atualiza a assinatura ativa no meio do ciclo (proração pelo Stripe). Sem argumento:
+  // Muda o valor da assinatura ativa — vale a partir da próxima mensalidade. Sem argumento:
   // sincroniza ao valor da faixa de mesas atual (botão "Atualizar plano" do planOutdated). Com
   // upToTables: move para a faixa escolhida no seletor. Devolve o estado atualizado e atualiza o cache.
   changePlan(upToTables?: number): Observable<SubscriptionStatusResponse> {

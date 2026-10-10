@@ -3,14 +3,14 @@ import { EMPTY, Subscription, defer, retry, timer } from 'rxjs';
 import { AuthService } from '../../../auth/services/auth.service';
 import { FloorPlanViewerComponent } from '../../../../shared/components/floor-plan-viewer/floor-plan-viewer.component';
 import { FloorPlanResponse, FloorPlansService } from '../../../../shared/services/floor-plans.service';
-import { DashboardService, DashboardSummaryResponse, RevenuePoint, StripeFinancialSummary } from '../../../../shared/services/dashboard.service';
+import { DashboardService, DashboardSummaryResponse, RevenuePoint } from '../../../../shared/services/dashboard.service';
+import { ExtratoService } from '../../../../shared/services/extrato.service';
 import { LineChartComponent, LineChartPoint } from '../../../../shared/components/line-chart/line-chart.component';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { PedidosComponent } from '../pedidos/pedidos.component';
 import { ServicosComponent } from '../servicos/servicos.component';
 import { SubscriptionBannerComponent } from '../../../../shared/components/subscription-banner/subscription-banner.component';
 import { SubscriptionService } from '../../../../shared/services/subscription.service';
-import { PaymentSettingsService } from '../../../../shared/services/payment-settings.service';
 
 const MANAGEMENT_PROFILES = ['ADMIN', 'OWNER', 'MANAGER'];
 // Perfis operacionais que vivem na fila de pedidos no dia a dia — a home entra direto na mesma
@@ -61,7 +61,7 @@ export class DashboardComponent implements OnDestroy {
   private readonly floorPlansService = inject(FloorPlansService);
   private readonly dashboardService = inject(DashboardService);
   private readonly subscriptionService = inject(SubscriptionService);
-  private readonly paymentSettingsService = inject(PaymentSettingsService);
+  private readonly extratoService = inject(ExtratoService);
 
   // Crédito da assinatura — vem do SubscriptionService (REST, já carregado pelo subscriptionGuard),
   // NÃO do resumo operacional do WebSocket: o crédito não é métrica de tempo real e o payload do
@@ -71,16 +71,6 @@ export class DashboardComponent implements OnDestroy {
 
   readonly currentUser = this.authService.currentUser;
   readonly selectedCompany = this.authService.selectedCompany;
-  // Platform admin (equipe interna da Comanda Única — ver AuthService.isPlatformAdmin): o backend
-  // detecta isso sozinho a partir do X-User-Id e troca a fonte do relatório financeiro para a
-  // conta Stripe da própria plataforma (ver DashboardApi#getFinancialReport) — aqui só serve para
-  // deixar isso visível na tela, não para decidir qual endpoint chamar.
-  readonly isPlatformAdmin = this.authService.isPlatformAdmin;
-  // Pagamento online desligado (Configurações > Pagamentos): somem o card "faturamento Stripe", os
-  // saldos da Stripe e o gráfico (série só da Stripe) — fica o recebido no caixa/garçom. A conta
-  // plataforma vê sempre.
-  readonly onlinePaymentsEnabled = this.paymentSettingsService.onlinePaymentsEnabled;
-  readonly showStripeIndicators = computed(() => this.isPlatformAdmin() || this.onlinePaymentsEnabled());
   readonly revenuePresets = REVENUE_PRESETS;
 
   // As métricas administrativas (faturamento, comandas, ocupação de mesas, funcionários) só
@@ -131,29 +121,11 @@ export class DashboardComponent implements OnDestroy {
   readonly revenueTotal = computed(() => this.revenueSeries().reduce((total, point) => total + point.amount, 0));
   readonly revenueNetTotal = computed(() => this.revenueSeries().reduce((total, point) => total + (point.netAmount ?? 0), 0));
 
-  // Resumo do relatório financeiro (repasses, retiradas, tarifas) — só usado na conta plataforma
-  // (ver isPlatformAdmin no template); para uma empresa comum esses totais não aparecem na tela.
-  readonly financialSummary = signal<StripeFinancialSummary | null>(null);
-  readonly cumulativePoints = computed<LineChartPoint[]>(() =>
-    this.revenueSeries().map((point) => ({ date: point.date, amount: point.cumulativeAmount ?? 0 }))
-  );
-  readonly totalTarifas = computed(() => {
-    const summary = this.financialSummary();
-    return summary ? summary.totalStripeFees + summary.totalPlatformFees : null;
-  });
-
-  // Saldo da conta Stripe do estabelecimento — indicadores, não série. "Atual" é o total que a
-  // Stripe ainda detém (disponível + pendente); "liberado" é só a parte já disponível para saque.
-  readonly stripeCurrentBalance = signal<number | null>(null);
-  readonly stripeAvailableBalance = signal<number | null>(null);
-  // Card "recebido no caixa e garçom": pagamentos registrados pela equipe no período, pelo valor
-  // cheio (a taxa da Comanda Única desses fica pendente e é cobrada em outra cobrança online).
+  // Recebido no período por onde entrou (caixa / garçom) — resumo do extrato, mesmo período do
+  // gráfico. A taxa da Comanda Única desses pagamentos é cobrada semanalmente no cartão.
   readonly cashRegisterAmount = signal<number | null>(null);
   readonly cashWaiterAmount = signal<number | null>(null);
-  readonly staffReceivedTotal = computed(() => (this.cashRegisterAmount() ?? 0) + (this.cashWaiterAmount() ?? 0));
-  // Faturamento total do período: bruto da Stripe (revenueTotal) + recebido pela equipe.
-  readonly overallRevenueTotal = computed(() => this.revenueTotal() + this.staffReceivedTotal());
-  readonly isLoadingStripeBalance = signal(false);
+  readonly platformFeesAmount = signal<number | null>(null);
 
   readonly floorPlans = signal<FloorPlanResponse[]>([]);
   readonly isLoadingFloorPlans = signal(true);
@@ -202,10 +174,10 @@ export class DashboardComponent implements OnDestroy {
     this.summarySubscription?.unsubscribe();
     this.summary.set(null);
     this.summaryError.set(null);
-    this.financialSummary.set(null);
     this.revenueSeries.set([]);
-    this.stripeCurrentBalance.set(null);
-    this.stripeAvailableBalance.set(null);
+    this.cashRegisterAmount.set(null);
+    this.cashWaiterAmount.set(null);
+    this.platformFeesAmount.set(null);
 
     this.activeTab.set(this.availableTabs()[0]?.id ?? 'floorplan');
 
@@ -306,35 +278,42 @@ export class DashboardComponent implements OnDestroy {
       });
   }
 
-  // Gráfico de faturamento + saldos "atual"/"liberado" — direto do relatório financeiro da conta
-  // Stripe Connect do estabelecimento (não mais do WebSocket nem do banco interno). O WebSocket
-  // (ver connectRealtimeSummary) continua alimentando só os indicadores operacionais da aba
-  // "Operação", sem mais tocar no gráfico.
+  // Gráfico de faturamento (pagamentos registrados nas comandas, bruto e líquido da taxa da
+  // Comanda Única) + o recebido por caixa/garçom no mesmo período (resumo do extrato). Tudo da base
+  // da Comanda Única. O WebSocket (ver connectRealtimeSummary) segue alimentando só a "Operação".
   private loadFinancialReport(): void {
+    const companyId = this.selectedCompany()?.companyId;
+    if (!companyId) {
+      return;
+    }
     this.isLoadingRevenue.set(true);
-    this.isLoadingStripeBalance.set(true);
     this.revenueError.set(null);
 
-    this.dashboardService.getFinancialReport(this.revenueStartDate(), this.revenueEndDate()).subscribe({
-      next: (report) => {
-        this.revenueSeries.set(report.dailySeries);
-        this.financialSummary.set(report.summary);
-        this.cashRegisterAmount.set(report.cashRegisterAmount ?? null);
-        this.cashWaiterAmount.set(report.cashWaiterAmount ?? null);
+    this.dashboardService.getRevenueSeries(this.revenueStartDate(), this.revenueEndDate()).subscribe({
+      next: (series) => {
+        this.revenueSeries.set(series);
         this.isLoadingRevenue.set(false);
-        this.stripeCurrentBalance.set(report.balance.currentAmount);
-        this.stripeAvailableBalance.set(report.balance.availableAmount);
-        this.isLoadingStripeBalance.set(false);
       },
       error: () => {
         this.isLoadingRevenue.set(false);
         this.revenueError.set('Não foi possível carregar o faturamento do período selecionado.');
-        this.financialSummary.set(null);
+      }
+    });
+
+    this.extratoService.getExtrato(companyId, {
+      startDate: this.revenueStartDate(),
+      endDate: this.revenueEndDate(),
+      size: 1
+    }).subscribe({
+      next: (extrato) => {
+        this.cashRegisterAmount.set(extrato.resumo.recebidoCaixa);
+        this.cashWaiterAmount.set(extrato.resumo.recebidoGarcom);
+        this.platformFeesAmount.set(extrato.resumo.taxasComandaUnica);
+      },
+      error: () => {
         this.cashRegisterAmount.set(null);
         this.cashWaiterAmount.set(null);
-        this.stripeCurrentBalance.set(null);
-        this.stripeAvailableBalance.set(null);
-        this.isLoadingStripeBalance.set(false);
+        this.platformFeesAmount.set(null);
       }
     });
   }

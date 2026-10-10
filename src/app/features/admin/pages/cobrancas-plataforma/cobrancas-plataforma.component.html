@@ -1,0 +1,133 @@
+<div class="page-header">
+  <h1 class="page-title">Cobranças da plataforma</h1>
+  <p class="page-subtitle">
+    Taxas da Comanda Única geradas pelos estabelecimentos e cobranças na Asaas (mensalidades e taxas semanais).
+  </p>
+</div>
+
+<div class="card platform-filters">
+  <label class="platform-field">
+    <span>De</span>
+    <input type="date" [value]="startDate()" [max]="endDate()" (change)="onStartDateChange($any($event.target).value)" />
+  </label>
+  <label class="platform-field">
+    <span>Até</span>
+    <input type="date" [value]="endDate()" [min]="startDate()" (change)="onEndDateChange($any($event.target).value)" />
+  </label>
+  <button type="button" class="btn btn--ghost" appRipple (click)="reload()" [disabled]="isLoading()">
+    <span class="material-icons" aria-hidden="true">refresh</span>
+    {{ isLoading() ? 'Atualizando…' : 'Atualizar' }}
+  </button>
+</div>
+
+<div class="card">
+  @if (summary(); as s) {
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="material-icons stat-card__icon" aria-hidden="true">percent</span>
+        <span class="stat-card__label">Taxas geradas no período</span>
+        <span class="stat-card__value">{{ formatCurrency(s.totalFeeAmount) }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="material-icons stat-card__icon" aria-hidden="true">receipt_long</span>
+        <span class="stat-card__label">Taxas recebidas (Asaas)</span>
+        <span class="stat-card__value">{{ formatCurrency(s.receivedFeeAmount) }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="material-icons stat-card__icon" aria-hidden="true">card_membership</span>
+        <span class="stat-card__label">Mensalidades recebidas</span>
+        <span class="stat-card__value">{{ formatCurrency(s.receivedSubscriptionAmount) }}</span>
+      </div>
+      <div class="stat-card">
+        <span class="material-icons stat-card__icon" aria-hidden="true">hourglass_empty</span>
+        <span class="stat-card__label">Taxas a cobrar (hoje)</span>
+        <span class="stat-card__value">{{ formatCurrency(s.pendingFeeBalance) }}</span>
+      </div>
+    </div>
+    <div class="platform-chart">
+      <app-line-chart [points]="feePoints()" primaryLabel="Taxas geradas" [height]="220" />
+    </div>
+  } @else if (summaryError()) {
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      Não foi possível carregar o resumo do período.
+    </div>
+  } @else {
+    <p class="field__hint">Carregando resumo…</p>
+  }
+</div>
+
+<div class="card">
+  <div class="platform-table-head">
+    <h2 class="platform-table-head__title">Cobranças na Asaas</h2>
+    <div class="platform-table-head__actions">
+      <select [value]="statusFilter()" (change)="onStatusFilterChange($any($event.target).value)">
+        @for (option of statusOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+      <button type="button" class="btn btn--ghost" appRipple (click)="exportCsv()" [disabled]="isExporting()">
+        <span class="material-icons" aria-hidden="true">download</span>
+        {{ isExporting() ? 'Exportando…' : 'Exportar CSV' }}
+      </button>
+    </div>
+  </div>
+
+  @if (loadError()) {
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      {{ loadError() }}
+    </div>
+  } @else if (isLoading()) {
+    <p class="field__hint">Carregando cobranças…</p>
+  } @else if (charges().length === 0) {
+    <p class="field__hint">Nenhuma cobrança no período.</p>
+  } @else {
+    <div class="platform-table-wrapper">
+      <table class="platform-table">
+        <thead>
+          <tr>
+            <th>Criada em</th>
+            <th>Estabelecimento</th>
+            <th>Tipo</th>
+            <th>Status</th>
+            <th class="platform-table__number">Valor</th>
+            <th class="platform-table__number">Líquido</th>
+            <th>Pago em</th>
+            <th>Cartão</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (charge of charges(); track charge.id) {
+            <tr>
+              <td>{{ formatDateTime(charge.createdAt) }}</td>
+              <td>{{ charge.companyName || '—' }}</td>
+              <td>{{ kindLabel(charge) }}</td>
+              <td>
+                <span class="platform-status" [class.platform-status--pending]="!charge.paid">{{ statusLabel(charge) }}</span>
+              </td>
+              <td class="platform-table__number">{{ formatCurrency(charge.value) }}</td>
+              <td class="platform-table__number">{{ formatCurrency(charge.netValue) }}</td>
+              <td>{{ formatDateTime(charge.paidAt) }}</td>
+              <td>{{ charge.cardLast4 ? charge.cardBrand + ' •••• ' + charge.cardLast4 : '—' }}</td>
+              <td>
+                @if (charge.receiptUrl || charge.invoiceUrl) {
+                  <a [href]="charge.receiptUrl || charge.invoiceUrl" target="_blank" rel="noopener">comprovante</a>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (hasMore()) {
+      <div class="platform-load-more">
+        <button type="button" class="btn btn--ghost" appRipple [disabled]="isLoadingMore()" (click)="loadMore()">
+          {{ isLoadingMore() ? 'Carregando…' : 'Carregar mais' }}
+        </button>
+      </div>
+    }
+  }
+</div>

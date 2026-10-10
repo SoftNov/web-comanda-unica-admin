@@ -5,13 +5,12 @@ import { AuthService } from '../../../auth/services/auth.service';
 import {
   CreditMovement,
   CreditMovementType,
+  PlatformCharge,
   SavedPaymentMethod,
-  SubscribeResponse,
   SubscriptionService,
   SubscriptionStatusResponse
 } from '../../../../shared/services/subscription.service';
 import { parseApiDate } from '../../../../shared/utils/datetime.util';
-import { loadStripeJs, stripeErrorMessage } from '../../../../shared/utils/stripe-js.loader';
 import { BillingCardFormComponent, BillingCardFormSummary } from './billing-card-form.component';
 
 type ViewMode = 'offer' | 'active' | 'past-due';
@@ -34,8 +33,9 @@ export class AssinaturaComponent {
   readonly loadError = signal(false);
   // Funcionário sem perfil OWNER/ADMIN — não pode gerenciar a assinatura (o backend responde 403).
   readonly noPermission = signal(false);
-  // Botão do Customer Portal (faturas / cancelamento) com a requisição em voo — 'manage' ou null.
-  readonly redirectingTarget = signal<string | null>(null);
+  // Cancelamento da renovação: pedindo confirmação / requisição em voo.
+  readonly confirmingCancel = signal(false);
+  readonly isCancelling = signal(false);
   // Qual botão de assinar está em voo — 'default' (Assinar agora, sem seletor de faixa) ou
   // 'plan-<upToTables>' (um card do seletor). Guardar QUAL botão evita que todos mudem de rótulo
   // juntos quando só um foi clicado.
@@ -50,7 +50,7 @@ export class AssinaturaComponent {
   // Assinatura pedida antes de haver cartão: depois de salvar o cartão, assina direto.
   // undefined = nenhuma; null = faixa da quantidade de mesas atual; número = faixa escolhida.
   private readonly pendingSubscription = signal<number | null | undefined>(undefined);
-  // Mesma lógica do redirectingTarget, para as trocas de plano: 'sync' (botão "Atualizar plano" do
+  // Botão de troca de plano em voo: 'sync' (botão "Atualizar plano" do
   // banner planOutdated) ou 'plan-<upToTables>' (confirmação de uma faixa do seletor).
   readonly changingPlanTarget = signal<string | null>(null);
   readonly changePlanMessage = signal<{ type: 'ok' | 'error'; text: string } | null>(null);
@@ -59,6 +59,11 @@ export class AssinaturaComponent {
 
   readonly status = signal<SubscriptionStatusResponse | null>(null);
   readonly companyName = computed(() => this.authService.selectedCompany()?.companyName ?? 'seu estabelecimento');
+
+  // Faturas na Asaas (mensalidades e taxas semanais).
+  readonly charges = signal<PlatformCharge[]>([]);
+  readonly isLoadingCharges = signal(false);
+  readonly chargesLoadError = signal(false);
 
   readonly creditMovements = signal<CreditMovement[]>([]);
   readonly isLoadingMovements = signal(false);
@@ -124,6 +129,9 @@ export class AssinaturaComponent {
         if (status.credit) {
           this.loadMovements();
         }
+        if (status.exists) {
+          this.loadCharges();
+        }
       },
       error: (error: unknown) => {
         this.isLoading.set(false);
@@ -149,10 +157,6 @@ export class AssinaturaComponent {
       return;
     }
     this.doSubscribe(upToTables);
-  }
-
-  isRedirectingTo(target: string): boolean {
-    return this.redirectingTarget() === target;
   }
 
   isSubscribingTo(target: string): boolean {
@@ -236,15 +240,19 @@ export class AssinaturaComponent {
     const target = upToTables != null ? `plan-${upToTables}` : 'default';
     this.subscribingTarget.set(target);
     this.subscriptionService.subscribe(upToTables).subscribe({
-      next: (res) => {
-        this.status.set(res.subscription);
-        if (!res.requiresConfirmation) {
-          this.subscribingTarget.set(null);
+      next: (status) => {
+        this.status.set(status);
+        this.subscribingTarget.set(null);
+        this.loadCharges();
+        if (status.status === 'ACTIVE' && !status.courtesy) {
           this.actionSuccess.set('Assinatura confirmada! A mensalidade foi cobrada no cartão salvo.');
-          this.waitForActivation();
+          if (status.credit) {
+            this.loadMovements();
+          }
           return;
         }
-        this.confirmFirstPayment(res);
+        this.actionSuccess.set('Assinatura criada. Aguardando a confirmação do pagamento pela operadora do cartão…');
+        this.waitForActivation();
       },
       error: (error: unknown) => {
         this.subscribingTarget.set(null);
@@ -254,39 +262,8 @@ export class AssinaturaComponent {
     });
   }
 
-  // O banco pediu autenticação (3D Secure) ou recusou a 1ª tentativa: o Stripe.js abre a
-  // autenticação do banco / tenta de novo no cartão salvo. A ativação chega pelo webhook.
-  private confirmFirstPayment(res: SubscribeResponse): void {
-    const { clientSecret, publishableKey } = res;
-    if (!clientSecret || !publishableKey) {
-      this.subscribingTarget.set(null);
-      this.actionError.set('O pagamento não foi aprovado. Confira o cartão ou cadastre outro e tente novamente.');
-      return;
-    }
-    loadStripeJs()
-      .then((Stripe) => Stripe(publishableKey, { locale: 'pt-BR' }).confirmCardPayment(clientSecret, {
-        payment_method: res.paymentMethodId ?? undefined
-      }))
-      .then((result: any) => {
-        this.subscribingTarget.set(null);
-        if (result.error) {
-          this.actionError.set(result.error.type === 'card_error'
-            ? `${result.error.message ?? 'O pagamento não foi aprovado.'} Confira o cartão ou cadastre outro e tente novamente.`
-            : stripeErrorMessage(result.error, 'Não foi possível processar o pagamento agora por um problema no processamento '
-              + 'de pagamentos. Tente novamente mais tarde ou fale com o suporte da Comanda Única.'));
-          return;
-        }
-        this.actionSuccess.set('Pagamento confirmado! Ativando sua assinatura…');
-        this.waitForActivation();
-      })
-      .catch(() => {
-        this.subscribingTarget.set(null);
-        this.actionError.set('Não foi possível confirmar o pagamento agora. Tente novamente em instantes.');
-      });
-  }
-
-  // A ativação definitiva vem do webhook do Stripe (invoice.paid concede o crédito) — re-busca o
-  // estado algumas vezes até a assinatura aparecer ativa.
+  // Pagamento ainda em análise na Asaas: a ativação chega pelo webhook — re-busca o estado algumas
+  // vezes até a assinatura aparecer ativa.
   private waitForActivation(attempt = 0): void {
     const companyId = this.authService.selectedCompany()?.companyId;
     const s = this.status();
@@ -300,6 +277,7 @@ export class AssinaturaComponent {
           if (status.credit) {
             this.loadMovements();
           }
+          this.loadCharges();
           this.waitForActivation(attempt + 1);
         },
         error: () => this.waitForActivation(attempt + 1)
@@ -320,6 +298,43 @@ export class AssinaturaComponent {
         this.movementsLoadError.set(true);
       }
     });
+  }
+
+  loadCharges(): void {
+    this.isLoadingCharges.set(true);
+    this.chargesLoadError.set(false);
+    this.subscriptionService.getCharges(0, 10).subscribe({
+      next: (page) => {
+        this.charges.set(page.content);
+        this.isLoadingCharges.set(false);
+      },
+      error: () => {
+        this.isLoadingCharges.set(false);
+        this.chargesLoadError.set(true);
+      }
+    });
+  }
+
+  chargeKindLabel(charge: PlatformCharge): string {
+    return charge.kind === 'SUBSCRIPTION' ? 'Mensalidade' : 'Taxas da semana';
+  }
+
+  chargeStatusLabel(charge: PlatformCharge): string {
+    if (charge.paid) {
+      return 'Paga';
+    }
+    switch (charge.status) {
+      case 'PENDING':
+      case 'AWAITING_RISK_ANALYSIS':
+        return 'Processando';
+      case 'OVERDUE':
+        return 'Recusada';
+      case 'REFUNDED':
+      case 'REFUND_REQUESTED':
+        return 'Estornada';
+      default:
+        return charge.status;
+    }
   }
 
   private static readonly MOVEMENT_LABELS: Record<CreditMovementType, string> = {
@@ -379,7 +394,7 @@ export class AssinaturaComponent {
         this.status.set(status);
         this.changingPlanTarget.set(null);
         this.pendingPlan.set(null);
-        this.changePlanMessage.set({ type: 'ok', text: 'Plano atualizado. A diferença entra na próxima fatura.' });
+        this.changePlanMessage.set({ type: 'ok', text: 'Plano atualizado. O novo valor vale a partir da próxima mensalidade.' });
       },
       error: (error: unknown) => {
         this.changingPlanTarget.set(null);
@@ -394,22 +409,31 @@ export class AssinaturaComponent {
     });
   }
 
-  // Customer Portal do Stripe — faturas e cancelamento da renovação.
-  manage(): void {
-    const target = 'manage';
-    this.redirectingTarget.set(target);
+  // Cancelar a renovação: pede confirmação antes (o acesso segue até o fim do período pago).
+  requestCancel(): void {
     this.actionError.set(null);
-    this.subscriptionService.createPortalSession().subscribe({
-      next: ({ url }) => {
-        window.location.href = url;
+    this.actionSuccess.set(null);
+    this.confirmingCancel.set(true);
+  }
+
+  abortCancel(): void {
+    this.confirmingCancel.set(false);
+  }
+
+  confirmCancel(): void {
+    this.isCancelling.set(true);
+    this.subscriptionService.cancelRenewal().subscribe({
+      next: (status) => {
+        this.status.set(status);
+        this.isCancelling.set(false);
+        this.confirmingCancel.set(false);
+        this.actionSuccess.set(`Renovação cancelada. Seu acesso continua até ${this.dateLabel(status.currentPeriodEnd)}.`);
       },
-      error: () => {
-        // Só limpa se ainda for O MESMO alvo — evita que a resposta de um clique antigo apague o
-        // estado "em voo" de um clique mais novo em outro botão.
-        if (this.redirectingTarget() === target) {
-          this.redirectingTarget.set(null);
-        }
-        this.actionError.set('Não foi possível abrir as faturas agora. Tente novamente em instantes.');
+      error: (error: unknown) => {
+        this.isCancelling.set(false);
+        this.confirmingCancel.set(false);
+        const body = error instanceof HttpErrorResponse ? (error.error as { mensagem?: string } | undefined) : undefined;
+        this.actionError.set(body?.mensagem ?? 'Não foi possível cancelar a renovação agora. Tente novamente em instantes.');
       }
     });
   }
@@ -426,7 +450,8 @@ export class AssinaturaComponent {
   };
 
   cardLabel(pm: SavedPaymentMethod): string {
-    const brand = pm.brand ? (AssinaturaComponent.BRAND_LABELS[pm.brand] ?? pm.brand) : 'Cartão';
+    // A Asaas devolve a bandeira em maiúsculas (VISA, MASTERCARD, ELO...).
+    const brand = pm.brand ? (AssinaturaComponent.BRAND_LABELS[pm.brand.toLowerCase()] ?? pm.brand) : 'Cartão';
     return pm.last4 ? `${brand} •••• ${pm.last4}` : brand;
   }
 
