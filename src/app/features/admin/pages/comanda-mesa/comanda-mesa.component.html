@@ -3,29 +3,104 @@
     <h1 class="page-title">
       Comanda
       @if (table(); as t) {
-        — Mesa {{ t.number }}{{ t.name ? ' — ' + t.name : '' }}
+        — {{ tableLabel(t.number, t.name) }}
       }
       @if (orderComanda()?.consumptionPassNumber; as passNumber) {
         — Cartão {{ passNumber }}
       }
     </h1>
     <p class="page-subtitle">
-      {{ passToken ? 'Todos os pedidos já lançados neste cartão.' : 'Todos os pedidos já lançados nesta mesa.' }}
+      @if (showPassPicker()) {
+        Nesta mesa cada cliente consome no próprio cartão — escolha o cartão para ver a comanda.
+      } @else {
+        {{ passToken() ? 'Todos os pedidos já lançados neste cartão.' : 'Todos os pedidos já lançados nesta mesa.' }}
+      }
     </p>
   </div>
+  <div class="page-header__actions">
+  @if (passToken() && (tablePasses()?.length ?? 0) > 1) {
+    <button type="button" class="btn btn--ghost" (click)="backToTablePasses()">
+      <span class="material-icons" aria-hidden="true">credit_card</span>
+      Outros cartões da mesa
+    </button>
+  }
   <button type="button" class="btn btn--ghost" (click)="goToMenu()">
     <span class="material-icons" aria-hidden="true">restaurant_menu</span>
     Lançar mais itens
   </button>
+  </div>
 </div>
 
-@if (isLoading()) {
-  <p class="field__hint">Carregando comanda…</p>
+@if (isLoading() || isLoadingPasses()) {
+  <p class="field__hint">{{ isLoadingPasses() ? 'Carregando cartões da mesa…' : 'Carregando comanda…' }}</p>
 } @else if (loadError()) {
   <div class="form-alert form-alert--error" role="alert">
     <span class="material-icons" aria-hidden="true">error_outline</span>
     {{ loadError() }}
   </div>
+} @else if (showPassPicker()) {
+  <div class="pass-reader">
+    @if (isScanningPass()) {
+      <app-qr-scanner
+        hint="Aponte a câmera para o QR Code do cartão."
+        fallbackHint="Digite o número ou o código do cartão."
+        (scanned)="onPassScanned($event)"
+        (closed)="isScanningPass.set(false)"
+      ></app-qr-scanner>
+    } @else {
+      <form class="pass-reader__form" (submit)="$event.preventDefault(); submitPassInput()">
+        <button type="button" class="btn btn--primary" [disabled]="isResolvingPass()" (click)="startPassScan()">
+          <span class="material-icons" aria-hidden="true">qr_code_scanner</span>
+          Ler cartão
+        </button>
+        <input
+          type="text"
+          class="field__input pass-reader__input"
+          placeholder="ou digite o número / código CMU-…"
+          aria-label="Número ou código do cartão"
+          autocomplete="off"
+          autocapitalize="characters"
+          spellcheck="false"
+          enterkeyhint="search"
+          name="passInput"
+          [value]="passInput()"
+          (input)="passInput.set($any($event.target).value)"
+          [disabled]="isResolvingPass()">
+        <button type="submit" class="btn btn--ghost" [disabled]="!passInput().trim() || isResolvingPass()">
+          {{ isResolvingPass() ? 'Buscando…' : 'Abrir' }}
+        </button>
+      </form>
+    }
+    @if (passReadError()) {
+      <div class="form-alert form-alert--error" role="alert">
+        <span class="material-icons" aria-hidden="true">error_outline</span>
+        {{ passReadError() }}
+      </div>
+    }
+  </div>
+
+  @if (tablePasses()!.length === 0) {
+    <div class="comanda-empty">
+      <p>Nenhum cartão de consumo em uso nesta mesa. Leia o cartão do cliente acima ou lance um pedido.</p>
+      <button type="button" class="btn btn--primary" (click)="goToMenu()">
+        <span class="material-icons" aria-hidden="true">add_shopping_cart</span>
+        Lançar pedido com cartão
+      </button>
+    </div>
+  } @else {
+    <div class="pass-picker">
+      @for (pass of tablePasses(); track pass.id) {
+        <button type="button" class="pass-picker__item" (click)="selectPass(pass)">
+          <span class="material-icons pass-picker__icon" aria-hidden="true">credit_card</span>
+          <span class="pass-picker__text">
+            <strong>Cartão Nº {{ pass.number }}</strong>
+            <span>{{ pass.customerName || 'Cliente sem nome' }}</span>
+          </span>
+          <span class="material-icons" aria-hidden="true">chevron_right</span>
+        </button>
+      }
+    </div>
+  }
 } @else {
   @if (orderActionError()) {
     <div class="form-alert form-alert--error" role="alert">

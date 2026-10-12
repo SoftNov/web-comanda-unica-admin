@@ -107,6 +107,8 @@
 
 .table-item {
   padding: 18px;
+  border: 1px solid transparent;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -416,4 +418,103 @@
 select.field__input {
   appearance: none;
   cursor: pointer;
+}
+
+.table-item--selected {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 6%, var(--color-bg-card));
+}
+
+.table-item__check,
+.bulk-bar__select-all input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--color-accent);
+  cursor: pointer;
+}
+
+.bulk-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.bulk-bar--active {
+  position: sticky;
+  top: 8px;
+  z-index: 5;
+  border-color: var(--color-accent);
+  background: var(--color-bg-card);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.bulk-bar__select-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.bulk-bar__count {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-accent);
+}
+
+.bulk-bar__hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.bulk-bar__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.btn--limit {
+  opacity: 0.85;
+}
+
+.upgrade-modal {
+  text-align: center;
+
+  .step-actions {
+    justify-content: center;
+  }
+}
+
+.upgrade-modal__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 8px;
+  border-radius: var(--radius-full);
+  background: rgba(214, 164, 79, 0.16);
+  color: #d6a44f;
+  font-size: 28px;
+}
+
+.upgrade-modal__meter {
+  height: 8px;
+  margin: 4px 0 12px;
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    background: #d6a44f;
+  }
 }

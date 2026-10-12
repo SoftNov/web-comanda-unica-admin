@@ -1,0 +1,207 @@
+<section class="card quick-service" aria-labelledby="quick-service-title">
+  <div class="quick-service__header">
+    <span class="quick-service__icon material-icons" aria-hidden="true">bolt</span>
+    <div class="quick-service__heading">
+      <h2 id="quick-service-title" class="quick-service__title">Atendimento</h2>
+      <p class="quick-service__subtitle">
+        Escolha a mesa{{ passEnabled() ? ' ou o cartão' : '' }} para lançar pedido ou abrir a comanda.
+      </p>
+    </div>
+    @if (!target() && !isScanning()) {
+      <button type="button" class="btn btn--primary quick-service__scan" appRipple [disabled]="isResolving()" (click)="startScan()">
+        <span class="material-icons" aria-hidden="true">qr_code_scanner</span>
+        <span>{{ isResolving() ? 'Identificando…' : 'Escanear QR' }}</span>
+      </button>
+    }
+  </div>
+
+  @if (error()) {
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      {{ error() }}
+    </div>
+  }
+
+  @if (isScanning()) {
+    <app-qr-scanner
+      [hint]="passEnabled() ? 'Aponte a câmera para o QR Code da mesa ou do cartão.' : 'Aponte a câmera para o QR Code da mesa.'"
+      fallbackHint="Escolha a mesa ou digite o cartão abaixo."
+      (scanned)="onScanned($event)"
+      (closed)="isScanning.set(false)"
+    ></app-qr-scanner>
+  } @else {
+  @if (target(); as current) {
+    <!-- Foco no que foi escolhido: só as ações dele, sem o seletor em volta. -->
+    <div class="quick-service__target" aria-live="polite">
+      <div class="quick-service__target-info">
+        <span class="quick-service__target-icon material-icons" aria-hidden="true">
+          {{ current.kind === 'table' ? 'table_restaurant' : 'qr_code_2' }}
+        </span>
+        <div class="quick-service__target-text">
+          @if (current.kind === 'table') {
+            <strong>{{ tableLabel(current.table) }}</strong>
+            <span class="quick-service__target-detail">
+              <span class="qs-status" [class]="statusClass(current.table)">{{ statusLabel(current.table) }}</span>
+              {{ current.table.sectorName }}
+            </span>
+          } @else {
+            <strong>Cartão Nº {{ current.pass.number }}</strong>
+            <span class="quick-service__target-detail">
+              @if (current.pass.status === 'IN_USE') {
+                <span class="qs-status qs-status--occupied">Em uso</span>
+                {{ current.table ? tableLabel(current.table) : passTableLabel(current.pass.tableNumber, current.pass.tableName) }}{{ current.pass.customerName ? ' · ' + current.pass.customerName : '' }}
+              } @else {
+                <span class="qs-status qs-status--free">Livre</span>
+                Será vinculado à mesa{{ counterTable() ? ' ou ao balcão' : '' }} no lançamento
+              }
+            </span>
+          }
+        </div>
+        <button type="button" class="btn btn--ghost btn--sm quick-service__clear" (click)="clearTarget()">
+          <span class="material-icons" aria-hidden="true">swap_horiz</span>
+          Trocar
+        </button>
+      </div>
+
+      <div class="quick-service__actions">
+        <button type="button" class="btn btn--primary quick-service__action-main" appRipple (click)="launchOrder()">
+          <span class="material-icons" aria-hidden="true">add_shopping_cart</span>
+          Lançar pedido
+        </button>
+        @if (canOpenComanda()) {
+          <button type="button" class="btn btn--ghost" appRipple (click)="openComanda()">
+            <span class="material-icons" aria-hidden="true">receipt_long</span>
+            Ver comanda
+          </button>
+        }
+        @if (canLaunchAtCounter()) {
+          <button type="button" class="btn btn--ghost" appRipple (click)="launchAtCounter()">
+            <span class="material-icons" aria-hidden="true">storefront</span>
+            {{ counterLabel }}
+          </button>
+        }
+      </div>
+    </div>
+  } @else {
+    @if (passEnabled()) {
+      <div class="quick-service__modes" role="tablist" aria-label="Atender por">
+        <button type="button" role="tab" class="quick-service__mode" [class.quick-service__mode--active]="mode() === 'table'"
+                [attr.aria-selected]="mode() === 'table'" (click)="setMode('table')">
+          <span class="material-icons" aria-hidden="true">table_restaurant</span>
+          Mesa
+        </button>
+        <button type="button" role="tab" class="quick-service__mode" [class.quick-service__mode--active]="mode() === 'pass'"
+                [attr.aria-selected]="mode() === 'pass'" (click)="setMode('pass')">
+          <span class="material-icons" aria-hidden="true">credit_card</span>
+          Cartão de consumo
+        </button>
+      </div>
+    }
+
+    @if (mode() === 'table' || !passEnabled()) {
+      <div class="quick-service__table-tools">
+        <div class="quick-service__search">
+          <span class="material-icons" aria-hidden="true">search</span>
+          <input
+            type="search"
+            inputmode="search"
+            class="field__input"
+            placeholder="Buscar mesa (número, nome ou setor)"
+            aria-label="Buscar mesa"
+            autocomplete="off"
+            [ngModel]="tableSearch()"
+            (ngModelChange)="tableSearch.set($event)">
+        </div>
+        <div class="quick-service__filters" role="group" aria-label="Filtrar mesas">
+          <button type="button" class="quick-service__filter" [class.quick-service__filter--active]="tableFilter() === 'ALL'"
+                  [attr.aria-pressed]="tableFilter() === 'ALL'" (click)="tableFilter.set('ALL')">
+            Todas <span>{{ tables().length }}</span>
+          </button>
+          <button type="button" class="quick-service__filter" [class.quick-service__filter--active]="tableFilter() === 'OCCUPIED'"
+                  [attr.aria-pressed]="tableFilter() === 'OCCUPIED'" (click)="tableFilter.set('OCCUPIED')">
+            Ocupadas <span>{{ occupiedCount() }}</span>
+          </button>
+          <button type="button" class="quick-service__filter" [class.quick-service__filter--active]="tableFilter() === 'FREE'"
+                  [attr.aria-pressed]="tableFilter() === 'FREE'" (click)="tableFilter.set('FREE')">
+            Livres <span>{{ freeCount() }}</span>
+          </button>
+          <button type="button" class="btn btn--ghost btn--sm quick-service__refresh" aria-label="Atualizar mesas"
+                  title="Atualizar mesas" [disabled]="tablesLoading()" (click)="loadTables()">
+            <span class="material-icons" [class.quick-service__spin]="tablesLoading()" aria-hidden="true">refresh</span>
+          </button>
+        </div>
+      </div>
+
+      @if (tablesLoading() && !tables().length) {
+        <div class="quick-service__grid" aria-busy="true">
+          @for (i of [1, 2, 3, 4, 5, 6, 7, 8]; track i) {
+            <div class="quick-service__tile skeleton"></div>
+          }
+        </div>
+      } @else if (tablesError()) {
+        <div class="form-alert form-alert--error" role="alert">
+          <span class="material-icons" aria-hidden="true">error_outline</span>
+          Não foi possível carregar as mesas.
+          <button type="button" class="btn btn--ghost btn--sm" (click)="loadTables()">Tentar de novo</button>
+        </div>
+      } @else if (!filteredTables().length) {
+        <p class="quick-service__empty">
+          {{ tables().length ? 'Nenhuma mesa encontrada com esse filtro.' : 'Nenhuma mesa ativa cadastrada.' }}
+        </p>
+      } @else {
+        <div class="quick-service__grid">
+          @for (table of filteredTables(); track table.id) {
+            <button type="button" class="quick-service__tile" [class]="statusClass(table)" appRipple
+                    [attr.aria-label]="tableLabel(table) + ', ' + statusLabel(table)" (click)="selectTable(table.id)">
+              <span class="quick-service__tile-number">{{ table.number }}</span>
+              <span class="quick-service__tile-name">{{ table.name || table.sectorName }}</span>
+              <span class="quick-service__tile-status">{{ statusLabel(table) }}</span>
+            </button>
+          }
+        </div>
+      }
+    } @else {
+      <form class="quick-service__pass-form" (submit)="$event.preventDefault(); searchPass()">
+        <div class="field quick-service__field">
+          <label class="field__label" for="quick-service-pass">Cartão</label>
+          <div class="field__control">
+            <input
+              #passInputEl
+              id="quick-service-pass"
+              type="text"
+              class="field__input"
+              placeholder="Número (ex.: 12) ou código CMU-…"
+              autocomplete="off"
+              autocapitalize="characters"
+              spellcheck="false"
+              enterkeyhint="search"
+              name="passInput"
+              [ngModel]="passInput()"
+              (ngModelChange)="passInput.set($event)"
+              [disabled]="isResolving()">
+          </div>
+          <span class="field__hint">Leitor USB: é só escanear — o cursor já fica no campo.</span>
+        </div>
+        <button type="submit" class="btn btn--primary" appRipple [disabled]="!passInput().trim() || isResolving()">
+          {{ isResolving() ? 'Buscando…' : 'Buscar' }}
+        </button>
+      </form>
+
+      @if (counterTable()) {
+        <button type="button" class="quick-service__counter-option" appRipple [disabled]="isResolving()" (click)="linkPassToCounter()">
+          <span class="quick-service__counter-icon material-icons" aria-hidden="true">storefront</span>
+          <span class="quick-service__counter-text">
+            <strong>{{ counterLabel }}</strong>
+            <span>
+              {{ passInput().trim()
+                ? 'Vincula o cartão digitado ao balcão e já abre o cardápio.'
+                : 'Lê o QR do cartão, vincula ao balcão e já abre o cardápio.' }}
+            </span>
+          </span>
+          <span class="material-icons" aria-hidden="true">chevron_right</span>
+        </button>
+      }
+    }
+  }
+  }
+</section>

@@ -1,10 +1,14 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
+import {
+  CARD_BRAND_LABELS,
+  CardBrandLogoComponent,
+  normalizeCardBrand
+} from '../../../../shared/components/card-brand-logo/card-brand-logo.component';
 import { AuthService } from '../../../auth/services/auth.service';
 import {
   CreditMovement,
-  CreditMovementType,
   PlatformCharge,
   SavedPaymentMethod,
   SubscriptionService,
@@ -12,13 +16,18 @@ import {
 } from '../../../../shared/services/subscription.service';
 import { parseApiDate } from '../../../../shared/utils/datetime.util';
 import { BillingCardFormComponent, BillingCardFormSummary } from './billing-card-form.component';
+import { ChargeGridComponent } from './charge-grid.component';
+import { MovementGridComponent } from './movement-grid.component';
 
 type ViewMode = 'offer' | 'active' | 'past-due';
+
+// 10 cards por página = 5 linhas de 2 no celular.
+const MOVEMENTS_PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-admin-assinatura',
   standalone: true,
-  imports: [RippleDirective, BillingCardFormComponent],
+  imports: [RippleDirective, BillingCardFormComponent, CardBrandLogoComponent, ChargeGridComponent, MovementGridComponent],
   templateUrl: './assinatura.component.html',
   styleUrl: './assinatura.component.scss'
 })
@@ -68,6 +77,10 @@ export class AssinaturaComponent {
   readonly creditMovements = signal<CreditMovement[]>([]);
   readonly isLoadingMovements = signal(false);
   readonly movementsLoadError = signal(false);
+  // Paginação das movimentações (vem da API — PagedResponse).
+  readonly movementsPage = signal(0);
+  readonly movementsTotalPages = signal(0);
+  readonly movementsTotal = signal(0);
 
   readonly mode = computed<ViewMode>(() => {
     const s = this.status();
@@ -106,6 +119,81 @@ export class AssinaturaComponent {
       return null;
     }
     return Math.max(0, Math.ceil((end.getTime() - Date.now()) / 86_400_000));
+  });
+
+  // --- carrossel de planos (mobile) -----------------------------------
+  // No desktop as faixas ficam num grid; no celular o mesmo container vira um carrossel com
+  // scroll-snap (ver .plan-picker__grid no scss). Os pontos/setas acompanham o card centralizado.
+  readonly planCount = computed(() => this.status()?.availablePlans?.length ?? 0);
+  readonly activePlanIndex = signal(0);
+  private planTrack: HTMLElement | null = null;
+
+  // Quando o seletor aparece, já centraliza o plano atual (ou a faixa recomendada) no carrossel.
+  @ViewChild('planTrack') set planTrackRef(ref: ElementRef<HTMLElement> | undefined) {
+    const el = ref?.nativeElement ?? null;
+    const isNew = el !== null && el !== this.planTrack;
+    this.planTrack = el;
+    if (isNew) {
+      setTimeout(() => this.scrollToPlan(this.highlightedPlanIndex(), false));
+    }
+  }
+
+  private highlightedPlanIndex(): number {
+    const plans = this.status()?.availablePlans ?? [];
+    const current = plans.findIndex((p) => p.current);
+    if (current >= 0) {
+      return current;
+    }
+    const recommended = plans.findIndex((p) => p.upToTables === this.recommendedUpToTables());
+    return Math.max(0, recommended);
+  }
+
+  scrollToPlan(index: number, smooth = true): void {
+    const track = this.planTrack;
+    const item = track?.children.item(index) as HTMLElement | null | undefined;
+    if (!track || !item) {
+      return;
+    }
+    this.activePlanIndex.set(index);
+    // Sem rolagem horizontal (grid do desktop) não há o que mover.
+    if (track.scrollWidth <= track.clientWidth) {
+      return;
+    }
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    track.scrollTo({
+      left: item.offsetLeft - (track.clientWidth - item.offsetWidth) / 2,
+      behavior: smooth && !reduceMotion ? 'smooth' : 'auto'
+    });
+  }
+
+  onPlanTrackScroll(): void {
+    const track = this.planTrack;
+    if (!track) {
+      return;
+    }
+    const center = track.scrollLeft + track.clientWidth / 2;
+    let closest = 0;
+    let closestDistance = Number.POSITIVE_INFINITY;
+    Array.from(track.children).forEach((child, i) => {
+      const el = child as HTMLElement;
+      const distance = Math.abs(el.offsetLeft + el.offsetWidth / 2 - center);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closest = i;
+      }
+    });
+    if (closest !== this.activePlanIndex()) {
+      this.activePlanIndex.set(closest);
+    }
+  }
+
+  // Percentual do crédito do período já consumido — barra do card de crédito.
+  readonly creditUsedPercent = computed(() => {
+    const credit = this.status()?.credit;
+    if (!credit || !credit.granted) {
+      return 0;
+    }
+    return Math.min(100, Math.max(0, Math.round((credit.consumed / credit.granted) * 100)));
   });
 
   constructor() {
@@ -285,12 +373,17 @@ export class AssinaturaComponent {
     }, 2000);
   }
 
-  loadMovements(): void {
+  // Sem argumento volta para a 1ª página — usado depois de assinar/trocar plano, quando entram
+  // movimentações novas (a API ordena da mais recente para a mais antiga).
+  loadMovements(page = 0): void {
     this.isLoadingMovements.set(true);
     this.movementsLoadError.set(false);
-    this.subscriptionService.getCreditMovements(0, 20).subscribe({
-      next: (page) => {
-        this.creditMovements.set(page.content);
+    this.subscriptionService.getCreditMovements(page, MOVEMENTS_PAGE_SIZE).subscribe({
+      next: (result) => {
+        this.creditMovements.set(result.content);
+        this.movementsPage.set(result.page);
+        this.movementsTotalPages.set(result.totalPages);
+        this.movementsTotal.set(result.totalElements);
         this.isLoadingMovements.set(false);
       },
       error: () => {
@@ -315,44 +408,6 @@ export class AssinaturaComponent {
     });
   }
 
-  chargeKindLabel(charge: PlatformCharge): string {
-    return charge.kind === 'SUBSCRIPTION' ? 'Mensalidade' : 'Taxas da semana';
-  }
-
-  chargeStatusLabel(charge: PlatformCharge): string {
-    if (charge.paid) {
-      return 'Paga';
-    }
-    switch (charge.status) {
-      case 'PENDING':
-      case 'AWAITING_RISK_ANALYSIS':
-        return 'Processando';
-      case 'OVERDUE':
-        return 'Recusada';
-      case 'REFUNDED':
-      case 'REFUND_REQUESTED':
-        return 'Estornada';
-      default:
-        return charge.status;
-    }
-  }
-
-  private static readonly MOVEMENT_LABELS: Record<CreditMovementType, string> = {
-    SUBSCRIPTION_CREDIT: 'Crédito concedido',
-    FEE_CREDIT_CONSUMPTION: 'Crédito usado em taxa',
-    FEE_CREDIT_CONSUMPTION_REVERSAL: 'Crédito devolvido',
-    CREDIT_EXPIRATION: 'Crédito expirado'
-  };
-
-  movementLabel(type: CreditMovementType): string {
-    return AssinaturaComponent.MOVEMENT_LABELS[type] ?? type;
-  }
-
-  // + quando entra crédito (concessão / devolução), − quando sai (consumo / expiração).
-  movementSign(type: CreditMovementType): string {
-    return type === 'SUBSCRIPTION_CREDIT' || type === 'FEE_CREDIT_CONSUMPTION_REVERSAL' ? '+' : '−';
-  }
-
   // Botão "Atualizar plano" do banner planOutdated — sincroniza ao valor da faixa das mesas atuais.
   changePlan(): void {
     this.applyPlanChange(undefined, 'sync');
@@ -371,10 +426,23 @@ export class AssinaturaComponent {
 
   confirmPlanChange(): void {
     const target = this.pendingPlan();
-    if (target != null) {
-      this.applyPlanChange(target, `plan-${target}`);
+    if (target == null) {
+      return;
     }
+    if (this.renewing()) {
+      this.applyPlanChange(target, `plan-${target}`);
+      return;
+    }
+    // Sem renovação (cancelada ou sem assinatura na Asaas) o backend não troca o plano
+    // (ERR_SUBSCRIPTION_NOT_ACTIVE_FOR_CHANGE) — reativa assinando a faixa escolhida.
+    this.pendingPlan.set(null);
+    this.changePlanMessage.set(null);
+    this.subscribe(target);
   }
+
+  // Assinatura paga e ainda renovando — só nesse estado o backend aceita trocar de plano
+  // (mesma regra de SubscriptionServiceImpl#changePlan, espelhada em "cancellable").
+  readonly renewing = computed(() => this.mode() === 'active' && !!this.status()?.cancellable);
 
   // true enquanto QUALQUER troca de plano está em voo — usado só pra desabilitar os botões que não
   // deveriam iniciar uma segunda troca em paralelo (sem mudar o rótulo deles).
@@ -438,20 +506,10 @@ export class AssinaturaComponent {
     });
   }
 
-  private static readonly BRAND_LABELS: Record<string, string> = {
-    visa: 'Visa',
-    mastercard: 'Mastercard',
-    amex: 'American Express',
-    elo: 'Elo',
-    hipercard: 'Hipercard',
-    diners: 'Diners Club',
-    discover: 'Discover',
-    jcb: 'JCB'
-  };
-
   cardLabel(pm: SavedPaymentMethod): string {
     // A Asaas devolve a bandeira em maiúsculas (VISA, MASTERCARD, ELO...).
-    const brand = pm.brand ? (AssinaturaComponent.BRAND_LABELS[pm.brand.toLowerCase()] ?? pm.brand) : 'Cartão';
+    const key = normalizeCardBrand(pm.brand);
+    const brand = key ? CARD_BRAND_LABELS[key] : (pm.brand ?? 'Cartão');
     return pm.last4 ? `${brand} •••• ${pm.last4}` : brand;
   }
 

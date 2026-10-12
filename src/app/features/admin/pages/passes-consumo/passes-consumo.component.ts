@@ -15,6 +15,7 @@ import { ApiErrorResponse } from '../../../../shared/services/reservations.servi
 import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
 import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
 
+import { formatTableLabel } from '../../../../shared/utils/table-label.util';
 const PAGE_SIZE = 20;
 
 const STATUS_LABELS: Record<ConsumptionPassStatus, string> = {
@@ -466,7 +467,7 @@ export class PassesConsumoComponent implements OnInit, OnDestroy {
     if (tableNumber == null) {
       return '—';
     }
-    return `Mesa ${tableNumber}${tableName ? ' — ' + tableName : ''}`;
+    return formatTableLabel(tableNumber, tableName);
   }
 
   private flashSuccess(message: string): void {

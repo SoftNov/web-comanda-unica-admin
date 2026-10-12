@@ -14,15 +14,64 @@
 
 <div class="field">
   <label class="field__label" for="order-table">Mesa</label>
-  <div class="field__control">
-    <select id="order-table" class="field__input" [ngModel]="orderTableId()" (ngModelChange)="selectOrderTable($event)">
-      <option value="">Selecione a mesa</option>
-      @for (table of tables(); track table.id) {
-        <option [value]="table.id">Mesa {{ table.number }}{{ table.name ? ' — ' + table.name : '' }}</option>
-      }
-    </select>
+  <div class="order-target">
+    <div class="field__control order-target__select">
+      <select id="order-table" class="field__input" [ngModel]="orderTableId()" (ngModelChange)="selectOrderTable($event)">
+        <option value="">Selecione a mesa</option>
+        @if (counterTable(); as counter) {
+          <option [value]="counter.id">{{ counterLabel }} (cartão de consumo)</option>
+        }
+        @for (table of tables(); track table.id) {
+          <option [value]="table.id">Mesa {{ table.number }}{{ table.name ? ' — ' + table.name : '' }}</option>
+        }
+      </select>
+    </div>
+    <button type="button" class="btn btn--ghost order-target__scan" appRipple
+            [disabled]="isSubmittingOrder() || isResolvingTarget() || isScanningTarget()" (click)="startTargetScan()">
+      <span class="material-icons" aria-hidden="true">qr_code_scanner</span>
+      {{ isResolvingTarget() ? 'Identificando…' : 'Escanear QR' }}
+    </button>
   </div>
+  <span class="field__hint">QR Code da mesa ou do cartão de consumo do cliente.</span>
+  @if (counterTable() && !isCounterSelected()) {
+    <button type="button" class="btn btn--ghost btn--sm order-target__counter" appRipple
+            [disabled]="isSubmittingOrder()" (click)="selectCounter()">
+      <span class="material-icons" aria-hidden="true">storefront</span>
+      {{ counterLabel }}
+    </button>
+  }
 </div>
+
+@if (tablesError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ tablesError() }}
+    <button type="button" class="btn btn--ghost btn--sm" (click)="loadTables(orderTableId() || null)">Tentar de novo</button>
+  </div>
+}
+
+@if (isScanningTarget()) {
+  <div class="card order-target__scanner">
+    <app-qr-scanner
+      hint="Aponte a câmera para o QR Code da mesa ou do cartão."
+      fallbackHint="Escolha a mesa na lista acima."
+      (scanned)="onTargetScanned($event)"
+      (closed)="isScanningTarget.set(false)"
+    ></app-qr-scanner>
+  </div>
+}
+@if (targetScanError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ targetScanError() }}
+  </div>
+}
+@if (pendingPassNumber() && !orderTableId()) {
+  <div class="form-alert form-alert--info" role="status">
+    <span class="material-icons" aria-hidden="true">qr_code_2</span>
+    Cartão Nº {{ pendingPassNumber() }} está livre — escolha a mesa{{ counterTable() ? ' (ou ' + counterLabel + ')' : '' }} para vinculá-lo e lançar o pedido.
+  </div>
+}
 
 @if (isLoadingOrderComanda()) {
   <p class="field__hint">Abrindo comanda da mesa…</p>
@@ -42,7 +91,13 @@
       <span class="pass-step__icon material-icons" aria-hidden="true">qr_code_2</span>
       <div>
         <h2 id="pass-step-title" class="pass-step__title">Cartão de consumo do cliente</h2>
-        <p class="pass-step__subtitle">Os itens vão para a comanda do cartão. Cartão livre é vinculado agora.</p>
+        <p class="pass-step__subtitle">
+          @if (isCounterSelected()) {
+            Retirada no balcão: os itens vão para a comanda do cartão e o cliente busca no balcão.
+          } @else {
+            Os itens vão para a comanda do cartão. Cartão livre é vinculado agora.
+          }
+        </p>
       </div>
     </div>
 

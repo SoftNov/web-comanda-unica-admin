@@ -11,6 +11,7 @@ import {
 import { ApiErrorResponse } from '../../../../shared/services/reservations.service';
 import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
 
+import { formatTableLabel } from '../../../../shared/utils/table-label.util';
 type ExitState = 'PAID' | 'PENDING' | 'RELEASED' | 'NOT_IN_USE' | 'BLOCKED';
 
 // Tela da recepção: lê o QR Code do Passe de Consumo na saída (câmera, leitor USB — que "digita"
@@ -162,7 +163,7 @@ export class ControleSaidaComponent implements AfterViewInit {
     if (result.tableNumber == null) {
       return '—';
     }
-    return `Mesa ${result.tableNumber}${result.tableName ? ' — ' + result.tableName : ''}`;
+    return formatTableLabel(result.tableNumber, result.tableName);
   }
 
   shortId(id: string | undefined): string {

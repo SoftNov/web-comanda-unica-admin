@@ -58,7 +58,7 @@
           @for (item of itemsFor(column); track item.id) {
             <div class="order-card card">
               <div class="order-card__header">
-                <span class="order-card__table">Mesa {{ item.tableNumber }}{{ item.tableName ? ' — ' + item.tableName : '' }}</span>
+                <span class="order-card__table">{{ tableLabel(item.tableNumber, item.tableName) }}</span>
                 <span class="order-card__time" [title]="formatDateTime(item.createdAt)">{{ formatTime(item.createdAt) }}</span>
               </div>
 
@@ -133,7 +133,7 @@
       </div>
 
       <p class="field__hint">
-        Cancelar {{ item.quantity }}x {{ item.itemName }} do pedido de {{ item.customerName }} (Mesa {{ item.tableNumber }}). Esta ação não pode ser desfeita.
+        Cancelar {{ item.quantity }}x {{ item.itemName }} do pedido de {{ item.customerName }} ({{ tableLabel(item.tableNumber) }}). Esta ação não pode ser desfeita.
       </p>
 
       @if (cancelError()) {

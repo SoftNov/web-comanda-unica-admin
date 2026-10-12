@@ -107,7 +107,7 @@
           @for (comanda of comandas(); track comanda.id) {
             <tr>
               <td>
-                Mesa {{ comanda.tableNumber }}{{ comanda.tableName ? ' — ' + comanda.tableName : '' }}
+                {{ tableLabel(comanda.tableNumber, comanda.tableName) }}
                 @if (comanda.consumptionPassToken) {
                   <span class="comanda-guest-hint">Cartão Nº {{ comanda.consumptionPassNumber }} · {{ comanda.consumptionPassToken }}</span>
                 }
@@ -169,7 +169,7 @@
       <div class="modal-card__header">
         <div>
           <h2 class="step-heading">
-            Comanda — Mesa {{ comanda.tableNumber }}{{ comanda.tableName ? ' — ' + comanda.tableName : '' }}
+            Comanda — {{ tableLabel(comanda.tableNumber, comanda.tableName) }}
           </h2>
           @if (comanda.consumptionPassToken) {
             <p class="comanda-guest-hint">Comanda individual do cartão de consumo Nº {{ comanda.consumptionPassNumber }} ({{ comanda.consumptionPassToken }})</p>

@@ -29,6 +29,8 @@ export interface RestaurantTableResponse {
   // Horário limite da reserva ativa (quando operationalStatus === 'RESERVED'); ausente caso contrário.
   reservedUntil?: string;
   allowQr: boolean;
+  // Mesa virtual do balcão (retirada no balcão com cartão de consumo) — ver getCounter.
+  counter?: boolean;
   publicToken: string;
   publicUrl: string;
   qrCodeVersion: number;
@@ -48,6 +50,19 @@ export interface TablePayload {
 }
 
 export type CreateTableRequest = TablePayload;
+
+// Cota de mesas frente ao plano (GET /tables/quota — em cache no Redis na API). tableLimit/remaining
+// nulos = sem limite.
+export interface TableQuotaResponse {
+  tableCount: number;
+  tableLimit: number | null;
+  remaining: number | null;
+  limitReached: boolean;
+  courtesy: boolean;
+}
+
+// Código do erro da API quando a criação passa do limite do plano.
+export const TABLE_LIMIT_ERROR_CODE = 'ERR_SUBSCRIPTION_TABLE_LIMIT_REACHED';
 
 // Várias mesas iguais de uma vez, numeradas em sequência a partir de startNumber (sem ele, a API
 // continua do maior número já cadastrado).
@@ -103,6 +118,13 @@ export class TablesService {
     return this.http.get<PageResponse<RestaurantTableResponse>>(this.baseUrl, { params: httpParams });
   }
 
+  // Mesa virtual do balcão do estabelecimento (criada pela API na primeira chamada): é onde fica a
+  // comanda do cartão de consumo quando o cliente retira no balcão, sem ocupar mesa. Não aparece
+  // em list() nem no cadastro de mesas.
+  getCounter(): Observable<RestaurantTableResponse> {
+    return this.http.get<RestaurantTableResponse>(`${this.baseUrl}/counter`);
+  }
+
   get(id: string): Observable<RestaurantTableResponse> {
     return this.http.get<RestaurantTableResponse>(`${this.baseUrl}/${id}`);
   }
@@ -121,6 +143,16 @@ export class TablesService {
 
   disable(id: string): Observable<RestaurantTableResponse> {
     return this.http.patch<RestaurantTableResponse>(`${this.baseUrl}/${id}/disable`, {});
+  }
+
+  getQuota(): Observable<TableQuotaResponse> {
+    return this.http.get<TableQuotaResponse>(`${this.baseUrl}/quota`);
+  }
+
+  // Exclui (arquiva) a mesa: some da listagem e do mapa, o número fica livre e o QR Code deixa de
+  // funcionar; o histórico de pedidos/comandas é preservado. 409 com comanda aberta ou reserva ativa.
+  delete(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
   enable(id: string): Observable<RestaurantTableResponse> {

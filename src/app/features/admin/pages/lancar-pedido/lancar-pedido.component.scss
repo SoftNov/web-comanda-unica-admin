@@ -887,3 +887,29 @@ select.field__input {
     justify-content: center;
   }
 }
+
+.order-target {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.order-target__select {
+  flex: 1;
+  min-width: 0;
+}
+
+.order-target__scan {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.order-target__scanner {
+  max-width: 480px;
+  margin-bottom: 16px;
+  padding: 16px;
+}
+
+.order-target__counter {
+  margin-top: 8px;
+}

@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild, signal } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, signal } from '@angular/core';
 
 // Leitura de QR Code pela câmera do aparelho usando a API nativa BarcodeDetector (Chrome/Edge no
 // Android e desktop, Safari 17+). Sem suporte no navegador, o componente só avisa — quem o usa
@@ -12,7 +12,7 @@ import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChi
       @if (unsupported()) {
         <p class="qr-scanner__message">
           <span class="material-icons" aria-hidden="true">no_photography</span>
-          Este navegador não lê QR Code pela câmera. Digite o código impresso no cartão ou use um leitor USB.
+          Este navegador não lê QR Code pela câmera. {{ fallbackHint }}
         </p>
       } @else if (error()) {
         <p class="qr-scanner__message qr-scanner__message--error">
@@ -24,7 +24,7 @@ import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChi
           <video #video class="qr-scanner__video" playsinline muted></video>
           <div class="qr-scanner__frame" aria-hidden="true"></div>
         </div>
-        <p class="qr-scanner__hint">Aponte a câmera para o QR Code do cartão.</p>
+        <p class="qr-scanner__hint">{{ hint }}</p>
       }
       <button type="button" class="btn btn--ghost qr-scanner__close" (click)="closed.emit()">
         <span class="material-icons" aria-hidden="true">close</span>
@@ -43,6 +43,8 @@ import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChi
   `]
 })
 export class QrScannerComponent implements OnInit, OnDestroy {
+  @Input() hint = 'Aponte a câmera para o QR Code do cartão.';
+  @Input() fallbackHint = 'Digite o código impresso no cartão ou use um leitor USB.';
   @Output() readonly scanned = new EventEmitter<string>();
   @Output() readonly closed = new EventEmitter<void>();
 

@@ -116,14 +116,22 @@ export class SubscriptionBannerComponent {
         tone: 'info'
       };
     }
-    if (s.planOutdated) {
+    // Limite de mesas do plano (número de mesas do plano — plan_table_limit): atingido, não dá mais
+    // para cadastrar mesa (a API barra); acima dele (mesas criadas antes da trava), idem.
+    const limit = s.contractedTableLimit;
+    const tables = s.tableCount;
+    if (limit != null && tables != null && tables >= limit) {
       return {
-        text: 'Você mudou de faixa de mesas — o valor da assinatura está desatualizado.',
-        cta: 'Atualizar plano',
-        icon: 'upgrade',
-        tone: 'info'
+        text: tables > limit
+          ? `Você tem ${tables} mesas e seu plano comporta até ${limit}. Suba de plano para regularizar e cadastrar novas mesas.`
+          : `Você atingiu o limite de ${limit} mesas do seu plano. Suba de plano para cadastrar mais mesas.`,
+        cta: 'Subir de plano',
+        icon: 'table_restaurant',
+        tone: 'warn'
       };
     }
+    // Fora isso, assinatura ativa não mostra nada na home — nem o aviso de faixa de mesas/valor
+    // desatualizado (planOutdated), que continua na tela de Assinatura.
     return null;
   });
 

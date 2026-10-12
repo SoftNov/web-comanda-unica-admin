@@ -11,6 +11,7 @@ import { PedidosComponent } from '../pedidos/pedidos.component';
 import { ServicosComponent } from '../servicos/servicos.component';
 import { SubscriptionBannerComponent } from '../../../../shared/components/subscription-banner/subscription-banner.component';
 import { SubscriptionService } from '../../../../shared/services/subscription.service';
+import { QuickServiceComponent } from '../../../../shared/components/quick-service/quick-service.component';
 
 const MANAGEMENT_PROFILES = ['ADMIN', 'OWNER', 'MANAGER'];
 // Perfis operacionais que vivem na fila de pedidos no dia a dia — a home entra direto na mesma
@@ -20,10 +21,15 @@ const QUEUE_HOME_PROFILES = ['WAITER', 'KITCHEN'];
 // Só WAITER: quem chama/atende limpeza, garçom, caixa, reclamação e ajuda de mesa — o backend nem
 // libera esses endpoints pra KITCHEN (ver TableServiceRequestController#@RequireProfile).
 const SERVICE_HOME_PROFILES = ['WAITER'];
+// Garçom e caixa: atendimento rápido no topo da home — QR Code da mesa ou do cartão de consumo
+// direto para lançar pedido ou abrir a comanda (ver QuickServiceComponent).
+const QUICK_SERVICE_PROFILES = ['WAITER', 'CASHIER'];
+// Dono e gerente: o mesmo atendimento, mas numa aba própria — a home deles abre na Visão geral.
+const QUICK_SERVICE_TAB_PROFILES = ['OWNER', 'MANAGER'];
 const WS_RETRY_DELAY_MS = 5000;
 const WS_SILENT_RETRIES = 3;
 
-type DashboardTabId = 'overview' | 'pedidos' | 'servicos' | 'floorplan';
+type DashboardTabId = 'overview' | 'atendimento' | 'pedidos' | 'servicos' | 'floorplan';
 
 interface DashboardTab {
   id: DashboardTabId;
@@ -51,7 +57,8 @@ const REVENUE_PRESETS: RevenuePreset[] = [
     PedidosComponent,
     ServicosComponent,
     RippleDirective,
-    SubscriptionBannerComponent
+    SubscriptionBannerComponent,
+    QuickServiceComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
@@ -95,6 +102,16 @@ export class DashboardComponent implements OnDestroy {
   readonly isServiceHomeProfile = computed(() => {
     const profileCode = this.selectedCompany()?.profileCode;
     return !!profileCode && SERVICE_HOME_PROFILES.includes(profileCode);
+  });
+
+  readonly isQuickServiceProfile = computed(() => {
+    const profileCode = this.selectedCompany()?.profileCode;
+    return !!profileCode && QUICK_SERVICE_PROFILES.includes(profileCode);
+  });
+
+  readonly isQuickServiceTabProfile = computed(() => {
+    const profileCode = this.selectedCompany()?.profileCode;
+    return !!profileCode && QUICK_SERVICE_TAB_PROFILES.includes(profileCode);
   });
 
   // Indicadores operacionais, atualizados em tempo real via WebSocket (ver connectRealtime) —
@@ -141,6 +158,9 @@ export class DashboardComponent implements OnDestroy {
     const tabs: DashboardTab[] = [];
     if (this.isManagementProfile()) {
       tabs.push({ id: 'overview', label: 'Visão geral', icon: 'insights' });
+    }
+    if (this.isQuickServiceTabProfile()) {
+      tabs.push({ id: 'atendimento', label: 'Atendimento', icon: 'bolt' });
     }
     if (this.isQueueHomeProfile()) {
       tabs.push({ id: 'pedidos', label: 'Pedidos', icon: 'point_of_sale' });

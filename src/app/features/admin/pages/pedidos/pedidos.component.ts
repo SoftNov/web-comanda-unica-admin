@@ -12,6 +12,7 @@ import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
 import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
 import { AuthService } from '../../../auth/services/auth.service';
 
+import { formatTableLabel } from '../../../../shared/utils/table-label.util';
 const WS_RETRY_DELAY_MS = 5000;
 const WS_SILENT_RETRIES = 3;
 
@@ -66,6 +67,8 @@ const CANCELLABLE_STATUSES: OrderQueueItemStatus[] = ['REQUESTED', 'PREPARING', 
   styleUrl: './pedidos.component.scss'
 })
 export class PedidosComponent implements OnDestroy {
+  readonly tableLabel = formatTableLabel;
+
   private readonly orderQueueService = inject(OrderQueueService);
   private readonly authService = inject(AuthService);
 

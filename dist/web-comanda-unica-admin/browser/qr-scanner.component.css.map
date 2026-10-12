@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["qr-scanner.component.ts"],
+  "sourcesContent": ["\n    .qr-scanner { display: flex; flex-direction: column; align-items: center; gap: 12px; }\n    .qr-scanner__viewport { position: relative; width: 100%; max-width: 360px; aspect-ratio: 1; border-radius: var(--radius-sm); overflow: hidden; background: #000; }\n    .qr-scanner__video { width: 100%; height: 100%; object-fit: cover; }\n    .qr-scanner__frame { position: absolute; inset: 18%; border: 3px solid var(--color-accent); border-radius: 12px; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35); }\n    .qr-scanner__hint { margin: 0; font-size: 0.875rem; color: var(--color-text-muted); }\n    .qr-scanner__message { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 0.875rem; color: var(--color-text-muted); }\n    .qr-scanner__message--error { color: #f87171; }\n  "],
+  "mappings": ";AACI,CAAA;AAAc,WAAA;AAAe,kBAAA;AAAwB,eAAA;AAAqB,OAAA;;AAC1E,CAAA;AAAwB,YAAA;AAAoB,SAAA;AAAa,aAAA;AAAkB,gBAAA;AAAiB,iBAAA,IAAA;AAAiC,YAAA;AAAkB,cAAA;;AAC/I,CAAA;AAAqB,SAAA;AAAa,UAAA;AAAc,cAAA;;AAChD,CAAA;AAAqB,YAAA;AAAoB,SAAA;AAAY,UAAA,IAAA,MAAA,IAAA;AAAuC,iBAAA;AAAqB,cAAA,EAAA,EAAA,EAAA,OAAA,KAAA,CAAA,EAAA,CAAA,EAAA,CAAA,EAAA;;AACjH,CAAA;AAAoB,UAAA;AAAW,aAAA;AAAqB,SAAA,IAAA;;AACpD,CAAA;AAAuB,WAAA;AAAe,eAAA;AAAqB,OAAA;AAAU,UAAA;AAAW,aAAA;AAAqB,SAAA,IAAA;;AACrG,CAAA;AAA8B,SAAA;;",
+  "names": []
+}

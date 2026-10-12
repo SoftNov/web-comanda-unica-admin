@@ -7,6 +7,10 @@
 
 <app-subscription-banner />
 
+@if (isQuickServiceProfile()) {
+  <app-quick-service />
+}
+
 @if (availableTabs().length > 1) {
   <div class="dashboard-tabs" role="tablist">
     @for (tab of availableTabs(); track tab.id) {
@@ -197,6 +201,10 @@
       }
     </div>
   </div>
+}
+
+@if (activeTab() === 'atendimento') {
+  <app-quick-service />
 }
 
 @if (activeTab() === 'pedidos') {

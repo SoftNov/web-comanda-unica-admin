@@ -1,11 +1,16 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { EMPTY, Observable, expand, reduce } from 'rxjs';
+import { ConsumptionPassResponse, ConsumptionPassesService } from '../../../../shared/services/consumption-passes.service';
 import { ApiErrorResponse } from '../../../../shared/services/comandas.service';
 import { RestaurantTableResponse, TablesService } from '../../../../shared/services/tables.service';
 import { StaffComandaLineItem, StaffComandaResponse, StaffOrderItemStatus, StaffOrderService } from '../../../../shared/services/staff-order.service';
 import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
 
+import { formatTableLabel } from '../../../../shared/utils/table-label.util';
+import { QrTargetResolverService } from '../../../../shared/services/qr-target-resolver.service';
+import { QrScannerComponent } from '../../../../shared/components/qr-scanner/qr-scanner.component';
 // Itens já lançados na comanda (StaffComandaResponse.items, achatados) agrupados por pedido no
 // front — a API não agrupa (ver orderId em cada item), mesmo padrão de OrderGroup no
 // comanda.component.ts do web-comanda-unica-menu (visão do cliente).
@@ -30,13 +35,17 @@ interface StaffOrderGroup {
 @Component({
   selector: 'app-comanda-mesa',
   standalone: true,
-  imports: [],
+  imports: [QrScannerComponent],
   templateUrl: './comanda-mesa.component.html',
   styleUrl: './comanda-mesa.component.scss'
 })
 export class ComandaMesaComponent {
+  readonly tableLabel = formatTableLabel;
+
   private readonly tablesService = inject(TablesService);
   private readonly staffOrderService = inject(StaffOrderService);
+  private readonly consumptionPassesService = inject(ConsumptionPassesService);
+  private readonly qrResolver = inject(QrTargetResolverService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -46,7 +55,15 @@ export class ComandaMesaComponent {
   readonly table = signal<RestaurantTableResponse | null>(null);
   // Estabelecimento com cartão de consumo: a tela de lançar pedido manda o token do cartão
   // (?cartao=) e esta página mostra a comanda individual do cartão, não a compartilhada da mesa.
-  readonly passToken = this.route.snapshot.queryParamMap.get('cartao');
+  // Signal (não snapshot): escolher um cartão da mesa troca o ?cartao= sem remontar a página.
+  readonly passToken = signal<string | null>(this.route.snapshot.queryParamMap.get('cartao'));
+
+  // Cartão obrigatório e página aberta pela MESA (sem ?cartao=, ex.: "Ver comanda" da home): a
+  // mesa não tem comanda compartilhada — cada cliente consome no próprio cartão (ver
+  // StaffOrderServiceImpl#openOrEnter na API do cardápio). Então lista os cartões em uso nesta
+  // mesa para escolher qual comanda abrir.
+  readonly tablePasses = signal<ConsumptionPassResponse[] | null>(null);
+  readonly isLoadingPasses = signal(false);
 
   readonly orderComanda = signal<StaffComandaResponse | null>(null);
   readonly isLoading = signal(true);
@@ -109,7 +126,18 @@ export class ComandaMesaComponent {
 
   private loadTable(): void {
     this.tablesService.list({ status: 'ACTIVE', page: 0, size: 200, sortBy: 'number', sortDirection: 'ASC' }).subscribe({
-      next: (response) => this.table.set(response.content.find((item) => item.id === this.tableId) ?? null),
+      next: (response) => {
+        const table = response.content.find((item) => item.id === this.tableId);
+        if (table) {
+          this.table.set(table);
+          return;
+        }
+        // Mesa virtual do balcão não vem na listagem de mesas.
+        this.tablesService.getCounter().subscribe({
+          next: (counter) => this.table.set(counter.id === this.tableId ? counter : null),
+          error: () => this.table.set(null)
+        });
+      },
       error: () => this.table.set(null)
     });
   }
@@ -118,13 +146,17 @@ export class ComandaMesaComponent {
     this.isLoading.set(true);
     this.loadError.set(null);
 
-    const request$ = this.passToken
-      ? this.staffOrderService.enterWithPass(this.tableId, this.passToken)
+    const passToken = this.passToken();
+    const request$ = passToken
+      ? this.staffOrderService.enterWithPass(this.tableId, passToken)
       : this.staffOrderService.openOrEnter(this.tableId);
     request$.subscribe({
       next: (comanda) => {
         this.isLoading.set(false);
         this.orderComanda.set(comanda);
+        if (!passToken && comanda.consumptionPassRequired) {
+          this.loadTablePasses();
+        }
       },
       error: (error: HttpErrorResponse) => {
         this.isLoading.set(false);
@@ -133,9 +165,114 @@ export class ComandaMesaComponent {
     });
   }
 
+  private loadTablePasses(): void {
+    this.isLoadingPasses.set(true);
+    this.fetchInUsePasses().subscribe({
+      next: (passes) => {
+        this.isLoadingPasses.set(false);
+        const onTable = passes.filter((pass) => pass.tableId === this.tableId);
+        this.tablePasses.set(onTable);
+        // Um cartão só: abre direto a comanda dele, sem passo extra.
+        if (onTable.length === 1) {
+          this.selectPass(onTable[0]);
+        }
+      },
+      error: () => {
+        this.isLoadingPasses.set(false);
+        this.tablePasses.set([]);
+        this.loadError.set('Não foi possível carregar os cartões de consumo desta mesa.');
+      }
+    });
+  }
+
+  // GET /consumption-passes devolve no máximo 100 por página — junta as páginas de IN_USE.
+  private fetchInUsePasses(): Observable<ConsumptionPassResponse[]> {
+    const pageOf = (page: number) => this.consumptionPassesService.list({ status: 'IN_USE', page, size: 100 });
+    return pageOf(0).pipe(
+      expand((response) => (response.last || response.page >= 9 ? EMPTY : pageOf(response.page + 1))),
+      reduce((all, response) => all.concat(response.content), [] as ConsumptionPassResponse[])
+    );
+  }
+
+  // Ler o cartão (câmera ou digitado/leitor USB) em vez de procurar na lista.
+  readonly isScanningPass = signal(false);
+  readonly passInput = signal('');
+  readonly isResolvingPass = signal(false);
+  readonly passReadError = signal<string | null>(null);
+
+  startPassScan(): void {
+    this.passReadError.set(null);
+    this.isScanningPass.set(true);
+  }
+
+  onPassScanned(value: string): void {
+    this.isScanningPass.set(false);
+    this.readPass(value);
+  }
+
+  submitPassInput(): void {
+    if (this.passInput().trim()) {
+      this.readPass(this.passInput());
+    }
+  }
+
+  // Cartão desta mesa (ou livre — fica vinculado a ela, como no lançamento): abre aqui. Cartão em
+  // uso em outra mesa: abre a comanda dele lá.
+  private readPass(value: string): void {
+    if (this.isResolvingPass()) {
+      return;
+    }
+    this.isResolvingPass.set(true);
+    this.passReadError.set(null);
+    const request$ = QrTargetResolverService.isPassCode(value) || /^\s*\d+\s*$/.test(value)
+      ? this.qrResolver.resolvePass(value, [])
+      : this.qrResolver.resolveScan(value, []);
+    request$.subscribe({
+      next: (target) => {
+        this.isResolvingPass.set(false);
+        if (target.kind !== 'pass') {
+          this.passReadError.set('Esse QR Code não é de um cartão de consumo.');
+          return;
+        }
+        this.passInput.set('');
+        const pass = target.pass;
+        if (pass.status === 'IN_USE' && pass.tableId && pass.tableId !== this.tableId) {
+          this.router.navigate(['/painel/comandas/lancar-pedido/comanda', pass.tableId], {
+            queryParams: { cartao: pass.token }
+          });
+          return;
+        }
+        this.selectPass(pass);
+      },
+      error: (error: unknown) => {
+        this.isResolvingPass.set(false);
+        this.passReadError.set(
+          error instanceof HttpErrorResponse
+            ? 'Não foi possível consultar o cartão. Tente novamente.'
+            : error instanceof Error ? error.message : 'Não foi possível ler o cartão.'
+        );
+      }
+    });
+  }
+
+  readonly showPassPicker = computed(() => !this.passToken() && this.tablePasses() !== null);
+
+  selectPass(pass: ConsumptionPassResponse): void {
+    this.passToken.set(pass.token);
+    this.router.navigate([], { relativeTo: this.route, queryParams: { cartao: pass.token }, replaceUrl: true });
+    this.loadComanda();
+  }
+
+  // Volta à lista dos cartões em uso na mesa (só oferecido quando há mais de um).
+  backToTablePasses(): void {
+    this.passToken.set(null);
+    this.orderComanda.set(null);
+    this.router.navigate([], { relativeTo: this.route, queryParams: { cartao: null }, replaceUrl: true });
+  }
+
   goToMenu(): void {
     this.router.navigate(['/painel/comandas/lancar-pedido'], {
-      queryParams: { mesa: this.tableId, cartao: this.passToken || null }
+      queryParams: { mesa: this.tableId, cartao: this.passToken() || null }
     });
   }
 

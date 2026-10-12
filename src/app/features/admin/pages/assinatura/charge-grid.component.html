@@ -1,0 +1,49 @@
+@if (loading) {
+  <div class="charge-grid">
+    @for (i of skeletons; track i) {
+      <div class="charge charge--skeleton" aria-hidden="true"></div>
+    }
+  </div>
+} @else if (error) {
+  <p class="field__hint">Não foi possível carregar as faturas.
+    <button type="button" class="btn btn--ghost btn--sm" (click)="retry.emit()">Tentar de novo</button>
+  </p>
+} @else if (charges.length === 0) {
+  <div class="charges-empty">
+    <span class="material-icons" aria-hidden="true">receipt_long</span>
+    <p>Nenhuma fatura ainda.</p>
+  </div>
+} @else {
+  <ul class="charge-grid">
+    @for (c of charges; track c.id) {
+      <li class="charge" [attr.data-tone]="tone(c)">
+        <div class="charge__top">
+          <span class="charge__kind">
+            <span class="material-icons" aria-hidden="true">{{ c.kind === 'SUBSCRIPTION' ? 'workspace_premium' : 'percent' }}</span>
+            {{ kindLabel(c) }}
+          </span>
+          <span class="charge__status">{{ statusLabel(c) }}</span>
+        </div>
+        <span class="charge__value">{{ amountLabel(c.value) }}</span>
+        <div class="charge__meta">
+          <span class="charge__date">
+            <span class="material-icons" aria-hidden="true">calendar_today</span>
+            {{ dateLabel(c.paidAt || c.createdAt) }}
+          </span>
+          @if (c.cardBrand || c.cardLast4) {
+            <span class="charge__card">
+              <app-card-brand-logo [brand]="c.cardBrand" [width]="24" />
+              @if (c.cardLast4) { •••• {{ c.cardLast4 }} }
+            </span>
+          }
+        </div>
+        @if (c.receiptUrl || c.invoiceUrl) {
+          <a class="charge__link" [href]="c.receiptUrl || c.invoiceUrl" target="_blank" rel="noopener">
+            {{ c.receiptUrl ? 'Ver comprovante' : 'Ver fatura' }}
+            <span class="material-icons" aria-hidden="true">open_in_new</span>
+          </a>
+        }
+      </li>
+    }
+  </ul>
+}

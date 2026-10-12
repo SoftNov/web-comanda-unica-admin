@@ -1,5 +1,6 @@
 :host {
   display: block;
+  max-width: 920px;
 }
 
 .page-header {
@@ -22,17 +23,72 @@
   color: var(--color-text-muted);
 }
 
+.section-title {
+  font-weight: 600;
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  margin-bottom: 10px;
+}
+
+// --- skeleton de carregamento ---------------------------------------------
+.sub-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-card);
+}
+
+.sub-skeleton__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.sub-skeleton__block {
+  height: 120px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.09) 50%, rgba(255, 255, 255, 0.04) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+.sub-skeleton__block--head {
+  height: 64px;
+  width: 55%;
+}
+
+.sub-skeleton__block--line {
+  height: 56px;
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
 // --- badges (component-scoped, mesmo padrão das outras telas) -----------
 .badge {
   display: inline-flex;
   align-items: center;
+  gap: 6px;
   padding: 4px 12px;
   border-radius: var(--radius-full);
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.02em;
+  white-space: nowrap;
   background: rgba(255, 255, 255, 0.08);
   color: var(--color-text-muted);
+}
+
+.badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
 }
 
 .badge--success {
@@ -52,18 +108,11 @@
 
 // --- cartão da assinatura ---------------------------------------------
 .sub-card {
-  max-width: 640px;
   padding: 28px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  transition: max-width 0.2s ease;
-}
-
-// Mais larga quando tem o grid de faixas (plan-picker) — 640px deixa os cards espremidos demais
-// com 4 faixas cadastradas.
-.sub-card--wide {
-  max-width: 880px;
+  min-width: 0;
 }
 
 .sub-card__head {
@@ -71,7 +120,10 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  flex-wrap: wrap;
+}
+
+.sub-card__head-main {
+  min-width: 0;
 }
 
 .sub-card__eyebrow {
@@ -82,10 +134,18 @@
   color: var(--color-text-muted);
 }
 
+.sub-card__lead {
+  margin-top: 6px;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
 .sub-card__price {
   margin-top: 6px;
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: 700;
+  line-height: 1.15;
   color: var(--color-text);
 
   span {
@@ -98,22 +158,25 @@
 .sub-card__price-note {
   margin-top: 4px;
   font-size: 0.8125rem;
+  line-height: 1.5;
   color: var(--color-text-muted);
 }
 
 .sub-card__benefits {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 20px;
+  padding: 16px 0 0;
   margin: 0;
   list-style: none;
+  border-top: 1px solid var(--color-border);
 
   li {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 10px;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
+    line-height: 1.4;
     color: var(--color-gray);
   }
 
@@ -126,14 +189,20 @@
 
 .sub-card__details {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 14px 24px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
   margin: 0;
-  padding: 16px 0 4px;
-  border-top: 1px solid var(--color-border);
+
+  > div {
+    padding: 12px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.02);
+    min-width: 0;
+  }
 
   dt {
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--color-text-muted);
@@ -141,7 +210,9 @@
 
   dd {
     margin: 4px 0 0;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.4;
     color: var(--color-text);
   }
 }
@@ -152,6 +223,16 @@
   flex-wrap: wrap;
 }
 
+.sub-card__cancel {
+  color: var(--color-text-muted);
+}
+
+.sub-card__fineprint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
 .plan-upgrade {
   display: flex;
   align-items: center;
@@ -159,9 +240,9 @@
   gap: 16px;
   flex-wrap: wrap;
   padding: 14px 16px;
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid rgba(59, 130, 246, 0.35);
   border-radius: var(--radius-sm);
-  background: var(--color-bg-elevated);
+  background: var(--color-accent-bg);
 }
 
 .plan-upgrade__info {
@@ -192,10 +273,16 @@
   font-size: 0.85rem;
 }
 
-// --- seletor de plano (upgrade/downgrade) -----------------------------
+// --- seletor de plano: grid no desktop, carrossel no celular -------------
 .plan-picker {
-  padding-top: 16px;
-  border-top: 1px solid var(--color-border);
+  min-width: 0;
+}
+
+.plan-picker__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
 }
 
 .plan-picker__title {
@@ -212,24 +299,85 @@
 }
 
 .plan-picker__grid {
+  position: relative;
   margin-top: 14px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 12px;
 }
 
+// Setas e pontos só aparecem no modo carrossel.
+.plan-carousel__nav,
+.plan-carousel__dots {
+  display: none;
+}
+
+.plan-carousel__nav {
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.plan-carousel__arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 50%;
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: opacity var(--transition-fast), border-color var(--transition-fast);
+
+  &:hover:not(:disabled) { border-color: var(--color-accent); }
+  &:disabled { opacity: 0.35; cursor: default; }
+  .material-icons { font-size: 20px; }
+}
+
+.plan-carousel__dots {
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.plan-carousel__dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--color-border-strong);
+  cursor: pointer;
+  transition: width var(--transition-base), background var(--transition-base);
+}
+
+.plan-carousel__dot--active {
+  width: 22px;
+  background: var(--color-accent);
+}
+
 .plan-option {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 14px;
+  gap: 10px;
+  padding: 18px 16px 16px;
   border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--color-bg-elevated);
+  transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+
+  &:hover:not(.plan-option--blocked) {
+    border-color: rgba(59, 130, 246, 0.5);
+  }
 }
 
 .plan-option--current {
   border-color: var(--color-success);
+  box-shadow: 0 0 0 1px var(--color-success) inset;
+
+  &:hover:not(.plan-option--blocked) { border-color: var(--color-success); }
 }
 
 // Faixa em destaque no seletor da tela de oferta — a que já comporta as mesas cadastradas hoje
@@ -238,6 +386,7 @@
 .plan-option--recommended {
   border-color: var(--color-accent);
   background: var(--color-accent-bg);
+  box-shadow: var(--shadow-glow);
 }
 
 .plan-option--blocked {
@@ -245,13 +394,18 @@
 }
 
 .plan-option__tables {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-weight: 600;
   color: var(--color-text);
   font-size: 0.9375rem;
+
+  .material-icons { font-size: 18px; color: var(--color-text-muted); }
 }
 
 .plan-option__price {
-  font-size: 1.125rem;
+  font-size: 1.375rem;
   font-weight: 700;
   color: var(--color-text);
 
@@ -262,22 +416,37 @@
   }
 }
 
+.plan-option__foot {
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.plan-option__cta {
+  width: 100%;
+}
+
 .plan-option__badge {
   align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 3px 10px;
   border-radius: var(--radius-full);
   font-size: 0.7rem;
   font-weight: 600;
   background: var(--color-success-bg);
   color: var(--color-success);
+
+  .material-icons { font-size: 13px; }
 }
 
 .plan-option__badge--accent {
-  background: var(--color-accent-bg);
+  background: rgba(59, 130, 246, 0.2);
   color: var(--color-accent-hover);
 }
 
 .plan-option__note {
+  display: block;
   font-size: 0.75rem;
   color: var(--color-text-muted);
   line-height: 1.4;
@@ -295,95 +464,30 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-}
 
-.sub-card__fineprint {
-  font-size: 0.8125rem;
-  color: var(--color-text-muted);
-  line-height: 1.6;
+  .btn { flex: 1 1 auto; }
 }
 
 .form-alert {
   margin-bottom: 20px;
 
-  button {
+  > button {
     margin-left: auto;
   }
 }
 
-// --- card de crédito da assinatura -----------------------------------
-.credit-card {
-  max-width: 640px;
-  margin-top: 20px;
-  padding: 28px;
+.sub-card .form-alert {
+  margin-bottom: 0;
+}
+
+.cancel-confirm {
+  flex-wrap: wrap;
+}
+
+.cancel-confirm__actions {
   display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.credit-card__available {
-  margin-top: 6px;
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-text);
-
-  span {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: var(--color-text-muted);
-  }
-}
-
-.credit-movements__title {
-  font-weight: 600;
-  color: var(--color-text);
-  font-size: 0.9375rem;
-  margin-bottom: 10px;
-}
-
-.credit-movements__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.credit-movements__item {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-areas: 'desc value' 'date value';
-  gap: 2px 16px;
-  padding: 10px 0;
-  border-top: 1px solid var(--color-border);
-  font-size: 0.875rem;
-}
-
-.credit-movements__desc {
-  grid-area: desc;
-  color: var(--color-text);
-}
-
-.credit-movements__detail {
-  color: var(--color-text-muted);
-}
-
-.credit-movements__date {
-  grid-area: date;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-.credit-movements__value {
-  grid-area: value;
-  align-self: center;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  white-space: nowrap;
-}
-
-.credit-movements__value--in {
-  color: var(--color-success);
+  gap: 8px;
+  margin-left: auto;
 }
 
 // --- cartão de cobrança salvo ------------------------------------------
@@ -392,24 +496,43 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  flex-wrap: wrap;
   padding: 16px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.02);
+  transition: border-color var(--transition-base), background var(--transition-base);
+
+  .btn .material-icons {
+    font-size: 16px;
+    vertical-align: -3px;
+    margin-right: 4px;
+  }
 }
 
 .billing-card__info {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 14px;
   min-width: 0;
-  flex: 1 1 260px;
+  flex: 1 1 auto;
+}
 
-  .material-icons {
-    color: var(--color-accent);
-    flex-shrink: 0;
-  }
+.billing-card__logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  flex-shrink: 0;
+}
+
+.billing-card__icon {
+  color: var(--color-accent);
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.billing-card__text {
+  min-width: 0;
 }
 
 .billing-card__title {
@@ -430,14 +553,16 @@
   color: var(--color-text-muted);
 }
 
-.billing-card {
-  transition: border-color var(--transition-base), background var(--transition-base);
+.billing-card__detail {
+  margin-top: 2px;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
 
-  .btn .material-icons {
-    font-size: 16px;
-    vertical-align: -3px;
-    margin-right: 4px;
-  }
+.billing-card__btn {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 // Sem cartão: borda tracejada, convida a cadastrar.
@@ -456,8 +581,231 @@
   }
 }
 
-.billing-card__detail {
-  margin-top: 2px;
-  font-size: 0.8125rem;
+// --- card de crédito da assinatura -----------------------------------
+.credit-card,
+.charges-card {
+  margin-top: 20px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.credit-card__head,
+.charges-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.credit-card__available {
+  margin-top: 6px;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text);
+
+  span {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-text-muted);
+  }
+}
+
+.credit-card__expiry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.06);
   color: var(--color-text-muted);
+
+  .material-icons { font-size: 14px; }
+}
+
+.credit-meter {
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-success-bg);
+  overflow: hidden;
+}
+
+.credit-meter__bar {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-accent), var(--color-accent-hover));
+  transition: width var(--transition-slow);
+}
+
+.credit-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 0;
+
+  > div {
+    padding: 12px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  dt {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+  }
+
+  dd {
+    margin: 4px 0 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+}
+
+.charges-card__refresh {
+  display: inline-flex;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+
+  &:hover { color: var(--color-text); border-color: var(--color-border-strong); }
+  .material-icons { font-size: 18px; }
+}
+
+// --- responsivo ------------------------------------------------------
+@media (max-width: 860px) {
+  .sub-card__details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+// Celular/tablet estreito: o seletor de planos vira carrossel horizontal com scroll-snap.
+@media (max-width: 720px) {
+  .plan-picker__grid {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 4px;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    // Respiro para a sombra/borda do card em destaque não ser cortada.
+    padding: 4px 4px 8px;
+    margin: 10px -4px 0;
+
+    &::-webkit-scrollbar { display: none; }
+  }
+
+  .plan-option {
+    flex: 0 0 78%;
+    max-width: 280px;
+    scroll-snap-align: center;
+  }
+
+  .plan-carousel__nav { display: inline-flex; }
+  .plan-carousel__dots { display: flex; }
+}
+
+@media (max-width: 640px) {
+  .page-header {
+    margin-bottom: 18px;
+  }
+
+  .page-title {
+    font-size: 1.375rem;
+  }
+
+  .page-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .sub-card,
+  .credit-card,
+  .charges-card,
+  .sub-skeleton {
+    padding: 18px 16px;
+    border-radius: var(--radius-md);
+  }
+
+  .sub-card {
+    gap: 18px;
+  }
+
+  .credit-card,
+  .charges-card {
+    margin-top: 16px;
+  }
+
+  .sub-card__head {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .sub-card__price {
+    font-size: 1.75rem;
+  }
+
+  .sub-card__lead {
+    font-size: 1.125rem;
+  }
+
+  .sub-card__benefits {
+    grid-template-columns: 1fr;
+  }
+
+  .sub-card__details {
+    gap: 8px;
+
+    > div { padding: 10px 12px; }
+  }
+
+  .plan-carousel__nav { display: none; }
+
+  .plan-upgrade .btn {
+    width: 100%;
+  }
+
+  .billing-card {
+    flex-wrap: wrap;
+  }
+
+  .billing-card__btn {
+    width: 100%;
+  }
+
+  .sub-card__actions .btn {
+    flex: 1 1 100%;
+  }
+
+  .cancel-confirm__actions {
+    width: 100%;
+    margin-left: 0;
+
+    .btn { flex: 1; }
+  }
+}
+
+@media (max-width: 360px) {
+  .sub-card__details {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sub-skeleton__block {
+    animation: none;
+  }
 }

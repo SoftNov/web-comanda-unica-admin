@@ -11,6 +11,9 @@ import { RippleDirective } from '../../../../shared/directives/ripple.directive'
 import { QrScannerComponent } from '../../../../shared/components/qr-scanner/qr-scanner.component';
 import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
 import { parseApiDate } from '../../../../shared/utils/datetime.util';
+import { QrTargetResolverService } from '../../../../shared/services/qr-target-resolver.service';
+import { ConsumptionPassesService } from '../../../../shared/services/consumption-passes.service';
+import { COUNTER_TABLE_LABEL } from '../../../../shared/utils/table-label.util';
 
 // Item em montagem no pedido lançado pela equipe — só no front, nada é persistido até o clique
 // em "Enviar pedido" (ver StaffOrderService#createOrder). Mesmo shape do LocalCartItem do
@@ -52,10 +55,20 @@ export class LancarPedidoComponent {
   private readonly staffOrderService = inject(StaffOrderService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly qrTargetResolver = inject(QrTargetResolverService);
+  private readonly consumptionPassesService = inject(ConsumptionPassesService);
 
   private readonly currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
   readonly tables = signal<RestaurantTableResponse[]>([]);
+  readonly tablesError = signal<string | null>(null);
+
+  // Retirada no balcão: com o cartão de consumo ligado, a mesa virtual do balcão aparece como
+  // opção no lugar de uma mesa — o pedido vai para a comanda do cartão e o cliente busca no
+  // balcão (ver TablesService#getCounter).
+  readonly counterTable = signal<RestaurantTableResponse | null>(null);
+  readonly counterLabel = COUNTER_TABLE_LABEL;
+  readonly isCounterSelected = computed(() => !!this.orderTableId() && this.orderTableId() === this.counterTable()?.id);
 
   readonly orderTableId = signal('');
   readonly orderComanda = signal<StaffComandaResponse | null>(null);
@@ -81,6 +94,14 @@ export class LancarPedidoComponent {
   readonly isScanningPass = signal(false);
   readonly isLinkingPass = signal(false);
   readonly passError = signal<string | null>(null);
+
+  // "Escanear QR" ao lado da mesa: aceita o QR da mesa ou do cartão de consumo (ver
+  // QrTargetResolverService) — cartão em uso já seleciona a mesa dele; cartão livre fica
+  // aguardando a mesa (pendingPassNumber) e é vinculado assim que ela for escolhida.
+  readonly isScanningTarget = signal(false);
+  readonly isResolvingTarget = signal(false);
+  readonly targetScanError = signal<string | null>(null);
+  readonly pendingPassNumber = signal<number | null>(null);
 
   readonly orderCategories = signal<MenuCategoryResponse[]>([]);
   readonly orderMenuItems = signal<MenuItemResponse[]>([]);
@@ -129,6 +150,29 @@ export class LancarPedidoComponent {
     const tableIdFromLink = this.route.snapshot.queryParamMap.get('mesa');
     this.passTokenFromLink = this.route.snapshot.queryParamMap.get('cartao');
     this.loadTables(tableIdFromLink);
+    this.loadCounterTable();
+  }
+
+  private loadCounterTable(): void {
+    this.consumptionPassesService.getSettings().subscribe({
+      next: (settings) => {
+        if (!settings.required) {
+          return;
+        }
+        this.tablesService.getCounter().subscribe({
+          next: (counter) => this.counterTable.set(counter),
+          error: () => this.counterTable.set(null)
+        });
+      },
+      error: () => this.counterTable.set(null)
+    });
+  }
+
+  selectCounter(): void {
+    const counter = this.counterTable();
+    if (counter && !this.isSubmittingOrder()) {
+      this.selectOrderTable(counter.id);
+    }
   }
 
   goBack(): void {
@@ -145,12 +189,16 @@ export class LancarPedidoComponent {
   loadTables(preselectTableId?: string | null): void {
     this.tablesService.list({ status: 'ACTIVE', page: 0, size: 200, sortBy: 'number', sortDirection: 'ASC' }).subscribe({
       next: (response) => {
+        this.tablesError.set(null);
         this.tables.set(response.content);
         if (preselectTableId) {
           this.selectOrderTable(preselectTableId);
         }
       },
-      error: () => this.tables.set([])
+      error: (error: HttpErrorResponse) => {
+        this.tables.set([]);
+        this.tablesError.set('Não foi possível carregar as mesas: ' + this.resolveErrorMessage(error));
+      }
     });
   }
 
@@ -217,6 +265,7 @@ export class LancarPedidoComponent {
         this.orderComanda.set(comanda);
         const passToken = this.passTokenFromLink;
         this.passTokenFromLink = null;
+        this.pendingPassNumber.set(null);
         if (passToken && comanda.consumptionPassRequired) {
           this.passTokenSuffix.set(this.toPassSuffix(passToken));
           this.linkPass();
@@ -225,6 +274,59 @@ export class LancarPedidoComponent {
       error: (error: HttpErrorResponse) => {
         this.isLoadingOrderComanda.set(false);
         this.orderComandaError.set(this.resolveErrorMessage(error));
+      }
+    });
+  }
+
+  // --- QR Code da mesa ou do cartão ------------------------------------------------
+  startTargetScan(): void {
+    if (this.isSubmittingOrder()) {
+      return;
+    }
+    this.targetScanError.set(null);
+    this.isScanningTarget.set(true);
+  }
+
+  onTargetScanned(value: string): void {
+    this.isScanningTarget.set(false);
+    this.isResolvingTarget.set(true);
+    this.targetScanError.set(null);
+    this.qrTargetResolver.resolveScan(value, this.tables()).subscribe({
+      next: (target) => {
+        this.isResolvingTarget.set(false);
+        if (target.kind === 'table') {
+          this.pendingPassNumber.set(null);
+          this.selectOrderTable(target.table.id);
+          return;
+        }
+        const pass = target.pass;
+        if (pass.tableId) {
+          // Cartão em uso: abre a mesa dele já na comanda do cartão.
+          this.pendingPassNumber.set(null);
+          this.passTokenFromLink = pass.token;
+          this.selectOrderTable(pass.tableId);
+          return;
+        }
+        if (this.orderTableId() && this.orderComanda()?.consumptionPassRequired) {
+          // Cartão livre com a mesa já escolhida: vincula nela agora.
+          if (this.linkedPass()) {
+            this.changePass();
+          }
+          this.passTokenSuffix.set(this.toPassSuffix(pass.token));
+          this.linkPass();
+          return;
+        }
+        // Cartão livre sem mesa: guarda e vincula assim que a mesa for escolhida.
+        this.passTokenFromLink = pass.token;
+        this.pendingPassNumber.set(pass.number);
+      },
+      error: (error: unknown) => {
+        this.isResolvingTarget.set(false);
+        this.targetScanError.set(
+          error instanceof Error && !(error instanceof HttpErrorResponse)
+            ? error.message
+            : 'Não foi possível identificar o QR Code. Tente novamente.'
+        );
       }
     });
   }
@@ -293,9 +395,8 @@ export class LancarPedidoComponent {
     this.passError.set(null);
   }
 
-  // Só letras e números, sem o prefixo "CMU" (o token é hexadecimal, então nunca começa com "CMU").
   private toPassSuffix(value: string): string {
-    return (value || '').toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^CMU/, '');
+    return QrTargetResolverService.toPassSuffix(value);
   }
 
   // Mesma exibição do cardápio digital do cliente (ver PublicMenuComponent#hasImage/getBadges/

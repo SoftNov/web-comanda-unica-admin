@@ -1,0 +1,51 @@
+@if (loading && movements.length === 0) {
+  <div class="movement-grid">
+    @for (i of skeletons; track i) {
+      <div class="movement movement--skeleton" aria-hidden="true"></div>
+    }
+  </div>
+} @else if (error) {
+  <p class="field__hint">Não foi possível carregar as movimentações.
+    <button type="button" class="btn btn--ghost btn--sm" (click)="retry.emit()">Tentar de novo</button>
+  </p>
+} @else if (movements.length === 0) {
+  <div class="movements-empty">
+    <span class="material-icons" aria-hidden="true">swap_vert</span>
+    <p>Nenhuma movimentação ainda.</p>
+  </div>
+} @else {
+  <ul class="movement-grid" [class.movement-grid--loading]="loading" [attr.aria-busy]="loading">
+    @for (m of movements; track $index) {
+      <li class="movement" [class.movement--in]="isIncoming(m.type)">
+        <div class="movement__top">
+          <span class="movement__icon" aria-hidden="true">
+            <span class="material-icons">{{ icon(m.type) }}</span>
+          </span>
+          <span class="movement__date">{{ dateLabel(m.createdAt) }}</span>
+        </div>
+        <span class="movement__value">{{ isIncoming(m.type) ? '+' : '−' }} {{ amountLabel(m.amount) }}</span>
+        <span class="movement__label">{{ label(m.type) }}</span>
+        @if (m.description) {
+          <span class="movement__detail" [attr.title]="m.description">{{ m.description }}</span>
+        }
+      </li>
+    }
+  </ul>
+
+  @if (totalPages > 1) {
+    <nav class="pager" aria-label="Paginação das movimentações">
+      <span class="pager__info">{{ totalElements }} movimentaç{{ totalElements === 1 ? 'ão' : 'ões' }} · Página {{ page + 1 }} de {{ totalPages }}</span>
+      <div class="pager__controls">
+        <button type="button" class="pager__btn" aria-label="Página anterior"
+                [disabled]="page === 0 || loading" (click)="goTo(page - 1)">
+          <span class="material-icons" aria-hidden="true">chevron_left</span>
+        </button>
+        <span class="pager__current" aria-live="polite">{{ page + 1 }} / {{ totalPages }}</span>
+        <button type="button" class="pager__btn" aria-label="Próxima página"
+                [disabled]="page >= totalPages - 1 || loading" (click)="goTo(page + 1)">
+          <span class="material-icons" aria-hidden="true">chevron_right</span>
+        </button>
+      </div>
+    </nav>
+  }
+}

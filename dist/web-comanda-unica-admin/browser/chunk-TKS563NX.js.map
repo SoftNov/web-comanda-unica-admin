@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/shared/utils/table-label.util.ts"],
+  "sourcesContent": ["// Mesa virtual do balcão (retirada no balcão com cartão de consumo): número 0 — as mesas normais\n// sempre têm número positivo (ver RestaurantTableService#getOrCreateCounter na API admin).\nexport const COUNTER_TABLE_NUMBER = 0;\n\nexport const COUNTER_TABLE_LABEL = 'Retirada no balcão';\n\nexport function isCounterTable(tableNumber: number | null | undefined): boolean {\n  return tableNumber === COUNTER_TABLE_NUMBER;\n}\n\n// \"Mesa 12 — VIP\" ou, para a mesa virtual do balcão, \"Retirada no balcão\".\nexport function formatTableLabel(tableNumber: number | null | undefined, tableName?: string | null): string {\n  if (isCounterTable(tableNumber)) {\n    return COUNTER_TABLE_LABEL;\n  }\n  return `Mesa ${tableNumber ?? '—'}${tableName ? ' — ' + tableName : ''}`;\n}\n"],
+  "mappings": ";AAEO,IAAM,uBAAuB;AAE7B,IAAM,sBAAsB;AAE7B,SAAU,eAAe,aAAsC;AACnE,SAAO,gBAAgB;AACzB;AAGM,SAAU,iBAAiB,aAAwC,WAAyB;AAChG,MAAI,eAAe,WAAW,GAAG;AAC/B,WAAO;EACT;AACA,SAAO,QAAQ,eAAe,QAAG,GAAG,YAAY,aAAQ,YAAY,EAAE;AACxE;",
+  "names": []
+}

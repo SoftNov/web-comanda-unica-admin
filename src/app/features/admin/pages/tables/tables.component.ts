@@ -1,7 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Subject, debounceTime, distinctUntilChanged, forkJoin, map } from 'rxjs';
+import { Router } from '@angular/router';
+import { Observable, Subject, catchError, debounceTime, distinctUntilChanged, forkJoin, from, map, mergeMap, of, toArray } from 'rxjs';
 import {
   ApiErrorResponse,
   CreateTableRequest,
@@ -10,7 +11,9 @@ import {
   TableListParams,
   TableStatus,
   TablesService,
-  UpdateTableRequest
+  UpdateTableRequest,
+  TABLE_LIMIT_ERROR_CODE,
+  TableQuotaResponse
 } from '../../../../shared/services/tables.service';
 import {
   CreateTableSectorRequest,
@@ -23,6 +26,7 @@ import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
 import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
 import { AuthService } from '../../../auth/services/auth.service';
 
+import { formatTableLabel } from '../../../../shared/utils/table-label.util';
 const PAGE_SIZE = 12;
 // Mesmo teto da API (CreateRestaurantTableBatchRequest.MAX_QUANTITY).
 const MAX_BATCH_TABLES = 100;
@@ -42,6 +46,9 @@ const TABLE_SORT_OPTIONS: TableSortOption[] = [
   { value: 'capacity', label: 'Capacidade' }
 ];
 
+
+type BulkTableAction = 'enable' | 'disable' | 'delete';
+
 @Component({
   selector: 'app-admin-tables',
   standalone: true,
@@ -50,7 +57,10 @@ const TABLE_SORT_OPTIONS: TableSortOption[] = [
   styleUrl: './tables.component.scss'
 })
 export class TablesComponent {
+  readonly tableLabel = formatTableLabel;
+
   private readonly fb = new FormBuilder();
+  private readonly router = inject(Router);
   private readonly tablesService = inject(TablesService);
   private readonly tableSectorsService = inject(TableSectorsService);
   private readonly authService = inject(AuthService);
@@ -131,6 +141,30 @@ export class TablesComponent {
   readonly sectorFormError = signal<string | null>(null);
   private sectorModalReturnsToTableForm = false;
 
+  // Seleção de várias mesas para ação em lote (ativar/desativar/excluir). Guarda a mesa inteira
+  // por id, então a seleção sobrevive à troca de página/filtro.
+  readonly selectedTables = signal<Map<string, RestaurantTableResponse>>(new Map());
+  readonly selectedCount = computed(() => this.selectedTables().size);
+  readonly allPageSelected = computed(() => {
+    const tables = this.tables();
+    const selected = this.selectedTables();
+    return tables.length > 0 && tables.every((table) => selected.has(table.id));
+  });
+  readonly bulkAction = signal<BulkTableAction | null>(null);
+  readonly isRunningBulk = signal(false);
+  readonly bulkError = signal<string | null>(null);
+  readonly bulkResult = signal<string | null>(null);
+
+  // Cota de mesas do plano: com o limite atingido, "Nova mesa" mostra o aviso de upgrade em vez
+  // do formulário (a API também barra — ver SubscriptionAccessService#assertCanAddTables).
+  readonly quota = signal<TableQuotaResponse | null>(null);
+  readonly isUpgradeModalOpen = signal(false);
+  readonly canCreateMoreTables = computed(() => !this.quota()?.limitReached);
+
+  readonly tableToDelete = signal<RestaurantTableResponse | null>(null);
+  readonly isDeletingTable = signal(false);
+  readonly deleteTableError = signal<string | null>(null);
+
   readonly sectorToDelete = signal<TableSectorResponse | null>(null);
   readonly isDeletingSector = signal(false);
   readonly deleteSectorError = signal<string | null>(null);
@@ -148,6 +182,7 @@ export class TablesComponent {
     });
 
     this.loadSectors();
+    this.loadQuota();
     this.loadTables(0);
   }
 
@@ -286,7 +321,44 @@ export class TablesComponent {
   }
 
   // --- Mesas: modal de criar/editar -------------------------------------------
+  loadQuota(): void {
+    if (!this.canManageTables()) {
+      return;
+    }
+    this.tablesService.getQuota().subscribe({
+      next: (quota) => this.quota.set(quota),
+      // Sem a cota, não trava nada no front — a API continua barrando no limite.
+      error: () => this.quota.set(null)
+    });
+  }
+
+  closeUpgradeModal(): void {
+    this.isUpgradeModalOpen.set(false);
+  }
+
+  goToSubscription(): void {
+    this.isUpgradeModalOpen.set(false);
+    this.router.navigate(['/painel/assinatura']);
+  }
+
+  // Erro da API por limite do plano (ex.: cota mudou entre abrir o formulário e salvar): fecha o
+  // formulário e mostra o mesmo aviso de upgrade.
+  private handleTableLimitError(error: HttpErrorResponse): boolean {
+    const body = error.error as ApiErrorResponse | undefined;
+    if (body?.codigoErro !== TABLE_LIMIT_ERROR_CODE) {
+      return false;
+    }
+    this.isTableModalOpen.set(false);
+    this.loadQuota();
+    this.isUpgradeModalOpen.set(true);
+    return true;
+  }
+
   openCreateTableModal(): void {
+    if (this.quota()?.limitReached) {
+      this.isUpgradeModalOpen.set(true);
+      return;
+    }
     this.tableModalMode.set('create');
     this.editingTable.set(null);
     this.tableFormError.set(null);
@@ -335,15 +407,25 @@ export class TablesComponent {
     this.tableFormError.set(null);
     this.isSubmittingTable.set(true);
 
+    if (this.exceedsQuota()) {
+      this.isTableModalOpen.set(false);
+      this.isUpgradeModalOpen.set(true);
+      return;
+    }
+
     if (this.tableModalMode() === 'create' && this.isBatchCreate()) {
       this.tablesService.createBatch(this.buildBatchPayload()).subscribe({
         next: () => {
           this.isSubmittingTable.set(false);
           this.isTableModalOpen.set(false);
           this.loadTables(0);
+          this.loadQuota();
         },
         error: (error: HttpErrorResponse) => {
           this.isSubmittingTable.set(false);
+          if (this.handleTableLimitError(error)) {
+            return;
+          }
           this.tableFormError.set(this.resolveErrorMessage(error, 'table'));
           autoDismiss(this.tableFormError, null);
         }
@@ -357,9 +439,13 @@ export class TablesComponent {
           this.isSubmittingTable.set(false);
           this.isTableModalOpen.set(false);
           this.loadTables(0);
+          this.loadQuota();
         },
         error: (error: HttpErrorResponse) => {
           this.isSubmittingTable.set(false);
+          if (this.handleTableLimitError(error)) {
+            return;
+          }
           this.tableFormError.set(this.resolveErrorMessage(error, 'table'));
           autoDismiss(this.tableFormError, null);
         }
@@ -661,6 +747,12 @@ export class TablesComponent {
     return this.tableModalMode() === 'create' && this.tableForm.controls.quantity.value > 1;
   }
 
+  // Lote maior do que o que ainda cabe no plano.
+  exceedsQuota(): boolean {
+    const remaining = this.quota()?.remaining;
+    return this.tableModalMode() === 'create' && remaining != null && this.tableForm.controls.quantity.value > remaining;
+  }
+
   // "Mesas 10 a 14" — prévia do intervalo que o lote vai criar.
   batchRangeLabel(): string | null {
     const start = this.tableForm.controls.number.value;
@@ -801,6 +893,154 @@ export class TablesComponent {
         this.isSubmittingSector.set(false);
         this.sectorFormError.set(this.resolveErrorMessage(error, 'sector'));
         autoDismiss(this.sectorFormError, null);
+      }
+    });
+  }
+
+  // --- Mesas: seleção e ações em lote ----------------------------------------------
+  isSelected(tableId: string): boolean {
+    return this.selectedTables().has(tableId);
+  }
+
+  toggleSelected(table: RestaurantTableResponse): void {
+    const next = new Map(this.selectedTables());
+    if (next.has(table.id)) {
+      next.delete(table.id);
+    } else {
+      next.set(table.id, table);
+    }
+    this.selectedTables.set(next);
+  }
+
+  toggleSelectPage(): void {
+    const next = new Map(this.selectedTables());
+    if (this.allPageSelected()) {
+      this.tables().forEach((table) => next.delete(table.id));
+    } else {
+      this.tables().forEach((table) => next.set(table.id, table));
+    }
+    this.selectedTables.set(next);
+  }
+
+  clearSelection(): void {
+    this.selectedTables.set(new Map());
+    this.bulkError.set(null);
+    this.bulkResult.set(null);
+  }
+
+  requestBulk(action: BulkTableAction): void {
+    if (this.selectedCount() === 0 || this.isRunningBulk()) {
+      return;
+    }
+    this.bulkError.set(null);
+    this.bulkResult.set(null);
+    // Ativar/desativar não destrói nada — roda direto; excluir pede confirmação.
+    if (action === 'delete') {
+      this.bulkAction.set(action);
+      return;
+    }
+    this.runBulk(action);
+  }
+
+  cancelBulk(): void {
+    if (!this.isRunningBulk()) {
+      this.bulkAction.set(null);
+    }
+  }
+
+  confirmBulk(): void {
+    const action = this.bulkAction();
+    if (action) {
+      this.runBulk(action);
+    }
+  }
+
+  // Uma requisição por mesa (até 4 em paralelo), sem parar na primeira falha: no fim, as que
+  // deram certo saem da seleção e as que falharam (ex.: mesa com comanda aberta) continuam
+  // selecionadas, com o motivo.
+  private runBulk(action: BulkTableAction): void {
+    const tables = [...this.selectedTables().values()];
+    this.isRunningBulk.set(true);
+    this.bulkError.set(null);
+
+    from(tables).pipe(
+      mergeMap((table) => this.bulkRequest(action, table).pipe(
+        map(() => ({ table, error: null as string | null })),
+        catchError((error: HttpErrorResponse) => of({ table, error: this.resolveErrorMessage(error, 'table') }))
+      ), 4),
+      toArray()
+    ).subscribe((results) => {
+      this.isRunningBulk.set(false);
+      this.bulkAction.set(null);
+      if (action === 'delete') {
+        this.loadQuota();
+      }
+
+      const failed = results.filter((result) => result.error);
+      const succeededIds = new Set(results.filter((result) => !result.error).map((result) => result.table.id));
+      this.selectedTables.set(new Map(failed.map((result) => [result.table.id, result.table])));
+
+      const verb = action === 'delete' ? 'excluída(s)' : action === 'disable' ? 'desativada(s)' : 'ativada(s)';
+      if (succeededIds.size > 0) {
+        this.bulkResult.set(`${succeededIds.size} mesa(s) ${verb}.`);
+        autoDismiss(this.bulkResult, null);
+      }
+      if (failed.length > 0) {
+        const labels = failed.map((result) => this.tableLabel(result.table.number, result.table.name)).join(', ');
+        this.bulkError.set(`Não foi possível concluir em ${failed.length} mesa(s) (${labels}): ${failed[0].error}`);
+      }
+
+      // Excluiu todas as mesas da página atual: volta uma página em vez de mostrar a lista vazia.
+      const page = this.page();
+      const pageEmptied = action === 'delete' && this.tables().every((table) => succeededIds.has(table.id));
+      this.loadTables(pageEmptied && page > 0 ? page - 1 : page);
+    });
+  }
+
+  private bulkRequest(action: BulkTableAction, table: RestaurantTableResponse): Observable<unknown> {
+    switch (action) {
+      case 'delete':
+        return this.tablesService.delete(table.id);
+      case 'disable':
+        return this.tablesService.disable(table.id);
+      default:
+        return this.tablesService.enable(table.id);
+    }
+  }
+
+  requestDeleteTable(table: RestaurantTableResponse): void {
+    this.deleteTableError.set(null);
+    this.tableToDelete.set(table);
+  }
+
+  cancelDeleteTable(): void {
+    if (!this.isDeletingTable()) {
+      this.tableToDelete.set(null);
+    }
+  }
+
+  confirmDeleteTable(): void {
+    const table = this.tableToDelete();
+    if (!table) {
+      return;
+    }
+
+    this.isDeletingTable.set(true);
+    this.deleteTableError.set(null);
+
+    this.tablesService.delete(table.id).subscribe({
+      next: () => {
+        this.isDeletingTable.set(false);
+        this.tableToDelete.set(null);
+        this.loadQuota();
+        // Era a última mesa da página: volta uma página em vez de mostrar a lista vazia.
+        const page = this.page();
+        this.loadTables(this.tables().length === 1 && page > 0 ? page - 1 : page);
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isDeletingTable.set(false);
+        this.deleteTableError.set(this.resolveErrorMessage(error, 'table'));
+        autoDismiss(this.deleteTableError, null);
       }
     });
   }

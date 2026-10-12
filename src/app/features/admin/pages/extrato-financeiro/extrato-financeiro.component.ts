@@ -12,6 +12,7 @@ import { CompanyFeeRuleResponse, PlatformFeeRulesService } from '../../../../sha
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
 
+import { formatTableLabel } from '../../../../shared/utils/table-label.util';
 type PeriodPresetId = 'hoje' | 'ontem' | '7d' | '30d' | 'este-mes' | 'mes-anterior' | 'personalizado';
 
 interface PeriodPreset {
@@ -123,7 +124,7 @@ export class ExtratoFinanceiroComponent {
     if (transacao.mesaNome) {
       return transacao.mesaNome;
     }
-    return transacao.mesaNumero != null ? `Mesa ${transacao.mesaNumero}` : '—';
+    return transacao.mesaNumero != null ? formatTableLabel(transacao.mesaNumero) : '—';
   }
 
   // --- Empresa ---------------------------------------------------------------

@@ -15,6 +15,7 @@ import {
 import { ServiceRequestType } from '../../../../shared/services/service-requests.service';
 import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
 
+import { formatTableLabel } from '../../../../shared/utils/table-label.util';
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
@@ -23,6 +24,8 @@ import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetim
   styleUrl: './admin-layout.component.scss'
 })
 export class AdminLayoutComponent {
+  readonly tableLabel = formatTableLabel;
+
   private readonly authService = inject(AuthService);
   private readonly accountsService = inject(AccountsService);
   private readonly notificationsService = inject(NotificationsService);

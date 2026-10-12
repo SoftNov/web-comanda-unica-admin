@@ -21,6 +21,7 @@ import { formatCurrencyInput, parseCurrencyInput } from '../../../../shared/util
 import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
 import { AuthService } from '../../../auth/services/auth.service';
 
+import { formatTableLabel } from '../../../../shared/utils/table-label.util';
 const PAGE_SIZE = 10;
 
 type StatusFilter = 'all' | ComandaStatus;
@@ -38,6 +39,8 @@ function positiveCurrencyValidator(control: AbstractControl<string>): Validation
   styleUrl: './comandas.component.scss'
 })
 export class ComandasComponent {
+  readonly tableLabel = formatTableLabel;
+
   private readonly fb = new FormBuilder();
   private readonly comandasService = inject(ComandasService);
   private readonly tablesService = inject(TablesService);

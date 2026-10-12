@@ -113,7 +113,7 @@
                     <button type="button" class="admin-topbar__notification-item" (click)="goToPedidos()">
                       <span class="material-icons" aria-hidden="true">point_of_sale</span>
                       <span class="admin-topbar__notification-text">
-                        <span>Mesa {{ order.tableNumber }}{{ order.tableName ? ' — ' + order.tableName : '' }}</span>
+                        <span>{{ tableLabel(order.tableNumber, order.tableName) }}</span>
                         <span class="admin-topbar__notification-meta">{{ order.itemName }} · {{ formatTime(order.createdAt) }}</span>
                       </span>
                     </button>

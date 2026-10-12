@@ -12,8 +12,10 @@
         {{ isPrintingAllQr() ? 'Preparando…' : 'Imprimir QR Codes' }}
       </button>
       @if (canManageTables()) {
-        <button type="button" class="btn btn--primary" appRipple (click)="openCreateTableModal()">
-          <span class="material-icons" aria-hidden="true">add</span>
+        <button type="button" class="btn btn--primary" appRipple (click)="openCreateTableModal()"
+                [class.btn--limit]="!canCreateMoreTables()"
+                [attr.title]="canCreateMoreTables() ? null : 'Limite de mesas do plano atingido'">
+          <span class="material-icons" aria-hidden="true">{{ canCreateMoreTables() ? 'add' : 'lock' }}</span>
           Nova mesa
         </button>
       }
@@ -118,14 +120,65 @@
       </div>
     }
 
+    @if (canManageTables() && tables().length > 0) {
+      <div class="bulk-bar" [class.bulk-bar--active]="selectedCount() > 0">
+        <label class="bulk-bar__select-all">
+          <input type="checkbox" [checked]="allPageSelected()" (change)="toggleSelectPage()">
+          {{ allPageSelected() ? 'Desmarcar página' : 'Selecionar página' }}
+        </label>
+        @if (selectedCount() > 0) {
+          <span class="bulk-bar__count">{{ selectedCount() }} selecionada(s)</span>
+          <div class="bulk-bar__actions">
+            <button type="button" class="btn btn--ghost btn--sm" [disabled]="isRunningBulk()" (click)="requestBulk('enable')">
+              <span class="material-icons" aria-hidden="true">toggle_on</span>
+              Ativar
+            </button>
+            <button type="button" class="btn btn--ghost btn--sm" [disabled]="isRunningBulk()" (click)="requestBulk('disable')">
+              <span class="material-icons" aria-hidden="true">toggle_off</span>
+              Desativar
+            </button>
+            <button type="button" class="btn btn--danger btn--sm" [disabled]="isRunningBulk()" (click)="requestBulk('delete')">
+              <span class="material-icons" aria-hidden="true">delete</span>
+              Excluir
+            </button>
+            <button type="button" class="btn btn--ghost btn--sm" [disabled]="isRunningBulk()" (click)="clearSelection()">
+              Limpar seleção
+            </button>
+          </div>
+        } @else {
+          <span class="bulk-bar__hint">Marque as mesas para ativar, desativar ou excluir várias de uma vez.</span>
+        }
+      </div>
+    }
+
+    @if (isRunningBulk() && !bulkAction()) {
+      <p class="field__hint">Aplicando nas mesas selecionadas…</p>
+    }
+    @if (bulkResult()) {
+      <div class="form-alert form-alert--success" role="status">
+        <span class="material-icons" aria-hidden="true">check_circle</span>
+        {{ bulkResult() }}
+      </div>
+    }
+    @if (bulkError()) {
+      <div class="form-alert form-alert--error" role="alert">
+        <span class="material-icons" aria-hidden="true">error_outline</span>
+        {{ bulkError() }}
+      </div>
+    }
+
     <div class="tables-grid">
       @if (tables().length === 0) {
         <p class="field__hint">Nenhuma mesa encontrada.</p>
       }
       @for (table of tables(); track table.id) {
-        <div class="card table-item">
+        <div class="card table-item" [class.table-item--selected]="isSelected(table.id)">
           <div class="table-item__header">
             <div class="table-item__number">
+              @if (canManageTables()) {
+                <input type="checkbox" class="table-item__check" [checked]="isSelected(table.id)"
+                       [attr.aria-label]="'Selecionar ' + tableLabel(table.number, table.name)" (change)="toggleSelected(table)">
+              }
               <span class="material-icons" aria-hidden="true">table_bar</span>
               Mesa {{ table.number }}
             </div>
@@ -190,6 +243,9 @@
               </button>
               <button type="button" class="icon-btn" [title]="table.status === 'ACTIVE' ? 'Desativar' : 'Ativar'" (click)="toggleTableStatus(table)">
                 <span class="material-icons" aria-hidden="true">{{ table.status === 'ACTIVE' ? 'toggle_on' : 'toggle_off' }}</span>
+              </button>
+              <button type="button" class="icon-btn icon-btn--danger" title="Excluir mesa" (click)="requestDeleteTable(table)">
+                <span class="material-icons" aria-hidden="true">delete</span>
               </button>
             }
           </div>
@@ -296,6 +352,8 @@
             </div>
             @if (tableForm.controls.quantity.invalid && tableForm.controls.quantity.touched) {
               <span class="field__error">Informe de 1 a {{ maxBatchTables }} mesas.</span>
+            } @else if (exceedsQuota()) {
+              <span class="field__error">Seu plano ainda comporta só {{ quota()?.remaining }} mesa(s). Diminua a quantidade ou suba o plano.</span>
             } @else {
               <span class="field__hint">Para criar várias mesas iguais de uma vez (mesmo setor e capacidade), numeradas em sequência.</span>
             }
@@ -495,6 +553,90 @@
           {{ isRegeneratingQr() ? 'Regenerando…' : 'Regenerar' }}
         </button>
         <button type="button" class="btn btn--ghost" (click)="cancelRegenerateQr()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (isUpgradeModalOpen()) {
+  <div class="modal-backdrop">
+    <div class="modal-card modal-card--sm card upgrade-modal" (click)="$event.stopPropagation()">
+      <span class="upgrade-modal__icon material-icons" aria-hidden="true">workspace_premium</span>
+      <h2 class="step-heading">Limite de mesas do plano atingido</h2>
+      @if (quota(); as q) {
+        <p class="field__hint">
+          Você já tem <strong>{{ q.tableCount }}</strong> mesa(s) e
+          {{ q.courtesy ? 'o período grátis' : 'seu plano atual' }} comporta até <strong>{{ q.tableLimit }}</strong>.
+        </p>
+        @if (q.tableLimit != null) {
+          <div class="upgrade-modal__meter" aria-hidden="true">
+            <span [style.width.%]="100"></span>
+          </div>
+        }
+      }
+      <p class="field__hint">
+        {{ quota()?.courtesy ? 'Assine um plano' : 'Suba para um plano maior' }} para cadastrar mais mesas.
+        Se alguma mesa não é mais usada, você também pode excluí-la para liberar espaço.
+      </p>
+
+      <div class="step-actions">
+        <button type="button" class="btn btn--primary" appRipple (click)="goToSubscription()">
+          <span class="material-icons" aria-hidden="true">upgrade</span>
+          {{ quota()?.courtesy ? 'Ver planos' : 'Subir de plano' }}
+        </button>
+        <button type="button" class="btn btn--ghost" (click)="closeUpgradeModal()">Agora não</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (bulkAction() === 'delete') {
+  <div class="modal-backdrop">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <h2 class="step-heading">Excluir {{ selectedCount() }} mesa(s)</h2>
+      <p class="field__hint">
+        As mesas selecionadas saem da lista e do mapa do salão, os QR Codes impressos param de funcionar e os
+        números ficam livres. O histórico de pedidos, comandas e pagamentos continua nos relatórios.
+      </p>
+      <p class="field__hint">
+        Mesas com comanda aberta ou reserva ativa não são excluídas e continuam selecionadas.
+      </p>
+
+      <div class="step-actions">
+        <button type="button" class="btn btn--danger" [disabled]="isRunningBulk()" (click)="confirmBulk()">
+          {{ isRunningBulk() ? 'Excluindo…' : 'Excluir ' + selectedCount() + ' mesa(s)' }}
+        </button>
+        <button type="button" class="btn btn--ghost" [disabled]="isRunningBulk()" (click)="cancelBulk()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (tableToDelete(); as table) {
+  <div class="modal-backdrop">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <h2 class="step-heading">Excluir mesa</h2>
+      <p class="field__hint">
+        Excluir a <strong>{{ tableLabel(table.number, table.name) }}</strong>? Ela sai da lista e do mapa do salão,
+        o QR Code impresso para de funcionar e o número fica livre para outra mesa.
+      </p>
+      <p class="field__hint">
+        O histórico de pedidos, comandas e pagamentos dela continua nos relatórios.
+        Se a ideia é só tirar de uso por um tempo, prefira <strong>desativar</strong>.
+      </p>
+
+      @if (deleteTableError()) {
+        <div class="form-alert form-alert--error" role="alert">
+          <span class="material-icons" aria-hidden="true">error_outline</span>
+          {{ deleteTableError() }}
+        </div>
+      }
+
+      <div class="step-actions">
+        <button type="button" class="btn btn--danger" [disabled]="isDeletingTable()" (click)="confirmDeleteTable()">
+          {{ isDeletingTable() ? 'Excluindo…' : 'Excluir mesa' }}
+        </button>
+        <button type="button" class="btn btn--ghost" [disabled]="isDeletingTable()" (click)="cancelDeleteTable()">Cancelar</button>
       </div>
     </div>
   </div>
