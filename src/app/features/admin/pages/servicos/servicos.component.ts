@@ -45,6 +45,10 @@ const TYPE_ICONS: Record<ServiceRequestType, string> = {
   HELP: 'help'
 };
 
+// Ordem da legenda — a cor de cada tipo fica em servicos.component.scss ([data-type]) e se repete
+// no card, no ícone e no botão, para a equipe reconhecer o pedido pela cor de longe.
+const LEGEND_TYPES: ServiceRequestType[] = ['CALL_WAITER', 'CALL_CASHIER', 'CLEANING', 'HELP', 'COMPLAINT'];
+
 // Próximo status ao avançar a solicitação (botão principal de cada card) — undefined em RESOLVED,
 // status terminal sem mais avanço possível.
 const NEXT_STATUS: Partial<Record<ServiceRequestStatus, ServiceRequestStatus>> = {
@@ -131,6 +135,19 @@ export class ServicosComponent implements OnDestroy {
   typeIcon(type: ServiceRequestType): string {
     return TYPE_ICONS[type];
   }
+
+  readonly legendTypes = LEGEND_TYPES;
+
+  // Quantas solicitações ativas (abertas + em atendimento) há de cada tipo — números da legenda.
+  readonly countByType = computed<Map<ServiceRequestType, number>>(() => {
+    const counts = new Map<ServiceRequestType, number>();
+    for (const status of this.columns) {
+      for (const request of this.requestsFor(status)) {
+        counts.set(request.type, (counts.get(request.type) ?? 0) + 1);
+      }
+    }
+    return counts;
+  });
 
   nextActionLabel(status: ServiceRequestStatus): string | undefined {
     return NEXT_ACTION_LABEL[status];

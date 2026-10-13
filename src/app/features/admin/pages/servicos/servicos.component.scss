@@ -48,6 +48,82 @@ select.field__input {
   color: var(--color-text-muted);
 }
 
+// --- Cores por tipo de solicitação ------------------------------------------------
+// Uma cor fixa por tipo, para a equipe reconhecer o que a mesa pediu de longe: azul = garçom,
+// verde = caixa (pagamento), ciano = limpeza, âmbar = ajuda, vermelho = reclamação (mais urgente).
+[data-type='CALL_WAITER'] {
+  --tone: #60a5fa;
+  --tone-bg: rgba(96, 165, 250, 0.14);
+}
+
+[data-type='CALL_CASHIER'] {
+  --tone: #4ade80;
+  --tone-bg: rgba(74, 222, 128, 0.14);
+}
+
+[data-type='CLEANING'] {
+  --tone: #22d3ee;
+  --tone-bg: rgba(34, 211, 238, 0.14);
+}
+
+[data-type='HELP'] {
+  --tone: #fbbf24;
+  --tone-bg: rgba(251, 191, 36, 0.14);
+}
+
+[data-type='COMPLAINT'] {
+  --tone: #f87171;
+  --tone-bg: rgba(248, 113, 113, 0.16);
+}
+
+// --- Legenda ------------------------------------------------------------------------
+.type-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.type-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 6px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid color-mix(in srgb, var(--tone) 35%, transparent);
+  background: var(--tone-bg);
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  font-weight: 600;
+
+  .material-icons {
+    font-size: 16px;
+    color: var(--tone);
+  }
+}
+
+.type-legend__item--empty {
+  opacity: 0.55;
+}
+
+.type-legend__count {
+  min-width: 22px;
+  padding: 1px 7px;
+  border-radius: var(--radius-full);
+  background: var(--tone);
+  color: #0b1220;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.type-legend__item--empty .type-legend__count {
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
 // --- Board (solicitações em colunas por status — kanban) --------------------------
 .board {
   display: flex;
@@ -97,10 +173,48 @@ select.field__input {
 
 // --- Card de solicitação ------------------------------------------------------------
 .request-card {
-  padding: 14px 16px;
+  position: relative;
+  padding: 14px 16px 14px 18px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--tone) 32%, var(--color-border));
+  background: linear-gradient(135deg, var(--tone-bg), transparent 60%), var(--color-bg-card);
+  transition: border-color var(--transition-fast);
+
+  // Faixa lateral na cor do tipo.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: var(--tone);
+  }
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--tone) 60%, var(--color-border));
+  }
+}
+
+// Já assumida: mantém a cor do tipo, mas com menos destaque que as que ainda esperam alguém.
+.request-card--in-progress {
+  background: var(--color-bg-card);
+}
+
+// Reclamação aberta pulsa de leve — é a que mais precisa de atenção rápida.
+.request-card[data-type='COMPLAINT']:not(.request-card--in-progress) {
+  animation: request-card-attention 2.4s ease-in-out infinite;
+}
+
+@keyframes request-card-attention {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(248, 113, 113, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(248, 113, 113, 0.18);
+  }
 }
 
 .request-card__header {
@@ -118,10 +232,18 @@ select.field__input {
   font-size: 0.9375rem;
   color: var(--color-text);
 
-  .material-icons {
-    font-size: 18px;
-    color: var(--color-accent-hover);
-  }
+}
+
+.request-card__icon {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--tone-bg);
+  color: var(--tone);
+  font-size: 18px;
 }
 
 .request-card__time {
@@ -182,6 +304,67 @@ select.field__input {
 
 .request-card__advance {
   flex: 1;
+  background: var(--tone);
+  color: #0b1220;
+  font-weight: 700;
+
+  .material-icons {
+    font-size: 18px;
+  }
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px -6px var(--tone);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tone);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: progress;
+  }
+}
+
+// "Concluir atendimento": mesma cor, em contorno — o passo principal (assumir) fica mais forte.
+.request-card__advance--outline {
+  background: transparent;
+  border-color: var(--tone);
+  color: var(--tone);
+
+  &:hover:not(:disabled) {
+    background: var(--tone-bg);
+    filter: none;
+  }
+}
+
+.request-card__spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: request-card-spin 0.7s linear infinite;
+}
+
+@keyframes request-card-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .request-card[data-type='COMPLAINT']:not(.request-card--in-progress) {
+    animation: none;
+    box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.3);
+  }
+
+  .request-card__advance:hover:not(:disabled) {
+    transform: none;
+  }
 }
 
 .icon-btn {

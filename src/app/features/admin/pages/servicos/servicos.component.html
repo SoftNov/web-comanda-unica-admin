@@ -27,6 +27,17 @@
     {{ listError() }}
   </div>
 } @else {
+  <!-- Legenda: cada tipo de solicitação tem uma cor, repetida no card e no botão. -->
+  <ul class="type-legend" aria-label="Cores por tipo de solicitação">
+    @for (type of legendTypes; track type) {
+      <li class="type-legend__item" [attr.data-type]="type" [class.type-legend__item--empty]="!countByType().get(type)">
+        <span class="material-icons" aria-hidden="true">{{ typeIcon(type) }}</span>
+        {{ typeLabel(type) }}
+        <span class="type-legend__count">{{ countByType().get(type) ?? 0 }}</span>
+      </li>
+    }
+  </ul>
+
   <div class="board">
     @for (column of columns; track column) {
       <div class="board-column">
@@ -40,10 +51,10 @@
             <p class="board-column__empty">Nenhuma solicitação aqui.</p>
           }
           @for (request of requestsFor(column); track request.id) {
-            <div class="request-card card">
+            <div class="request-card card" [attr.data-type]="request.type" [class.request-card--in-progress]="request.status === 'IN_PROGRESS'">
               <div class="request-card__header">
                 <span class="request-card__type">
-                  <span class="material-icons" aria-hidden="true">{{ typeIcon(request.type) }}</span>
+                  <span class="request-card__icon material-icons" aria-hidden="true">{{ typeIcon(request.type) }}</span>
                   {{ typeLabel(request.type) }}
                 </span>
                 <span class="request-card__time" [title]="formatDateTime(request.createdAt)">{{ formatTime(request.createdAt) }}</span>
@@ -73,11 +84,18 @@
                 <div class="request-card__actions">
                   <button
                     type="button"
-                    class="btn btn--primary btn--sm request-card__advance"
+                    class="btn btn--sm request-card__advance"
+                    [class.request-card__advance--outline]="request.status === 'IN_PROGRESS'"
                     [disabled]="movingRequestId() === request.id"
                     (click)="advance(request)"
                   >
-                    {{ movingRequestId() === request.id ? 'Movendo…' : nextActionLabel(request.status) }}
+                    @if (movingRequestId() === request.id) {
+                      <span class="request-card__spinner" aria-hidden="true"></span>
+                      Movendo…
+                    } @else {
+                      <span class="material-icons" aria-hidden="true">{{ request.status === 'OPEN' ? 'front_hand' : 'task_alt' }}</span>
+                      {{ nextActionLabel(request.status) }}
+                    }
                   </button>
                 </div>
               }

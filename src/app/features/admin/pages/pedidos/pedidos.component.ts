@@ -55,6 +55,16 @@ const NEXT_ACTION_LABEL: Partial<Record<OrderQueueItemStatus, string>> = {
   ON_THE_WAY: 'Marcar como entregue'
 };
 
+// Cada etapa tem uma cor fixa (pedidos.component.scss, [data-status]): a coluna, a borda do card e
+// o botão de avançar — que leva a cor da etapa de DESTINO, então a cor do botão antecipa a coluna
+// para onde o item vai.
+const STATUS_ICONS: Partial<Record<OrderQueueItemStatus, string>> = {
+  REQUESTED: 'hourglass_top',
+  PREPARING: 'local_fire_department',
+  ON_THE_WAY: 'room_service',
+  DELIVERED: 'check_circle'
+};
+
 // Status a partir dos quais ainda é possível cancelar — mesma regra de ALLOWED_TRANSITIONS no
 // OrderQueueServiceImpl (backend).
 const CANCELLABLE_STATUSES: OrderQueueItemStatus[] = ['REQUESTED', 'PREPARING', 'ON_THE_WAY'];
@@ -130,6 +140,14 @@ export class PedidosComponent implements OnDestroy {
 
   nextActionLabel(status: OrderQueueItemStatus): string | undefined {
     return NEXT_ACTION_LABEL[status];
+  }
+
+  statusIcon(status: OrderQueueItemStatus): string | undefined {
+    return STATUS_ICONS[status];
+  }
+
+  nextStatus(status: OrderQueueItemStatus): OrderQueueItemStatus | undefined {
+    return NEXT_STATUS[status];
   }
 
   canCancel(item: OrderQueueItemResponse): boolean {

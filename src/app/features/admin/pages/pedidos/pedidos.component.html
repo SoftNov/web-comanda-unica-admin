@@ -45,10 +45,13 @@
 } @else {
   <div class="board">
     @for (column of columns; track column) {
-      <div class="board-column">
+      <div class="board-column" [attr.data-status]="column">
         <div class="board-column__header">
-          <h2 class="board-column__title">{{ statusLabel(column) }}</h2>
-          <span class="badge badge--muted">{{ itemsFor(column).length }}</span>
+          <h2 class="board-column__title">
+            <span class="board-column__icon material-icons" aria-hidden="true">{{ statusIcon(column) }}</span>
+            {{ statusLabel(column) }}
+          </h2>
+          <span class="board-column__count">{{ itemsFor(column).length }}</span>
         </div>
 
         <div class="board-column__list">
@@ -56,7 +59,7 @@
             <p class="board-column__empty">Nenhum item aqui.</p>
           }
           @for (item of itemsFor(column); track item.id) {
-            <div class="order-card card">
+            <div class="order-card card" [attr.data-status]="item.status">
               <div class="order-card__header">
                 <span class="order-card__table">{{ tableLabel(item.tableNumber, item.tableName) }}</span>
                 <span class="order-card__time" [title]="formatDateTime(item.createdAt)">{{ formatTime(item.createdAt) }}</span>
@@ -105,11 +108,18 @@
                   @if (canAdvance(item)) {
                     <button
                       type="button"
-                      class="btn btn--primary btn--sm order-card__advance"
+                      class="btn btn--sm order-card__advance"
+                      [attr.data-status]="nextStatus(item.status)"
                       [disabled]="movingItemId() === item.id"
                       (click)="advance(item)"
                     >
-                      {{ movingItemId() === item.id ? 'Movendo…' : nextActionLabel(item.status) }}
+                      @if (movingItemId() === item.id) {
+                        <span class="order-card__spinner" aria-hidden="true"></span>
+                        Movendo…
+                      } @else {
+                        <span class="material-icons" aria-hidden="true">{{ statusIcon(nextStatus(item.status)!) }}</span>
+                        {{ nextActionLabel(item.status) }}
+                      }
                     </button>
                   }
                 </div>

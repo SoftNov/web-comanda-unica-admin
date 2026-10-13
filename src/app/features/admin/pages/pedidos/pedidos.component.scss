@@ -51,20 +51,6 @@ select.field__input {
   cursor: pointer;
 }
 
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-
-.badge--muted {
-  background: rgba(203, 213, 225, 0.12);
-  color: var(--color-text-muted);
-}
-
 // --- Board (fila em colunas por status — kanban) -----------------------------------
 .board {
   display: flex;
@@ -74,12 +60,37 @@ select.field__input {
   padding-bottom: 8px;
 }
 
+// --- Cores por etapa ----------------------------------------------------------------
+// Uma cor por etapa, sempre a mesma: âmbar = aguardando alguém pegar, azul = em preparo,
+// violeta = pronto para levar à mesa, verde = entregue. Vale para a coluna, a borda do card e o
+// botão de avançar (que usa a cor da etapa de destino — ver STATUS_ICONS em pedidos.component.ts).
+[data-status='REQUESTED'] {
+  --tone: #fbbf24;
+  --tone-bg: rgba(251, 191, 36, 0.14);
+}
+
+[data-status='PREPARING'] {
+  --tone: #60a5fa;
+  --tone-bg: rgba(96, 165, 250, 0.14);
+}
+
+[data-status='ON_THE_WAY'] {
+  --tone: #a78bfa;
+  --tone-bg: rgba(167, 139, 250, 0.14);
+}
+
+[data-status='DELIVERED'] {
+  --tone: #4ade80;
+  --tone-bg: rgba(74, 222, 128, 0.14);
+}
+
 .board-column {
   flex: 1 0 300px;
   max-width: 360px;
   min-width: 280px;
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
+  border-top: 3px solid var(--tone, var(--color-border));
   border-radius: var(--radius-lg);
   padding: 16px;
   display: flex;
@@ -94,8 +105,36 @@ select.field__input {
 }
 
 .board-column__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-size: 0.9375rem;
   color: var(--color-text);
+}
+
+.board-column__icon {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--tone-bg);
+  color: var(--tone);
+  font-size: 17px;
+}
+
+.board-column__count {
+  min-width: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: var(--tone-bg);
+  color: var(--tone);
+  font-size: 0.8125rem;
+  font-weight: 700;
 }
 
 .board-column__list {
@@ -114,10 +153,28 @@ select.field__input {
 
 // --- Card de pedido ---------------------------------------------------------------
 .order-card {
-  padding: 14px 16px;
+  position: relative;
+  padding: 14px 16px 14px 18px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--tone) 28%, var(--color-border));
+  background: linear-gradient(135deg, var(--tone-bg), transparent 55%), var(--color-bg-card);
+  transition: border-color var(--transition-fast), transform var(--transition-fast);
+
+  // Faixa lateral na cor da etapa — dá pra ler o status do card de relance.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: var(--tone);
+  }
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--tone) 55%, var(--color-border));
+  }
 }
 
 .order-card__header {
@@ -211,6 +268,56 @@ select.field__input {
 
 .order-card__advance {
   flex: 1;
+  // Cor da etapa de destino (data-status do botão = próximo status).
+  background: var(--tone);
+  color: #0b1220;
+  font-weight: 700;
+
+  .material-icons {
+    font-size: 18px;
+  }
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px -6px var(--tone);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--tone);
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: progress;
+  }
+}
+
+.order-card__spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: order-card-spin 0.7s linear infinite;
+}
+
+@keyframes order-card-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .order-card,
+  .order-card__advance {
+    transition: none;
+  }
+
+  .order-card__advance:hover:not(:disabled) {
+    transform: none;
+  }
 }
 
 .icon-btn {
