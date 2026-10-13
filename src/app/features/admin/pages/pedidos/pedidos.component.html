@@ -9,15 +9,32 @@
 
 <div class="card filters-card">
   <div class="filters-row">
-    <div class="field">
-      <label class="field__label" for="filter-sector">Setor</label>
-      <div class="field__control">
-        <select id="filter-sector" class="field__input" [value]="sectorFilter()" (change)="setSectorFilter($any($event.target).value)">
-          <option value="">Todos os setores</option>
-          @for (sector of sectors(); track sector) {
-            <option [value]="sector">{{ sectorLabel(sector) }}</option>
-          }
-        </select>
+    <div class="sector-filter" role="group" aria-labelledby="sector-filter-label">
+      <span id="sector-filter-label" class="field__label">Área</span>
+      <div class="sector-filter__chips">
+        <button
+          type="button"
+          class="sector-chip sector-chip--all"
+          [class.sector-chip--active]="sectorFilter() === ''"
+          [attr.aria-pressed]="sectorFilter() === ''"
+          (click)="setSectorFilter('')"
+        >
+          <span class="material-icons" aria-hidden="true">apps</span>
+          Todas
+        </button>
+        @for (sector of sectors(); track sector) {
+          <button
+            type="button"
+            class="sector-chip"
+            [attr.data-sector]="sector"
+            [class.sector-chip--active]="sectorFilter() === sector"
+            [attr.aria-pressed]="sectorFilter() === sector"
+            (click)="setSectorFilter(sector)"
+          >
+            <span class="material-icons" aria-hidden="true">{{ sectorIcon(sector) }}</span>
+            {{ sectorLabel(sector) }}
+          </button>
+        }
       </div>
     </div>
 
@@ -45,7 +62,7 @@
 } @else {
   <div class="board">
     @for (column of columns; track column) {
-      <div class="board-column" [attr.data-status]="column">
+      <div class="board-column">
         <div class="board-column__header">
           <h2 class="board-column__title">
             <span class="board-column__icon material-icons" aria-hidden="true">{{ statusIcon(column) }}</span>
@@ -59,11 +76,18 @@
             <p class="board-column__empty">Nenhum item aqui.</p>
           }
           @for (item of itemsFor(column); track item.id) {
-            <div class="order-card card" [attr.data-status]="item.status">
+            <div class="order-card card" [attr.data-sector]="item.kitchenSector">
               <div class="order-card__header">
                 <span class="order-card__table">{{ tableLabel(item.tableNumber, item.tableName) }}</span>
                 <span class="order-card__time" [title]="formatDateTime(item.createdAt)">{{ formatTime(item.createdAt) }}</span>
               </div>
+
+              @if (item.kitchenSector) {
+                <span class="sector-tag">
+                  <span class="material-icons" aria-hidden="true">{{ sectorIcon(item.kitchenSector) }}</span>
+                  {{ sectorLabel(item.kitchenSector) }}
+                </span>
+              }
 
               <p class="order-card__customer">{{ item.customerName }}</p>
 
@@ -71,10 +95,6 @@
                 <span class="order-card__item-qty">{{ item.quantity }}x</span>
                 {{ item.itemName }}
               </p>
-
-              @if (item.kitchenSector) {
-                <span class="chip">{{ sectorLabel(item.kitchenSector) }}</span>
-              }
 
               @if (item.notes) {
                 <p class="order-card__notes">
@@ -109,7 +129,6 @@
                     <button
                       type="button"
                       class="btn btn--sm order-card__advance"
-                      [attr.data-status]="nextStatus(item.status)"
                       [disabled]="movingItemId() === item.id"
                       (click)="advance(item)"
                     >

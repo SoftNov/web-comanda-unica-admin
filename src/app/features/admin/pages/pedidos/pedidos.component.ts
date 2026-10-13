@@ -33,6 +33,17 @@ const SECTOR_LABELS: Record<KitchenSector, string> = {
   SOBREMESAS: 'Sobremesas'
 };
 
+// Ícone de cada área — a cor fica em pedidos.component.scss ([data-sector]) e aparece no chip do
+// card e no filtro, para cada praça achar os próprios itens de relance.
+const SECTOR_ICONS: Record<KitchenSector, string> = {
+  COZINHA: 'restaurant',
+  BAR: 'local_bar',
+  CONFEITARIA: 'cake',
+  CHAPA: 'outdoor_grill',
+  COPA: 'coffee',
+  SOBREMESAS: 'icecream'
+};
+
 const STATUS_LABELS: Record<OrderQueueItemStatus, string> = {
   REQUESTED: 'Fila',
   PREPARING: 'Em preparo',
@@ -55,9 +66,7 @@ const NEXT_ACTION_LABEL: Partial<Record<OrderQueueItemStatus, string>> = {
   ON_THE_WAY: 'Marcar como entregue'
 };
 
-// Cada etapa tem uma cor fixa (pedidos.component.scss, [data-status]): a coluna, a borda do card e
-// o botão de avançar — que leva a cor da etapa de DESTINO, então a cor do botão antecipa a coluna
-// para onde o item vai.
+// Ícone de cada etapa — no cabeçalho da coluna e no botão de avançar (ícone da etapa de destino).
 const STATUS_ICONS: Partial<Record<OrderQueueItemStatus, string>> = {
   REQUESTED: 'hourglass_top',
   PREPARING: 'local_fire_department',
@@ -138,6 +147,10 @@ export class PedidosComponent implements OnDestroy {
     return SECTOR_LABELS[sector];
   }
 
+  sectorIcon(sector: KitchenSector): string {
+    return SECTOR_ICONS[sector];
+  }
+
   nextActionLabel(status: OrderQueueItemStatus): string | undefined {
     return NEXT_ACTION_LABEL[status];
   }
@@ -197,6 +210,9 @@ export class PedidosComponent implements OnDestroy {
   }
 
   setSectorFilter(value: string): void {
+    if (value === this.sectorFilter()) {
+      return;
+    }
     this.sectorFilter.set(value as KitchenSector | '');
     // O filtro de setor viaja no handshake do WebSocket (query param "sector"), não como parâmetro
     // de uma chamada REST — trocar o setor precisa reabrir a conexão.

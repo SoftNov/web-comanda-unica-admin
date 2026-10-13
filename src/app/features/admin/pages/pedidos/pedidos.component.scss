@@ -40,15 +40,6 @@
   align-items: flex-end;
   gap: 16px;
   flex-wrap: wrap;
-
-  .field {
-    min-width: 160px;
-  }
-}
-
-select.field__input {
-  appearance: none;
-  cursor: pointer;
 }
 
 // --- Board (fila em colunas por status — kanban) -----------------------------------
@@ -60,37 +51,12 @@ select.field__input {
   padding-bottom: 8px;
 }
 
-// --- Cores por etapa ----------------------------------------------------------------
-// Uma cor por etapa, sempre a mesma: âmbar = aguardando alguém pegar, azul = em preparo,
-// violeta = pronto para levar à mesa, verde = entregue. Vale para a coluna, a borda do card e o
-// botão de avançar (que usa a cor da etapa de destino — ver STATUS_ICONS em pedidos.component.ts).
-[data-status='REQUESTED'] {
-  --tone: #fbbf24;
-  --tone-bg: rgba(251, 191, 36, 0.14);
-}
-
-[data-status='PREPARING'] {
-  --tone: #60a5fa;
-  --tone-bg: rgba(96, 165, 250, 0.14);
-}
-
-[data-status='ON_THE_WAY'] {
-  --tone: #a78bfa;
-  --tone-bg: rgba(167, 139, 250, 0.14);
-}
-
-[data-status='DELIVERED'] {
-  --tone: #4ade80;
-  --tone-bg: rgba(74, 222, 128, 0.14);
-}
-
 .board-column {
   flex: 1 0 300px;
   max-width: 360px;
   min-width: 280px;
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
-  border-top: 3px solid var(--tone, var(--color-border));
   border-radius: var(--radius-lg);
   padding: 16px;
   display: flex;
@@ -119,8 +85,8 @@ select.field__input {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: var(--tone-bg);
-  color: var(--tone);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-muted);
   font-size: 17px;
 }
 
@@ -131,8 +97,8 @@ select.field__input {
   justify-content: center;
   padding: 3px 10px;
   border-radius: var(--radius-full);
-  background: var(--tone-bg);
-  color: var(--tone);
+  background: rgba(203, 213, 225, 0.12);
+  color: var(--color-text-muted);
   font-size: 0.8125rem;
   font-weight: 700;
 }
@@ -152,6 +118,12 @@ select.field__input {
 }
 
 // --- Card de pedido ---------------------------------------------------------------
+// Item sem área definida fica neutro.
+.order-card:not([data-sector]) {
+  --sector: var(--color-text-muted);
+  --sector-bg: rgba(203, 213, 225, 0.08);
+}
+
 .order-card {
   position: relative;
   padding: 14px 16px 14px 18px;
@@ -159,21 +131,21 @@ select.field__input {
   flex-direction: column;
   gap: 8px;
   overflow: hidden;
-  border-color: color-mix(in srgb, var(--tone) 28%, var(--color-border));
-  background: linear-gradient(135deg, var(--tone-bg), transparent 55%), var(--color-bg-card);
+  border-color: color-mix(in srgb, var(--sector) 28%, var(--color-border));
+  background: linear-gradient(135deg, var(--sector-bg), transparent 55%), var(--color-bg-card);
   transition: border-color var(--transition-fast), transform var(--transition-fast);
 
-  // Faixa lateral na cor da etapa — dá pra ler o status do card de relance.
+  // Faixa lateral na cor da área — cada praça reconhece os próprios itens de relance.
   &::before {
     content: '';
     position: absolute;
     inset: 0 auto 0 0;
     width: 4px;
-    background: var(--tone);
+    background: var(--sector);
   }
 
   &:hover {
-    border-color: color-mix(in srgb, var(--tone) 55%, var(--color-border));
+    border-color: color-mix(in srgb, var(--sector) 55%, var(--color-border));
   }
 }
 
@@ -211,18 +183,119 @@ select.field__input {
   margin-right: 4px;
 }
 
-.chip {
+// --- Cores por área (setor) ---------------------------------------------------------
+// A área define a cor do card inteiro (faixa lateral, borda, botão), da etiqueta e do filtro. A
+// etapa é dada só pela coluna — sem cor própria, para não disputar com a da área.
+[data-sector='COZINHA'] {
+  --sector: #fb923c;
+  --sector-bg: rgba(251, 146, 60, 0.16);
+}
+
+[data-sector='BAR'] {
+  --sector: #f472b6;
+  --sector-bg: rgba(244, 114, 182, 0.16);
+}
+
+[data-sector='CONFEITARIA'] {
+  --sector: #e879f9;
+  --sector-bg: rgba(232, 121, 249, 0.16);
+}
+
+[data-sector='CHAPA'] {
+  --sector: #f87171;
+  --sector-bg: rgba(248, 113, 113, 0.16);
+}
+
+[data-sector='COPA'] {
+  --sector: #2dd4bf;
+  --sector-bg: rgba(45, 212, 191, 0.16);
+}
+
+[data-sector='SOBREMESAS'] {
+  --sector: #a3e635;
+  --sector-bg: rgba(163, 230, 53, 0.16);
+}
+
+// Etiqueta da área no card.
+.sector-tag {
   display: inline-flex;
   align-self: flex-start;
   align-items: center;
-  padding: 2px 10px;
+  gap: 5px;
+  padding: 3px 10px 3px 7px;
   border-radius: var(--radius-full);
-  background: var(--color-accent-bg);
-  color: var(--color-accent-hover);
+  border: 1px solid color-mix(in srgb, var(--sector) 40%, transparent);
+  background: var(--sector-bg);
+  color: var(--sector);
   font-size: 0.6875rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
+
+  .material-icons {
+    font-size: 14px;
+  }
+}
+
+// Filtro por área (substitui o select): um botão por área, na cor dela.
+.sector-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.sector-filter__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sector-chip {
+  --sector: var(--color-accent-hover);
+  --sector-bg: var(--color-accent-bg);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px 0 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-strong);
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast);
+
+  .material-icons {
+    font-size: 18px;
+    color: var(--sector);
+  }
+
+  &:hover {
+    border-color: color-mix(in srgb, var(--sector) 60%, transparent);
+    color: var(--color-text);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--sector);
+    outline-offset: 2px;
+  }
+}
+
+.sector-chip--active {
+  border-color: var(--sector);
+  background: var(--sector-bg);
+  color: var(--color-text);
+  box-shadow: inset 0 0 0 1px var(--sector);
+}
+
+.sector-chip--all {
+  --sector: var(--color-text);
+  --sector-bg: rgba(255, 255, 255, 0.08);
 }
 
 .order-card__notes {
@@ -268,8 +341,8 @@ select.field__input {
 
 .order-card__advance {
   flex: 1;
-  // Cor da etapa de destino (data-status do botão = próximo status).
-  background: var(--tone);
+  // Na cor da área do item, como o resto do card.
+  background: var(--sector);
   color: #0b1220;
   font-weight: 700;
 
@@ -280,11 +353,11 @@ select.field__input {
   &:hover:not(:disabled) {
     filter: brightness(1.08);
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px -6px var(--tone);
+    box-shadow: 0 6px 18px -6px var(--sector);
   }
 
   &:focus-visible {
-    outline: 2px solid var(--tone);
+    outline: 2px solid var(--sector);
     outline-offset: 2px;
   }
 
