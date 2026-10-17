@@ -62,7 +62,7 @@ export class ProfileComponent {
   private readonly authService = inject(AuthService);
 
   readonly profileCode = computed(() => this.authService.selectedCompany()?.profileCode ?? null);
-  readonly canEditCompany = computed(() => this.profileCode() === 'OWNER' || this.profileCode() === 'ADMIN');
+  readonly canEditCompany = computed(() => ['OWNER', 'COMMERCIAL', 'ADMIN'].includes(this.profileCode() ?? ''));
 
   readonly activeTab = signal<'personal' | 'company'>('personal');
 

@@ -1,0 +1,575 @@
+.field__hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.form-alert {
+  margin-bottom: 16px;
+}
+
+.inline-error {
+  margin-top: 10px;
+  font-size: 0.8125rem;
+  color: #f87171;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+
+  .material-icons {
+    font-size: 18px;
+  }
+
+  &:hover {
+    color: var(--color-text);
+  }
+}
+
+// Cabeçalho do lead
+.lead-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.lead-header__avatar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--color-accent-bg);
+  color: var(--color-accent-hover);
+  font-weight: 700;
+}
+
+.lead-header__identity {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.lead-header__name {
+  font-size: 1.5rem;
+  overflow-wrap: anywhere;
+}
+
+.lead-header__meta {
+  margin-top: 2px;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.lead-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+// Layout em duas colunas: conteúdo + dados do lead
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 20px;
+  align-items: start;
+}
+
+.layout__main {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.panel {
+  padding: 20px;
+  min-width: 0;
+}
+
+.panel__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+
+  .material-icons {
+    font-size: 20px;
+    color: var(--color-accent-hover);
+  }
+}
+
+.panel__count {
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+// Etapa
+.stage-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stage-picker__item {
+  --stage-color: var(--color-accent);
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-strong);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+
+  .material-icons {
+    font-size: 16px;
+  }
+
+  &:hover:not(:disabled) {
+    color: var(--color-text);
+    border-color: var(--stage-color);
+  }
+
+  &:disabled {
+    cursor: wait;
+  }
+
+  &[data-status='IN_CONTACT'] {
+    --stage-color: #a855f7;
+  }
+
+  &[data-status='SCHEDULED'] {
+    --stage-color: #eab308;
+  }
+
+  &[data-status='NOT_INTERESTED'] {
+    --stage-color: #ef4444;
+  }
+
+  &[data-status='INTERESTED_NOT_HIRED'] {
+    --stage-color: #f97316;
+  }
+
+  &[data-status='HIRED'] {
+    --stage-color: var(--color-success);
+  }
+}
+
+.stage-picker__item--active {
+  border-color: var(--stage-color);
+  background: color-mix(in srgb, var(--stage-color) 16%, transparent);
+  color: var(--color-text);
+
+  .material-icons {
+    color: var(--stage-color);
+  }
+}
+
+// Call
+.empty {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.meeting {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.meeting__when {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  > .material-icons {
+    flex-shrink: 0;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    background: rgba(234, 179, 8, 0.14);
+    color: #eab308;
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+}
+
+.meeting--past .meeting__when > .material-icons {
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+}
+
+.meeting__date {
+  font-size: 1rem;
+
+  &::first-letter {
+    text-transform: uppercase;
+  }
+}
+
+.meeting__meta {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.meeting__link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  font-size: 0.875rem;
+
+  .material-icons {
+    flex-shrink: 0;
+    font-size: 18px;
+    color: var(--color-text-muted);
+  }
+
+  a {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-accent-hover);
+  }
+}
+
+.meeting__actions,
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  .material-icons {
+    font-size: 18px;
+  }
+}
+
+.form-actions {
+  justify-content: flex-end;
+}
+
+.btn--danger:hover {
+  border-color: #ef4444;
+  color: #f87171;
+}
+
+.btn--whatsapp {
+  background: #25d366;
+  color: #06210f;
+
+  &:hover {
+    filter: brightness(1.06);
+  }
+
+  ::ng-deep svg {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// Formulário da call
+.meeting-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  // flex só na linha (data + duração): no formulário em coluna, o flex-basis viraria altura.
+  .field {
+    flex: 1 1 220px;
+  }
+
+  .field--narrow {
+    flex: 0 1 140px;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.field input:not([type='radio']),
+.field select,
+.note-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.9375rem;
+  color-scheme: dark;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-accent);
+  }
+}
+
+.mode-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.mode-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-strong);
+  cursor: pointer;
+
+  &:has(input:checked) {
+    border-color: var(--color-accent);
+    background: var(--color-accent-bg);
+  }
+
+  input {
+    flex-shrink: 0;
+    margin-top: 3px;
+    accent-color: var(--color-accent);
+  }
+
+  span {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  strong {
+    font-size: 0.875rem;
+  }
+
+  small {
+    font-size: 0.75rem;
+    line-height: 1.4;
+    color: var(--color-text-muted);
+  }
+}
+
+.mode-option--disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.input-with-action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  input {
+    flex: 1 1 240px;
+    min-width: 0;
+  }
+
+  .material-icons {
+    font-size: 18px;
+  }
+}
+
+// Anotações
+.note-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  textarea {
+    resize: vertical;
+    min-height: 84px;
+  }
+}
+
+.note-form__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.note {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+
+.note__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.note__author {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.note__date {
+  flex: 1;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.note__delete {
+  display: inline-flex;
+  padding: 4px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+
+  .material-icons {
+    font-size: 18px;
+  }
+
+  &:hover:not(:disabled) {
+    color: #f87171;
+    background: rgba(239, 68, 68, 0.1);
+  }
+}
+
+.note__content {
+  font-size: 0.875rem;
+  color: var(--color-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+// Dados do lead
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0;
+
+  div {
+    min-width: 0;
+  }
+
+  dt {
+    margin-bottom: 3px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--color-text-muted);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 0.9375rem;
+    overflow-wrap: anywhere;
+
+    a {
+      color: var(--color-accent-hover);
+    }
+  }
+}
+
+.details__hint {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag {
+  max-width: 100%;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 960px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  // No celular, os dados do lead aparecem antes da call e das anotações.
+  .layout__side {
+    order: -1;
+  }
+}
+
+@media (max-width: 600px) {
+  .panel {
+    padding: 16px;
+  }
+
+  .lead-header__actions {
+    width: 100%;
+
+    .btn {
+      flex: 1;
+    }
+  }
+}

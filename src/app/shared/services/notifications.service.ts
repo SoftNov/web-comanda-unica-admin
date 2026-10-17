@@ -9,8 +9,8 @@ import { ServiceRequestType, ServiceRequestsService, TableServiceRequestResponse
 // OrderQueueController/TableServiceRequestController, @RequireProfile) — o sino só abre conexão
 // para quem realmente tem permissão, senão o handshake do WebSocket rejeitaria com 403. KITCHEN
 // fica de fora dos serviços gerais (não lida com limpeza/pagamento/reclamação de mesa).
-export const ORDER_QUEUE_NOTIFICATION_PROFILES = ['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER', 'KITCHEN'];
-export const SERVICE_REQUEST_NOTIFICATION_PROFILES = ['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'];
+export const ORDER_QUEUE_NOTIFICATION_PROFILES = ['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER', 'KITCHEN'];
+export const SERVICE_REQUEST_NOTIFICATION_PROFILES = ['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'];
 
 export const SERVICE_TYPE_LABELS: Record<ServiceRequestType, string> = {
   CLEANING: 'Limpeza',

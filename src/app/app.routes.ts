@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { homeGuard } from './core/guards/home.guard';
 import { platformAdminGuard } from './core/guards/platform-admin.guard';
+import { platformAdminOrProfileGuard } from './core/guards/platform-admin-or-profile.guard';
 import { profileGuard } from './core/guards/profile.guard';
 import { profileOrPlatformAdminGuard } from './core/guards/profile-or-platform-admin.guard';
 import { subscriptionGuard } from './core/guards/subscription.guard';
@@ -68,7 +69,7 @@ export const routes: Routes = [
       },
       {
         path: 'comandas',
-        canActivate: [profileGuard(['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'])],
+        canActivate: [profileGuard(['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'])],
         loadComponent: () => import('./features/admin/pages/comandas/comandas.component').then((m) => m.ComandasComponent),
         title: 'Comandas — Comanda Única'
       },
@@ -78,7 +79,7 @@ export const routes: Routes = [
         // cardápio digital do cliente (web-comanda-unica-menu): catálogo + carrinho flutuante
         // aqui, comanda já lançada numa rota separada (ver comanda/:tableId abaixo).
         path: 'comandas/lancar-pedido',
-        canActivate: [profileGuard(['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'])],
+        canActivate: [profileGuard(['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'])],
         loadComponent: () =>
           import('./features/admin/pages/lancar-pedido/lancar-pedido.component').then((m) => m.LancarPedidoComponent),
         title: 'Lançar Pedido — Comanda Única'
@@ -88,20 +89,20 @@ export const routes: Routes = [
         // montar pedido pra não pesar a mesma página com um catálogo de produtos e uma lista
         // grande de pedidos já lançados ao mesmo tempo.
         path: 'comandas/lancar-pedido/comanda/:tableId',
-        canActivate: [profileGuard(['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'])],
+        canActivate: [profileGuard(['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'])],
         loadComponent: () =>
           import('./features/admin/pages/comanda-mesa/comanda-mesa.component').then((m) => m.ComandaMesaComponent),
         title: 'Comanda da Mesa — Comanda Única'
       },
       {
         path: 'mesas',
-        canActivate: [profileGuard(['ADMIN', 'OWNER', 'MANAGER'])],
+        canActivate: [profileGuard(['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'])],
         loadComponent: () => import('./features/admin/pages/tables/tables.component').then((m) => m.TablesComponent),
         title: 'Mesas — Comanda Única'
       },
       {
         path: 'cardapio',
-        canActivate: [profileGuard(['ADMIN', 'OWNER', 'MANAGER'])],
+        canActivate: [profileGuard(['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'])],
         loadComponent: () => import('./features/admin/pages/menu/menu.component').then((m) => m.MenuComponent),
         title: 'Cardápio — Comanda Única'
       },
@@ -112,34 +113,34 @@ export const routes: Routes = [
       },
       {
         path: 'reservas',
-        canActivate: [profileGuard(['OWNER', 'ADMIN', 'MANAGER', 'WAITER'])],
+        canActivate: [profileGuard(['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER', 'WAITER'])],
         loadComponent: () => import('./features/admin/pages/reservas/reservas.component').then((m) => m.ReservasComponent),
         title: 'Reservas — Comanda Única'
       },
       {
         // Recepção: leitura do Passe de Consumo na saída (só libera com a comanda quitada).
         path: 'controle-saida',
-        canActivate: [profileGuard(['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'])],
+        canActivate: [profileGuard(['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'])],
         loadComponent: () =>
           import('./features/admin/pages/controle-saida/controle-saida.component').then((m) => m.ControleSaidaComponent),
         title: 'Controle de Saída — Comanda Única'
       },
       {
         path: 'passes-consumo',
-        canActivate: [profileGuard(['OWNER', 'ADMIN', 'MANAGER'])],
+        canActivate: [profileGuard(['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER'])],
         loadComponent: () =>
           import('./features/admin/pages/passes-consumo/passes-consumo.component').then((m) => m.PassesConsumoComponent),
         title: 'Passes de Consumo — Comanda Única'
       },
       {
         path: 'servicos',
-        canActivate: [profileGuard(['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'])],
+        canActivate: [profileGuard(['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'])],
         loadComponent: () => import('./features/admin/pages/servicos/servicos.component').then((m) => m.ServicosComponent),
         title: 'Serviços — Comanda Única'
       },
       {
         path: 'financeiro',
-        canActivate: [profileOrPlatformAdminGuard(['ADMIN', 'OWNER', 'MANAGER'])],
+        canActivate: [profileOrPlatformAdminGuard(['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'])],
         loadComponent: () =>
           import('./features/admin/pages/extrato-financeiro/extrato-financeiro.component').then((m) => m.ExtratoFinanceiroComponent),
         title: 'Extrato Financeiro — Comanda Única'
@@ -159,8 +160,30 @@ export const routes: Routes = [
         title: 'Financeiro Comanda Única — Comanda Única'
       },
       {
+        path: 'relatorio-estabelecimentos',
+        canActivate: [platformAdminGuard],
+        loadComponent: () =>
+          import('./features/admin/pages/relatorio-estabelecimentos/relatorio-estabelecimentos.component').then(
+            (m) => m.RelatorioEstabelecimentosComponent
+          ),
+        title: 'Relatório de Estabelecimentos — Comanda Única'
+      },
+      {
+        path: 'campanhas',
+        canActivate: [platformAdminOrProfileGuard(['COMMERCIAL'])],
+        loadComponent: () => import('./features/admin/pages/campanhas/campanhas.component').then((m) => m.CampanhasComponent),
+        title: 'Campanhas — Comanda Única'
+      },
+      {
+        path: 'campanhas/:id',
+        canActivate: [platformAdminOrProfileGuard(['COMMERCIAL'])],
+        loadComponent: () =>
+          import('./features/admin/pages/campanhas/campanha-detalhe.component').then((m) => m.CampanhaDetalheComponent),
+        title: 'Lead — Comanda Única'
+      },
+      {
         path: 'funcionarios',
-        canActivate: [profileGuard(['ADMIN', 'OWNER', 'MANAGER'])],
+        canActivate: [profileGuard(['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'])],
         loadComponent: () => import('./features/admin/pages/employees/employees.component').then((m) => m.EmployeesComponent),
         title: 'Funcionários — Comanda Única'
       },
@@ -191,14 +214,14 @@ export const routes: Routes = [
       },
       {
         path: 'configuracoes/mapa-salao',
-        canActivate: [profileGuard(['ADMIN', 'OWNER', 'MANAGER'])],
+        canActivate: [profileGuard(['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'])],
         loadComponent: () =>
           import('./features/admin/pages/settings/floor-plan/floor-plan-list.component').then((m) => m.FloorPlanListComponent),
         title: 'Mapa do Salão — Comanda Única'
       },
       {
         path: 'configuracoes/mapa-salao/:id',
-        canActivate: [profileGuard(['ADMIN', 'OWNER', 'MANAGER'])],
+        canActivate: [profileGuard(['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'])],
         loadComponent: () =>
           import('./features/admin/pages/settings/floor-plan/floor-plan-editor.component').then((m) => m.FloorPlanEditorComponent),
         title: 'Mapa do Salão — Comanda Única'

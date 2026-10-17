@@ -64,7 +64,7 @@
       <div class="sub-card__head-main">
         @if (mode() === 'active') {
           <span class="sub-card__eyebrow">Plano · {{ tableUsageLabel() }}</span>
-          <p class="sub-card__price">{{ planMonthlyLabel() }} <span>/ mês</span></p>
+          <p class="sub-card__price">{{ contractedMonthlyLabel() }} <span>/ mês</span></p>
           <p class="sub-card__price-note">Cobrança mensal com renovação automática.</p>
         } @else if (hasPlanPicker()) {
           <span class="sub-card__eyebrow">Assinatura Comanda Única</span>
@@ -116,7 +116,7 @@
           <div>
             <p class="plan-upgrade__title">Seu plano não cobre mais o número de mesas atual</p>
             <p class="plan-upgrade__detail">
-              Contratado: <strong>{{ amountLabel(status()?.monthlyAmount) }}/mês</strong> ·
+              Contratado: <strong>{{ contractedMonthlyLabel() }}/mês</strong> ·
               Valor para {{ tableCountLabel() }}: <strong>{{ planMonthlyLabel() }}/mês</strong>
             </p>
           </div>
@@ -183,7 +183,10 @@
                   <span class="material-icons" aria-hidden="true">table_restaurant</span>
                   Até {{ plan.upToTables }} mesas
                 </span>
-                <span class="plan-option__price">{{ planCardMonthlyLabel(plan.monthlyAmount) }} <span>/ mês</span></span>
+                <span class="plan-option__price">
+                  {{ plan.current && renewing() ? contractedMonthlyLabel() : planCardMonthlyLabel(plan.monthlyAmount) }}
+                  <span>/ mês</span>
+                </span>
                 <div class="plan-option__foot">
                   @if (plan.current && renewing()) {
                     <span class="plan-option__note">Você está neste plano.</span>

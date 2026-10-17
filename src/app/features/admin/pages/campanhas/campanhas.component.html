@@ -1,0 +1,123 @@
+<div class="page-header">
+  <div>
+    <h1 class="page-title">Campanhas</h1>
+    <p class="page-subtitle">Leads da landing page dos anúncios. Arraste o card para mudar a etapa.</p>
+  </div>
+  <button type="button" class="btn btn--ghost btn--sm" appRipple (click)="reload()" [disabled]="isLoading()">
+    <span class="material-icons" aria-hidden="true">refresh</span>
+    {{ isLoading() ? 'Atualizando…' : 'Atualizar' }}
+  </button>
+</div>
+
+<div class="card toolbar">
+  <label class="search">
+    <span class="material-icons search__icon" aria-hidden="true">search</span>
+    <input
+      type="search"
+      placeholder="Buscar por nome, e-mail ou telefone"
+      aria-label="Buscar leads"
+      [value]="search()"
+      (input)="onSearchChange($any($event.target).value)"
+    />
+  </label>
+</div>
+
+@if (moveError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ moveError() }}
+  </div>
+}
+
+@if (loadError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ loadError() }}
+  </div>
+} @else if (isLoading() && columns().length === 0) {
+  <p class="field__hint">Carregando leads…</p>
+} @else {
+  <div class="board" cdkDropListGroup>
+    @for (column of columns(); track column.status) {
+      <section class="column" [attr.data-status]="column.status">
+        <header class="column__header">
+          <span class="material-icons column__icon" aria-hidden="true">{{ column.icon }}</span>
+          <h2 class="column__title">{{ column.label }}</h2>
+          <span class="column__count">{{ column.total }}</span>
+        </header>
+
+        <div
+          class="column__list"
+          cdkDropList
+          [cdkDropListData]="column.status"
+          (cdkDropListDropped)="onDrop($event)"
+        >
+          @for (lead of column.items; track lead.id) {
+            <article class="lead" cdkDrag [cdkDragData]="lead" [cdkDragStartDelay]="{ touch: 250, mouse: 0 }">
+              <div class="lead__placeholder" *cdkDragPlaceholder></div>
+
+              <a class="lead__name" [routerLink]="['/painel/campanhas', lead.id]">{{ lead.name }}</a>
+
+              <ul class="lead__info">
+                <li>
+                  <span class="material-icons" aria-hidden="true">call</span>
+                  <span>{{ formatPhone(lead.phone) }}</span>
+                </li>
+                @if (lead.contactedByName) {
+                  <li>
+                    <span class="material-icons" aria-hidden="true">support_agent</span>
+                    <span [title]="'Comercial que fez o contato: ' + lead.contactedByName">{{ lead.contactedByName }}</span>
+                  </li>
+                }
+                @if (lead.meetingAt) {
+                  <li class="lead__meeting" [class.lead__meeting--past]="isPastMeeting(lead)">
+                    <span class="material-icons" aria-hidden="true">videocam</span>
+                    <span>Call {{ formatShortDateTime(lead.meetingAt) }}</span>
+                  </li>
+                }
+              </ul>
+
+              <footer class="lead__footer">
+                <span class="lead__date" title="Recebido em">{{ formatShortDate(lead.createdAt) }}</span>
+                <div class="lead__actions">
+                  <a
+                    class="icon-btn icon-btn--whatsapp"
+                    [href]="whatsappUrl(lead)"
+                    target="_blank"
+                    rel="noopener"
+                    title="Chamar no WhatsApp"
+                    aria-label="Chamar no WhatsApp"
+                  >
+                    <app-social-icon name="whatsapp" />
+                  </a>
+                  <a
+                    class="icon-btn"
+                    [routerLink]="['/painel/campanhas', lead.id]"
+                    title="Abrir anotações e call"
+                    aria-label="Abrir anotações e call"
+                  >
+                    <span class="material-icons" aria-hidden="true">open_in_new</span>
+                  </a>
+                </div>
+              </footer>
+            </article>
+          } @empty {
+            <p class="column__empty">Nenhum lead nesta etapa</p>
+          }
+        </div>
+
+        @if (column.items.length < column.total) {
+          <button
+            type="button"
+            class="btn btn--ghost btn--sm column__more"
+            appRipple
+            [disabled]="column.isLoadingMore"
+            (click)="loadMore(column)"
+          >
+            {{ column.isLoadingMore ? 'Carregando…' : 'Carregar mais (' + (column.total - column.items.length) + ')' }}
+          </button>
+        }
+      </section>
+    }
+  </div>
+}

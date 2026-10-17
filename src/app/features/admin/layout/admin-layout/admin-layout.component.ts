@@ -186,6 +186,10 @@ export class AdminLayoutComponent {
     return items
       .filter((item) => !item.roles || (!!profileCode && item.roles.includes(profileCode)))
       .filter((item) => !item.platformAdminOnly || isPlatformAdmin)
+      .filter(
+        (item) =>
+          !item.platformAdminOrProfiles || isPlatformAdmin || this.authService.hasProfileInAnyCompany(item.platformAdminOrProfiles)
+      )
       .filter((item) => !item.requiresConsumptionPass || consumptionPassEnabled)
       .map((item) =>
         item.children

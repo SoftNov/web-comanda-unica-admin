@@ -69,8 +69,8 @@ export class TablesComponent {
   readonly sortOptions = TABLE_SORT_OPTIONS;
 
   readonly profileCode = computed(() => this.selectedCompany()?.profileCode ?? null);
-  readonly canManageTables = computed(() => ['ADMIN', 'OWNER', 'MANAGER'].includes(this.profileCode() ?? ''));
-  readonly canManageSectors = computed(() => ['ADMIN', 'OWNER'].includes(this.profileCode() ?? ''));
+  readonly canManageTables = computed(() => ['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'].includes(this.profileCode() ?? ''));
+  readonly canManageSectors = computed(() => ['ADMIN', 'OWNER', 'COMMERCIAL'].includes(this.profileCode() ?? ''));
 
   readonly activeTab = signal<TabId>('mesas');
 

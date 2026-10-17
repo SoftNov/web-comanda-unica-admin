@@ -1,0 +1,344 @@
+<a class="back-link" routerLink="/painel/campanhas">
+  <span class="material-icons" aria-hidden="true">arrow_back</span>
+  Voltar para Campanhas
+</a>
+
+@if (isLoading()) {
+  <p class="field__hint">Carregando lead…</p>
+} @else if (loadError()) {
+  <div class="form-alert form-alert--error" role="alert">
+    <span class="material-icons" aria-hidden="true">error_outline</span>
+    {{ loadError() }}
+  </div>
+} @else {
+  @if (lead(); as lead) {
+  <header class="lead-header">
+    <span class="lead-header__avatar" aria-hidden="true">{{ initials(lead.name) }}</span>
+    <div class="lead-header__identity">
+      <h1 class="lead-header__name">{{ lead.name }}</h1>
+      <p class="lead-header__meta">Recebido em {{ formatDateTime(lead.createdAt) }}</p>
+    </div>
+    <div class="lead-header__actions">
+      <a class="btn btn--whatsapp btn--sm" appRipple [href]="whatsappUrl()" target="_blank" rel="noopener">
+        <app-social-icon name="whatsapp" />
+        Chamar no WhatsApp
+      </a>
+      <a class="btn btn--ghost btn--sm" appRipple [href]="'mailto:' + lead.email">
+        <span class="material-icons" aria-hidden="true">mail</span>
+        E-mail
+      </a>
+    </div>
+  </header>
+
+  <div class="layout">
+    <div class="layout__main">
+      <!-- Etapa -->
+      <section class="card panel">
+        <h2 class="panel__title">
+          <span class="material-icons" aria-hidden="true">view_kanban</span>
+          Etapa do funil
+        </h2>
+        <div class="stage-picker" role="radiogroup" aria-label="Etapa do funil">
+          @for (status of statuses; track status.value) {
+            <button
+              type="button"
+              role="radio"
+              class="stage-picker__item"
+              [attr.data-status]="status.value"
+              [class.stage-picker__item--active]="lead.status === status.value"
+              [attr.aria-checked]="lead.status === status.value"
+              [disabled]="statusSaving()"
+              (click)="onStatusChange(status.value)"
+            >
+              <span class="material-icons" aria-hidden="true">{{ status.icon }}</span>
+              {{ status.label }}
+            </button>
+          }
+        </div>
+        @if (statusError()) {
+          <p class="inline-error" role="alert">{{ statusError() }}</p>
+        }
+      </section>
+
+      <!-- Call -->
+      <section class="card panel">
+        <h2 class="panel__title">
+          <span class="material-icons" aria-hidden="true">videocam</span>
+          Call
+        </h2>
+
+        @if (isEditingMeeting()) {
+          <div class="meeting-form">
+            <div class="form-row">
+              <label class="field">
+                <span class="field__label">Data e horário</span>
+                <input
+                  type="datetime-local"
+                  [value]="meetingAt()"
+                  (input)="meetingAt.set($any($event.target).value)"
+                />
+              </label>
+              <label class="field field--narrow">
+                <span class="field__label">Duração</span>
+                <select [value]="meetingDuration()" (change)="meetingDuration.set(+$any($event.target).value)">
+                  @for (minutes of durationOptions; track minutes) {
+                    <option [value]="minutes" [selected]="minutes === meetingDuration()">{{ minutes }} min</option>
+                  }
+                </select>
+              </label>
+            </div>
+
+            <div class="field">
+              <span class="field__label">Sala da call</span>
+              <div class="mode-options">
+                <label class="mode-option" [class.mode-option--disabled]="!googleMeetEnabled()">
+                  <input
+                    type="radio"
+                    name="meetingMode"
+                    value="google"
+                    [checked]="meetingMode() === 'google'"
+                    [disabled]="!googleMeetEnabled()"
+                    (change)="meetingMode.set('google')"
+                  />
+                  <span>
+                    <strong>Criar sala no Google Meet</strong>
+                    @if (googleMeetEnabled()) {
+                      <small>A sala é criada na agenda da equipe e o lead recebe o convite por e-mail.</small>
+                    } @else {
+                      <small>Indisponível: a integração com o Google Agenda não está configurada.</small>
+                    }
+                  </span>
+                </label>
+                <label class="mode-option">
+                  <input
+                    type="radio"
+                    name="meetingMode"
+                    value="manual"
+                    [checked]="meetingMode() === 'manual'"
+                    (change)="meetingMode.set('manual')"
+                  />
+                  <span>
+                    <strong>Usar um link</strong>
+                    <small>Crie a sala no Google Meet (ou outra ferramenta) e cole o link aqui.</small>
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            @if (meetingMode() === 'manual') {
+              <div class="field">
+                <span class="field__label">Link da call</span>
+                <div class="input-with-action">
+                  <input
+                    type="url"
+                    placeholder="https://meet.google.com/abc-defg-hij"
+                    [value]="meetingUrl()"
+                    (input)="meetingUrl.set($any($event.target).value)"
+                  />
+                  <a class="btn btn--ghost btn--sm" appRipple href="https://meet.google.com/new" target="_blank" rel="noopener">
+                    <span class="material-icons" aria-hidden="true">add_link</span>
+                    Nova sala no Meet
+                  </a>
+                </div>
+              </div>
+            }
+
+            @if (meetingError()) {
+              <p class="inline-error" role="alert">{{ meetingError() }}</p>
+            }
+
+            <div class="form-actions">
+              <button type="button" class="btn btn--ghost btn--sm" appRipple [disabled]="meetingSaving()" (click)="cancelMeetingForm()">
+                Voltar
+              </button>
+              <button type="button" class="btn btn--primary btn--sm" appRipple [disabled]="meetingSaving()" (click)="saveMeeting()">
+                <span class="material-icons" aria-hidden="true">event_available</span>
+                {{ meetingSaving() ? 'Salvando…' : lead.meetingAt ? 'Salvar novo horário' : 'Agendar call' }}
+              </button>
+            </div>
+          </div>
+        } @else if (lead.meetingAt) {
+          <div class="meeting" [class.meeting--past]="isPastMeeting()">
+            <div class="meeting__when">
+              <span class="material-icons" aria-hidden="true">event</span>
+              <div>
+                <strong class="meeting__date">{{ formatLongDateTime(lead.meetingAt) }}</strong>
+                <span class="meeting__meta">
+                  {{ lead.meetingDurationMinutes ?? 30 }} min
+                  @if (lead.meetingFromGoogle) {
+                    · sala criada no Google Meet
+                  }
+                  @if (isPastMeeting()) {
+                    · já passou
+                  }
+                </span>
+              </div>
+            </div>
+
+            @if (lead.meetingUrl) {
+              <div class="meeting__link">
+                <span class="material-icons" aria-hidden="true">link</span>
+                <a [href]="lead.meetingUrl" target="_blank" rel="noopener" [title]="lead.meetingUrl">{{ lead.meetingUrl }}</a>
+              </div>
+            }
+
+            <div class="meeting__actions">
+              @if (lead.meetingUrl) {
+                <a class="btn btn--primary btn--sm" appRipple [href]="lead.meetingUrl" target="_blank" rel="noopener">
+                  <span class="material-icons" aria-hidden="true">videocam</span>
+                  Entrar na call
+                </a>
+                <button type="button" class="btn btn--ghost btn--sm" appRipple (click)="copyMeetingLink()">
+                  <span class="material-icons" aria-hidden="true">{{ linkCopied() ? 'check' : 'content_copy' }}</span>
+                  {{ linkCopied() ? 'Copiado' : 'Copiar link' }}
+                </button>
+              }
+              @if (!lead.meetingFromGoogle && googleCalendarUrl(lead); as calendarUrl) {
+                <a class="btn btn--ghost btn--sm" appRipple [href]="calendarUrl" target="_blank" rel="noopener">
+                  <span class="material-icons" aria-hidden="true">calendar_month</span>
+                  Adicionar à agenda
+                </a>
+              }
+              <button type="button" class="btn btn--ghost btn--sm" appRipple [disabled]="meetingSaving()" (click)="startMeetingForm()">
+                <span class="material-icons" aria-hidden="true">edit_calendar</span>
+                Remarcar
+              </button>
+              <button type="button" class="btn btn--ghost btn--sm btn--danger" appRipple [disabled]="meetingSaving()" (click)="cancelMeeting()">
+                <span class="material-icons" aria-hidden="true">event_busy</span>
+                Cancelar call
+              </button>
+            </div>
+
+            @if (meetingError()) {
+              <p class="inline-error" role="alert">{{ meetingError() }}</p>
+            }
+          </div>
+        } @else {
+          <div class="empty">
+            <p class="field__hint">Nenhuma call agendada com este lead.</p>
+            <button type="button" class="btn btn--primary btn--sm" appRipple (click)="startMeetingForm()">
+              <span class="material-icons" aria-hidden="true">add</span>
+              Agendar call
+            </button>
+          </div>
+        }
+      </section>
+
+      <!-- Anotações -->
+      <section class="card panel">
+        <h2 class="panel__title">
+          <span class="material-icons" aria-hidden="true">sticky_note_2</span>
+          Anotações
+          @if (notes().length) {
+            <span class="panel__count">{{ notes().length }}</span>
+          }
+        </h2>
+
+        <div class="note-form">
+          <textarea
+            rows="3"
+            placeholder="Como foi o contato? Próximos passos, objeções, o que o cliente precisa…"
+            [maxLength]="noteMaxLength"
+            [value]="noteDraft()"
+            (input)="noteDraft.set($any($event.target).value)"
+            (keydown)="onNoteKeydown($event)"
+          ></textarea>
+          <div class="note-form__footer">
+            <span class="field__hint">Ctrl + Enter para salvar</span>
+            <button
+              type="button"
+              class="btn btn--primary btn--sm"
+              appRipple
+              [disabled]="noteSaving() || !noteDraft().trim()"
+              (click)="saveNote()"
+            >
+              {{ noteSaving() ? 'Salvando…' : 'Salvar anotação' }}
+            </button>
+          </div>
+        </div>
+
+        @if (noteError()) {
+          <p class="inline-error" role="alert">{{ noteError() }}</p>
+        }
+
+        @if (notes().length) {
+          <ol class="notes">
+            @for (note of notes(); track note.id) {
+              <li class="note">
+                <div class="note__header">
+                  <span class="note__author">{{ note.authorName || 'Equipe comercial' }}</span>
+                  <span class="note__date">{{ formatDateTime(note.createdAt) }}</span>
+                  @if (canDeleteNote(note)) {
+                    <button
+                      type="button"
+                      class="note__delete"
+                      title="Excluir anotação"
+                      aria-label="Excluir anotação"
+                      [disabled]="deletingNoteId() === note.id"
+                      (click)="deleteNote(note)"
+                    >
+                      <span class="material-icons" aria-hidden="true">delete_outline</span>
+                    </button>
+                  }
+                </div>
+                <p class="note__content">{{ note.content }}</p>
+              </li>
+            }
+          </ol>
+        } @else {
+          <p class="field__hint">Nenhuma anotação ainda.</p>
+        }
+      </section>
+    </div>
+
+    <!-- Dados do lead -->
+    <aside class="card panel layout__side">
+      <h2 class="panel__title">
+        <span class="material-icons" aria-hidden="true">person</span>
+        Dados do lead
+      </h2>
+      <dl class="details">
+        <div>
+          <dt>Telefone</dt>
+          <dd>{{ formatPhone(lead.phone) }}</dd>
+        </div>
+        <div>
+          <dt>E-mail</dt>
+          <dd><a [href]="'mailto:' + lead.email">{{ lead.email }}</a></dd>
+        </div>
+        <div>
+          <dt>Comercial que fez o contato</dt>
+          <dd>
+            @if (lead.contactedByName) {
+              {{ lead.contactedByName }}
+              <span class="details__hint">em {{ formatDateTime(lead.contactedAt) }}</span>
+            } @else {
+              <span class="details__hint">Ainda não contatado</span>
+            }
+          </dd>
+        </div>
+        @if (lead.statusUpdatedAt) {
+          <div>
+            <dt>Última mudança de etapa</dt>
+            <dd>{{ formatDateTime(lead.statusUpdatedAt) }}</dd>
+          </div>
+        }
+        <div>
+          <dt>Origem do anúncio</dt>
+          <dd>
+            @if (originTags().length) {
+              <div class="tags">
+                @for (tag of originTags(); track $index) {
+                  <span class="tag">{{ tag }}</span>
+                }
+              </div>
+            } @else {
+              <span class="details__hint">Sem UTM</span>
+            }
+          </dd>
+        </div>
+      </dl>
+    </aside>
+  </div>
+  }
+}

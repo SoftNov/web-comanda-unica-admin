@@ -1,0 +1,157 @@
+<div class="page-header">
+  <h1 class="page-title">Relatório de estabelecimentos</h1>
+  <p class="page-subtitle">
+    Situação da assinatura, plano, vencimento, mesas, média de clientes e faturamento de cada estabelecimento.
+  </p>
+</div>
+
+<div class="card report-filters">
+  <div class="report-filters__presets">
+    @for (preset of presets; track preset.days) {
+      <button
+        type="button"
+        class="report-filters__preset"
+        [class.report-filters__preset--active]="activePresetDays() === preset.days"
+        (click)="applyPreset(preset.days)"
+      >
+        {{ preset.label }}
+      </button>
+    }
+  </div>
+  <label class="report-field">
+    <span>De</span>
+    <input type="date" [value]="startDate()" [max]="endDate()" (change)="onStartDateChange($any($event.target).value)" />
+  </label>
+  <label class="report-field">
+    <span>Até</span>
+    <input type="date" [value]="endDate()" [min]="startDate()" (change)="onEndDateChange($any($event.target).value)" />
+  </label>
+  <label class="report-field">
+    <span>Situação</span>
+    <select [value]="situationFilter()" (change)="onSituationFilterChange($any($event.target).value)">
+      @for (option of situationFilters; track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    </select>
+  </label>
+  <label class="report-field report-field--grow">
+    <span>Buscar</span>
+    <input
+      type="search"
+      placeholder="Nome ou CNPJ"
+      [value]="search()"
+      (input)="search.set($any($event.target).value)"
+    />
+  </label>
+  <div class="report-filters__actions">
+    <button type="button" class="btn btn--ghost" appRipple (click)="load()" [disabled]="isLoading()">
+      <span class="material-icons" aria-hidden="true">refresh</span>
+      {{ isLoading() ? 'Atualizando…' : 'Atualizar' }}
+    </button>
+    <button type="button" class="btn btn--primary" appRipple (click)="exportCsv()" [disabled]="rows().length === 0">
+      <span class="material-icons" aria-hidden="true">download</span>
+      Exportar CSV
+    </button>
+  </div>
+</div>
+
+<div class="card">
+  <div class="stat-grid">
+    <div class="stat-card">
+      <span class="material-icons stat-card__icon" aria-hidden="true">storefront</span>
+      <span class="stat-card__label">Estabelecimentos listados</span>
+      <span class="stat-card__value">{{ totals().count }}</span>
+      <span class="stat-card__detail">{{ totals().operating }} ativos · {{ totals().trial }} em teste</span>
+    </div>
+    <div class="stat-card">
+      <span class="material-icons stat-card__icon" aria-hidden="true">table_bar</span>
+      <span class="stat-card__label">Mesas cadastradas</span>
+      <span class="stat-card__value">{{ totals().tables }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="material-icons stat-card__icon" aria-hidden="true">groups</span>
+      <span class="stat-card__label">Média de clientes por dia</span>
+      <span class="stat-card__value">{{ formatDecimal(totals().customersPerDay) }}</span>
+      <span class="stat-card__detail">{{ totals().comandas }} comandas no período</span>
+    </div>
+    <div class="stat-card">
+      <span class="material-icons stat-card__icon" aria-hidden="true">payments</span>
+      <span class="stat-card__label">Faturamento no período</span>
+      <span class="stat-card__value">{{ formatCurrency(totals().revenue) }}</span>
+      <span class="stat-card__detail">ticket médio {{ formatCurrency(totals().averageTicket) }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="material-icons stat-card__icon" aria-hidden="true">hourglass_top</span>
+      <span class="stat-card__label">Taxas pendentes</span>
+      <span class="stat-card__value">{{ formatCurrency(totals().pendingFees) }}</span>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  @if (loadError()) {
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      {{ loadError() }}
+    </div>
+  } @else if (isLoading() && !report()) {
+    <p class="field__hint">Carregando relatório…</p>
+  } @else if (rows().length === 0) {
+    <p class="field__hint">Nenhum estabelecimento encontrado com esses filtros.</p>
+  } @else {
+    <div class="report-table-wrapper">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th><button type="button" (click)="sortBy('tradeName')">Estabelecimento <span class="material-icons">{{ sortIcon('tradeName') }}</span></button></th>
+            <th><button type="button" (click)="sortBy('situation')">Situação <span class="material-icons">{{ sortIcon('situation') }}</span></button></th>
+            <th>Plano</th>
+            <th><button type="button" (click)="sortBy('periodEnd')">Vencimento <span class="material-icons">{{ sortIcon('periodEnd') }}</span></button></th>
+            <th class="report-table__number"><button type="button" (click)="sortBy('tableCount')">Mesas <span class="material-icons">{{ sortIcon('tableCount') }}</span></button></th>
+            <th class="report-table__number"><button type="button" (click)="sortBy('comandaCount')">Comandas <span class="material-icons">{{ sortIcon('comandaCount') }}</span></button></th>
+            <th class="report-table__number"><button type="button" (click)="sortBy('averageCustomersPerDay')">Clientes/dia <span class="material-icons">{{ sortIcon('averageCustomersPerDay') }}</span></button></th>
+            <th class="report-table__number"><button type="button" (click)="sortBy('revenue')">Faturamento <span class="material-icons">{{ sortIcon('revenue') }}</span></button></th>
+            <th class="report-table__number"><button type="button" (click)="sortBy('averageTicket')">Ticket médio <span class="material-icons">{{ sortIcon('averageTicket') }}</span></button></th>
+            <th class="report-table__number"><button type="button" (click)="sortBy('pendingFeeAmount')">Taxas pendentes <span class="material-icons">{{ sortIcon('pendingFeeAmount') }}</span></button></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.companyId) {
+            <tr>
+              <td>
+                <span class="report-table__name">{{ row.tradeName }}</span>
+                <span class="report-table__sub">{{ row.cnpj || 'sem CNPJ' }} · desde {{ formatDate(row.createdAt) }}</span>
+              </td>
+              <td>
+                <span
+                  class="report-status"
+                  [class.report-status--warn]="situationTone(row.situation) === 'warn'"
+                  [class.report-status--off]="situationTone(row.situation) === 'off'"
+                >
+                  {{ situationLabels[row.situation] }}
+                </span>
+              </td>
+              <td>{{ planLabel(row) }}</td>
+              <td [class.report-table__overdue]="isOverdue(row)">
+                {{ formatDate(row.periodEnd) }}
+                @if (row.cancelAtPeriodEnd) {
+                  <span class="report-table__sub">não renova</span>
+                }
+              </td>
+              <td class="report-table__number">{{ row.tableCount }}</td>
+              <td class="report-table__number">{{ row.comandaCount }}</td>
+              <td class="report-table__number">{{ formatDecimal(row.averageCustomersPerDay) }}</td>
+              <td class="report-table__number">{{ formatCurrency(row.revenue) }}</td>
+              <td class="report-table__number">{{ formatCurrency(row.averageTicket) }}</td>
+              <td class="report-table__number">{{ formatCurrency(row.pendingFeeAmount) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <p class="field__hint report-note">
+      Clientes = comandas abertas no período (cada comanda é um atendimento). Plano, vencimento, mesas e taxas
+      pendentes refletem a situação atual.
+    </p>
+  }
+</div>

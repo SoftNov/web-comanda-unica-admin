@@ -18,7 +18,7 @@ const WS_SILENT_RETRIES = 3;
 
 // Perfis que podem movimentar a fila (pegar/preparar/entregar/cancelar) — mesma regra de
 // @RequireProfile em OrderQueueController#updateStatus no backend. CASHIER só visualiza.
-const QUEUE_MANAGER_PROFILES = ['OWNER', 'ADMIN', 'MANAGER', 'WAITER', 'KITCHEN'];
+const QUEUE_MANAGER_PROFILES = ['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER', 'WAITER', 'KITCHEN'];
 
 // Colunas fixas do kanban, sempre nesta ordem — CANCELLED não vira coluna: um item cancelado
 // simplesmente some do board (ver applyUpdatedItem).

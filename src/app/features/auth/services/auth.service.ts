@@ -106,6 +106,12 @@ export class AuthService {
   });
   readonly companies = computed(() => this.session()?.companies ?? []);
   readonly isPlatformAdmin = computed(() => this.session()?.platformAdmin ?? false);
+
+  // Perfil em qualquer empresa do usuário, não só na selecionada — usado por telas fora do modelo de
+  // empresas liberadas a um perfil além do platform admin (ex: COMMERCIAL nas Campanhas).
+  hasProfileInAnyCompany(profileCodes: string[]): boolean {
+    return this.companies().some((company) => profileCodes.includes(company.profileCode));
+  }
   readonly selectedCompany = computed(() => {
     const session = this.session();
     if (!session) {

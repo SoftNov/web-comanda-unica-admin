@@ -287,7 +287,7 @@ export class AssinaturaComponent {
     if (this.mode() === 'past-due') {
       return {
         title: 'Pagamento pendente',
-        amount: this.planMonthlyLabel(),
+        amount: this.contractedMonthlyLabel(),
         note: 'Ao salvar, a cobrança em aberto é tentada de novo no cartão novo.'
       };
     }
@@ -523,6 +523,15 @@ export class AssinaturaComponent {
   planMonthlyLabel(): string {
     const s = this.status();
     const amount = s?.planMonthlyAmount ?? s?.monthlyAmount ?? null;
+    return amount != null && amount > 0 ? this.currencyFormatter.format(amount) : '—';
+  }
+
+  // Valor que o estabelecimento paga hoje na assinatura contratada. Reajuste de faixa/valor
+  // negociado não altera quem já assina — o vigente (planMonthlyAmount) só vale para nova
+  // contratação ou troca de plano.
+  contractedMonthlyLabel(): string {
+    const s = this.status();
+    const amount = s?.monthlyAmount ?? s?.amount ?? s?.planMonthlyAmount ?? null;
     return amount != null && amount > 0 ? this.currencyFormatter.format(amount) : '—';
   }
 

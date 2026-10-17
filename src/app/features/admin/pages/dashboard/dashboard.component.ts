@@ -12,8 +12,18 @@ import { ServicosComponent } from '../servicos/servicos.component';
 import { SubscriptionBannerComponent } from '../../../../shared/components/subscription-banner/subscription-banner.component';
 import { SubscriptionService } from '../../../../shared/services/subscription.service';
 import { QuickServiceComponent } from '../../../../shared/components/quick-service/quick-service.component';
+import {
+  CompanyPendingFee,
+  PlatformFinanceService,
+  PlatformFinanceSummary,
+  PlatformOverview,
+  SITUATION_LABELS,
+  situationTone
+} from '../../../../shared/services/platform-finance.service';
+import { RouterLink } from '@angular/router';
+import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
 
-const MANAGEMENT_PROFILES = ['ADMIN', 'OWNER', 'MANAGER'];
+const MANAGEMENT_PROFILES = ['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'];
 // Perfis operacionais que vivem na fila de pedidos no dia a dia — a home entra direto na mesma
 // visão do menu Pedidos (ver PedidosComponent) em vez do mapa do salão, pra não exigir mais um
 // clique de quem só quer ver o que precisa preparar/servir agora.
@@ -25,11 +35,11 @@ const SERVICE_HOME_PROFILES = ['WAITER'];
 // direto para lançar pedido ou abrir a comanda (ver QuickServiceComponent).
 const QUICK_SERVICE_PROFILES = ['WAITER', 'CASHIER'];
 // Dono e gerente: o mesmo atendimento, mas numa aba própria — a home deles abre na Visão geral.
-const QUICK_SERVICE_TAB_PROFILES = ['OWNER', 'MANAGER'];
+const QUICK_SERVICE_TAB_PROFILES = ['OWNER', 'COMMERCIAL', 'MANAGER'];
 const WS_RETRY_DELAY_MS = 5000;
 const WS_SILENT_RETRIES = 3;
 
-type DashboardTabId = 'overview' | 'atendimento' | 'pedidos' | 'servicos' | 'floorplan';
+type DashboardTabId = 'platform' | 'overview' | 'atendimento' | 'pedidos' | 'servicos' | 'floorplan';
 
 interface DashboardTab {
   id: DashboardTabId;
@@ -58,7 +68,8 @@ const REVENUE_PRESETS: RevenuePreset[] = [
     ServicosComponent,
     RippleDirective,
     SubscriptionBannerComponent,
-    QuickServiceComponent
+    QuickServiceComponent,
+    RouterLink
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
@@ -69,12 +80,14 @@ export class DashboardComponent implements OnDestroy {
   private readonly dashboardService = inject(DashboardService);
   private readonly subscriptionService = inject(SubscriptionService);
   private readonly extratoService = inject(ExtratoService);
+  private readonly platformFinanceService = inject(PlatformFinanceService);
 
   // Crédito da assinatura — vem do SubscriptionService (REST, já carregado pelo subscriptionGuard),
   // NÃO do resumo operacional do WebSocket: o crédito não é métrica de tempo real e o payload do
   // WS passa por serializadores diferentes do REST.
   readonly subscriptionCreditAvailable = computed(() => this.subscriptionService.status()?.credit?.available ?? null);
   private readonly currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+  private readonly shortDateFormatter = brDateTimeFormat({ day: '2-digit', month: '2-digit', year: 'numeric' });
 
   readonly currentUser = this.authService.currentUser;
   readonly selectedCompany = this.authService.selectedCompany;
@@ -144,6 +157,34 @@ export class DashboardComponent implements OnDestroy {
   readonly cashWaiterAmount = signal<number | null>(null);
   readonly platformFeesAmount = signal<number | null>(null);
 
+  // Aba "Comanda Única" — só para o platform admin (User.isPlatformAdmin), independente da empresa
+  // selecionada: taxas recebidas/geradas no período (PlatformFinanceService#getSummary) e o estado
+  // atual de estabelecimentos e taxas pendentes por estabelecimento (#getOverview).
+  readonly isPlatformAdmin = this.authService.isPlatformAdmin;
+  readonly platformSummary = signal<PlatformFinanceSummary | null>(null);
+  readonly platformOverview = signal<PlatformOverview | null>(null);
+  readonly isLoadingPlatformSummary = signal(false);
+  readonly isLoadingPlatformOverview = signal(false);
+  readonly platformSummaryError = signal<string | null>(null);
+  readonly platformOverviewError = signal<string | null>(null);
+  readonly platformStartDate = signal(this.toIsoDate(this.daysAgo(29)));
+  readonly platformEndDate = signal(this.toIsoDate(new Date()));
+  readonly activePlatformPresetDays = signal<number | null>(30);
+  readonly pendingFeeSearch = signal('');
+
+  readonly platformFeePoints = computed<LineChartPoint[]>(() =>
+    (this.platformSummary()?.feeSeries ?? []).map((point) => ({ date: point.date, amount: point.amount }))
+  );
+  readonly platformReceivedTotal = computed(() => {
+    const summary = this.platformSummary();
+    return summary ? summary.receivedFeeAmount + summary.receivedSubscriptionAmount : null;
+  });
+  readonly filteredPendingFees = computed<CompanyPendingFee[]>(() => {
+    const term = this.pendingFeeSearch().trim().toLocaleLowerCase('pt-BR');
+    const rows = this.platformOverview()?.pendingFeesByCompany ?? [];
+    return term ? rows.filter((row) => row.tradeName?.toLocaleLowerCase('pt-BR').includes(term)) : rows;
+  });
+
   readonly floorPlans = signal<FloorPlanResponse[]>([]);
   readonly isLoadingFloorPlans = signal(true);
   readonly selectedFloorPlanId = signal<string | null>(null);
@@ -156,6 +197,9 @@ export class DashboardComponent implements OnDestroy {
   // ver NotificationsService, usado pelo AdminLayoutComponent.
   readonly availableTabs = computed<DashboardTab[]>(() => {
     const tabs: DashboardTab[] = [];
+    if (this.isPlatformAdmin()) {
+      tabs.push({ id: 'platform', label: 'Comanda Única', icon: 'account_balance' });
+    }
     if (this.isManagementProfile()) {
       tabs.push({ id: 'overview', label: 'Visão geral', icon: 'insights' });
     }
@@ -205,6 +249,9 @@ export class DashboardComponent implements OnDestroy {
       this.connectRealtimeSummary();
       this.loadFinancialReport();
     }
+    if (this.isPlatformAdmin() && !this.platformOverview()) {
+      this.loadPlatformDashboard();
+    }
     this.loadFloorPlans();
   }
 
@@ -247,6 +294,68 @@ export class DashboardComponent implements OnDestroy {
   // esperar o próximo carregamento automático (não há mais WebSocket alimentando o gráfico).
   refreshFinancialReport(): void {
     this.loadFinancialReport();
+  }
+
+  applyPlatformPreset(days: number): void {
+    this.activePlatformPresetDays.set(days);
+    this.platformStartDate.set(this.toIsoDate(this.daysAgo(days - 1)));
+    this.platformEndDate.set(this.toIsoDate(new Date()));
+    this.loadPlatformSummary();
+  }
+
+  onPlatformStartDateChange(value: string): void {
+    this.activePlatformPresetDays.set(null);
+    this.platformStartDate.set(value);
+    this.loadPlatformSummary();
+  }
+
+  onPlatformEndDateChange(value: string): void {
+    this.activePlatformPresetDays.set(null);
+    this.platformEndDate.set(value);
+    this.loadPlatformSummary();
+  }
+
+  loadPlatformDashboard(): void {
+    this.loadPlatformSummary();
+    this.loadPlatformOverview();
+  }
+
+  readonly situationLabels = SITUATION_LABELS;
+  readonly situationTone = situationTone;
+
+  formatShortDate(value: string | null): string {
+    const date = parseApiDate(value);
+    return date ? this.shortDateFormatter.format(date) : '—';
+  }
+
+  private loadPlatformSummary(): void {
+    this.isLoadingPlatformSummary.set(true);
+    this.platformSummaryError.set(null);
+    this.platformFinanceService.getSummary(this.platformStartDate(), this.platformEndDate()).subscribe({
+      next: (summary) => {
+        this.platformSummary.set(summary);
+        this.isLoadingPlatformSummary.set(false);
+      },
+      error: () => {
+        this.isLoadingPlatformSummary.set(false);
+        this.platformSummaryError.set('Não foi possível carregar as taxas do período selecionado.');
+      }
+    });
+  }
+
+  private loadPlatformOverview(): void {
+    this.isLoadingPlatformOverview.set(true);
+    this.platformOverviewError.set(null);
+    this.platformFinanceService.getOverview().subscribe({
+      next: (overview) => {
+        this.platformOverview.set(overview);
+        this.isLoadingPlatformOverview.set(false);
+      },
+      error: () => {
+        this.isLoadingPlatformOverview.set(false);
+        this.platformOverviewError.set('Não foi possível carregar os estabelecimentos e as taxas pendentes.');
+      }
+    });
   }
 
   private connectRealtimeSummary(): void {

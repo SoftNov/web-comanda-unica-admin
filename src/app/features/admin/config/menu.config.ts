@@ -9,6 +9,9 @@ export interface MenuItem {
   // AuthService.isPlatformAdmin). Não se combina com "roles": o painel financeiro da Comanda
   // Única fica fora do modelo de empresas.
   platformAdminOnly?: boolean;
+  // Como platformAdminOnly, mas também aparece para quem tem um destes perfis em qualquer empresa
+  // (ex: COMMERCIAL nas Campanhas) — espelha @RequirePlatformAdmin(allowProfiles) no backend.
+  platformAdminOrProfiles?: string[];
   // Só aparece quando o estabelecimento usa o cartão de consumo (ver ConsumptionPassesService#enabled).
   requiresConsumptionPass?: boolean;
   children?: MenuItem[];
@@ -38,20 +41,20 @@ export const ADMIN_MENU_SEGMENTS: MenuSegment[] = [
         label: 'Comandas',
         icon: 'receipt_long',
         route: '/painel/comandas',
-        roles: ['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER']
+        roles: ['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER']
       },
       { label: 'Pedidos', icon: 'point_of_sale', route: '/painel/pedidos' },
       {
         label: 'Reservas',
         icon: 'event_seat',
         route: '/painel/reservas',
-        roles: ['OWNER', 'ADMIN', 'MANAGER', 'WAITER']
+        roles: ['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER', 'WAITER']
       },
       {
         label: 'Controle de Saída',
         icon: 'qr_code_scanner',
         route: '/painel/controle-saida',
-        roles: ['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'],
+        roles: ['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER'],
         requiresConsumptionPass: true
       },
       {
@@ -62,7 +65,7 @@ export const ADMIN_MENU_SEGMENTS: MenuSegment[] = [
             label: 'Serviços',
             icon: 'room_service',
             route: '/painel/servicos',
-            roles: ['OWNER', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER']
+            roles: ['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER', 'CASHIER', 'WAITER']
           }
         ]
       }
@@ -79,30 +82,47 @@ export const ADMIN_MENU_SEGMENTS: MenuSegment[] = [
             label: 'Cadastro de Mesas',
             icon: 'table_restaurant',
             route: '/painel/mesas',
-            roles: ['ADMIN', 'OWNER', 'MANAGER']
+            roles: ['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER']
           },
           {
             label: 'Mapa do Salão',
             icon: 'map',
             route: '/painel/configuracoes/mapa-salao',
-            roles: ['ADMIN', 'OWNER', 'MANAGER']
+            roles: ['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER']
           }
         ]
       },
-      { label: 'Cardápio', icon: 'restaurant_menu', route: '/painel/cardapio', roles: ['ADMIN', 'OWNER', 'MANAGER'] },
-      { label: 'Passes de Consumo', icon: 'qr_code_2', route: '/painel/passes-consumo', roles: ['ADMIN', 'OWNER', 'MANAGER'] },
-      { label: 'Funcionários', icon: 'groups', route: '/painel/funcionarios', roles: ['ADMIN', 'OWNER', 'MANAGER'] }
+      { label: 'Cardápio', icon: 'restaurant_menu', route: '/painel/cardapio', roles: ['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'] },
+      { label: 'Passes de Consumo', icon: 'qr_code_2', route: '/painel/passes-consumo', roles: ['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'] },
+      { label: 'Funcionários', icon: 'groups', route: '/painel/funcionarios', roles: ['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'] }
+    ]
+  },
+  {
+    label: 'Comercial',
+    items: [
+      {
+        label: 'Campanhas',
+        icon: 'campaign',
+        route: '/painel/campanhas',
+        platformAdminOrProfiles: ['COMMERCIAL']
+      }
     ]
   },
   {
     label: 'Financeiro',
     items: [
-      { label: 'Financeiro', icon: 'payments', route: '/painel/financeiro', roles: ['ADMIN', 'OWNER', 'MANAGER'] },
-      { label: 'Assinatura', icon: 'card_membership', route: '/painel/assinatura', roles: ['OWNER', 'ADMIN'] },
+      { label: 'Financeiro', icon: 'payments', route: '/painel/financeiro', roles: ['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'] },
+      { label: 'Assinatura', icon: 'card_membership', route: '/painel/assinatura', roles: ['OWNER', 'COMMERCIAL', 'ADMIN'] },
       {
         label: 'Cobranças da Plataforma',
         icon: 'receipt_long',
         route: '/painel/cobrancas-plataforma',
+        platformAdminOnly: true
+      },
+      {
+        label: 'Relatório de Estabelecimentos',
+        icon: 'summarize',
+        route: '/painel/relatorio-estabelecimentos',
         platformAdminOnly: true
       },
       {

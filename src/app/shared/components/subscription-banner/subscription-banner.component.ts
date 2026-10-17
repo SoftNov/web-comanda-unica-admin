@@ -5,7 +5,8 @@ import { SubscriptionService, SubscriptionStatusResponse } from '../../services/
 import { parseApiDate } from '../../utils/datetime.util';
 
 // Faixa no topo da home avisando que o estabelecimento precisa assinar / regularizar. Some quando
-// a assinatura está ativa e não é cortesia. Só aparece para OWNER/ADMIN — quem pode contratar.
+// a assinatura está ativa e não é cortesia. Só aparece para OWNER/ADMIN — quem pode contratar —
+// e nunca para a conta da Comanda Única (platform admin).
 @Component({
   selector: 'app-subscription-banner',
   standalone: true,
@@ -68,8 +69,13 @@ export class SubscriptionBannerComponent {
   private readonly status = signal<SubscriptionStatusResponse | null>(null);
 
   private readonly canManage = computed(() => {
+    // A conta da própria Comanda Única nunca precisa de assinatura (espelha o subscriptionGuard e
+    // o SubscriptionAccessAspect no backend) — não há o que avisar.
+    if (this.authService.isPlatformAdmin()) {
+      return false;
+    }
     const code = this.authService.selectedCompany()?.profileCode;
-    return code === 'OWNER' || code === 'ADMIN';
+    return code === 'OWNER' || code === 'COMMERCIAL' || code === 'ADMIN';
   });
 
   readonly banner = computed<{ text: string; cta: string; icon: string; tone: 'info' | 'warn' } | null>(() => {

@@ -4949,6 +4949,7 @@ export {
   parseCookieValue,
   CommonModule,
   PLATFORM_BROWSER_ID,
+  isPlatformBrowser,
   isPlatformServer,
   ViewportScroller,
   XhrFactory
@@ -4962,4 +4963,4 @@ export {
    * License: MIT
    *)
 */
-//# sourceMappingURL=chunk-EW3OY2ZL.js.map
+//# sourceMappingURL=chunk-IAPLJUCD.js.map
