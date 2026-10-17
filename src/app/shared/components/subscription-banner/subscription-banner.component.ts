@@ -69,13 +69,13 @@ export class SubscriptionBannerComponent {
   private readonly status = signal<SubscriptionStatusResponse | null>(null);
 
   private readonly canManage = computed(() => {
-    // A conta da própria Comanda Única nunca precisa de assinatura (espelha o subscriptionGuard e
-    // o SubscriptionAccessAspect no backend) — não há o que avisar.
+    // A conta da própria Comanda Única e o perfil COMMERCIAL nunca precisam de assinatura (espelha
+    // o subscriptionGuard e o SubscriptionExemption no backend) — não há o que avisar.
     if (this.authService.isPlatformAdmin()) {
       return false;
     }
     const code = this.authService.selectedCompany()?.profileCode;
-    return code === 'OWNER' || code === 'COMMERCIAL' || code === 'ADMIN';
+    return code === 'OWNER' || code === 'ADMIN';
   });
 
   readonly banner = computed<{ text: string; cta: string; icon: string; tone: 'info' | 'warn' } | null>(() => {

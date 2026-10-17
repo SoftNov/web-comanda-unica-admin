@@ -19,6 +19,14 @@ const PAGE_SIZE = 10;
 const PASSWORD_PATTERN = /^(?=.*[a-zA-Z])(?=.*\d).+$/;
 
 type ModalMode = 'create' | 'edit';
+type ListTab = 'ativos' | 'desativados';
+
+const STATUS_LABELS: Record<string, string> = {
+  ACTIVE: 'Ativo',
+  PENDING: 'Aguardando ativação',
+  INACTIVE: 'Desativado',
+  BLOCKED: 'Bloqueado'
+};
 
 @Component({
   selector: 'app-admin-employees',
@@ -35,6 +43,7 @@ export class EmployeesComponent {
 
   readonly selectedCompany = this.authService.selectedCompany;
 
+  readonly activeTab = signal<ListTab>('ativos');
   readonly employees = signal<EmployeeResponse[]>([]);
   readonly page = signal(0);
   readonly totalPages = signal(0);
@@ -72,6 +81,18 @@ export class EmployeesComponent {
     this.loadEmployees(0);
   }
 
+  setActiveTab(tab: ListTab): void {
+    if (tab === this.activeTab()) {
+      return;
+    }
+    this.activeTab.set(tab);
+    this.loadEmployees(0);
+  }
+
+  statusLabel(status: string): string {
+    return STATUS_LABELS[status] ?? status;
+  }
+
   formatPhoneDisplay(phone: string): string {
     return formatCellphone(phone);
   }
@@ -80,7 +101,7 @@ export class EmployeesComponent {
     this.isLoadingList.set(true);
     this.listError.set(null);
 
-    this.employeesService.list(page, PAGE_SIZE).subscribe({
+    this.employeesService.list(page, PAGE_SIZE, this.activeTab() === 'desativados').subscribe({
       next: (response) => {
         this.employees.set(response.content);
         this.page.set(response.page);
@@ -182,6 +203,7 @@ export class EmployeesComponent {
         next: () => {
           this.isSubmitting.set(false);
           this.isModalOpen.set(false);
+          this.activeTab.set('ativos');
           this.loadEmployees(0);
         },
         error: (error: HttpErrorResponse) => {

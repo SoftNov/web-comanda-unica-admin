@@ -76,9 +76,10 @@ export interface ApiErrorResponse {
 export class EmployeesService {
   private readonly http = inject(HttpClient);
 
-  list(page: number, size: number): Observable<PageResponse<EmployeeResponse>> {
+  // deactivated=true lista os desativados (INACTIVE/BLOCKED); false, os ativos (ACTIVE/PENDING).
+  list(page: number, size: number, deactivated = false): Observable<PageResponse<EmployeeResponse>> {
     return this.http.get<PageResponse<EmployeeResponse>>(`${environment.apiBaseUrl}/api/v1/employees`, {
-      params: { page, size }
+      params: { page, size, deactivated }
     });
   }
 

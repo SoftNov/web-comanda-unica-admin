@@ -11,6 +11,17 @@
   </button>
 </div>
 
+<div class="tabs" role="tablist">
+  <button type="button" role="tab" class="tabs__item" [class.tabs__item--active]="activeTab() === 'ativos'"
+    [attr.aria-selected]="activeTab() === 'ativos'" (click)="setActiveTab('ativos')">
+    Ativos
+  </button>
+  <button type="button" role="tab" class="tabs__item" [class.tabs__item--active]="activeTab() === 'desativados'"
+    [attr.aria-selected]="activeTab() === 'desativados'" (click)="setActiveTab('desativados')">
+    Desativados
+  </button>
+</div>
+
 @if (isLoadingList()) {
   <p class="field__hint">Carregando funcionários…</p>
 } @else if (listError()) {
@@ -35,7 +46,9 @@
         <tbody>
           @if (employees().length === 0) {
             <tr>
-              <td colspan="6" class="data-table__empty">Nenhum funcionário encontrado.</td>
+              <td colspan="6" class="data-table__empty">
+                {{ activeTab() === 'desativados' ? 'Nenhum funcionário desativado.' : 'Nenhum funcionário encontrado.' }}
+              </td>
             </tr>
           }
           @for (employee of employees(); track employee.employeeId) {
@@ -50,14 +63,14 @@
                   [class.badge--success]="employee.status === 'ACTIVE'"
                   [class.badge--muted]="employee.status !== 'ACTIVE'"
                 >
-                  {{ employee.status === 'ACTIVE' ? 'Ativo' : 'Inativo' }}
+                  {{ statusLabel(employee.status) }}
                 </span>
               </td>
               <td class="data-table__actions-col">
                 <button type="button" class="icon-btn" title="Editar" (click)="openEditModal(employee)">
                   <span class="material-icons" aria-hidden="true">edit</span>
                 </button>
-                @if (employee.status === 'ACTIVE') {
+                @if (employee.status === 'ACTIVE' || employee.status === 'PENDING') {
                   <button type="button" class="icon-btn icon-btn--danger" title="Desativar" (click)="requestDeactivate(employee)">
                     <span class="material-icons" aria-hidden="true">block</span>
                   </button>
