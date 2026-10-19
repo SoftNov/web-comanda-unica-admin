@@ -143,7 +143,7 @@
               <p class="plan-picker__title">Escolha seu plano</p>
               <p class="plan-picker__hint">
                 Ao trocar, a 1ª mensalidade do novo plano é cobrada na hora no cartão salvo, a assinatura
-                atual é encerrada e o crédito restante dela é zerado. O downgrade só é possível se as mesas
+                atual é encerrada e o crédito restante dela passa para o novo plano. O downgrade só é possível se as mesas
                 cadastradas couberem no plano menor.
               </p>
             } @else {
@@ -392,8 +392,8 @@
           <p class="credit-card__available">{{ amountLabel(credit.available) }} <span>disponível</span></p>
         </div>
         <span class="credit-card__expiry">
-          <span class="material-icons" aria-hidden="true">event</span>
-          Expira em {{ creditExpiryLabel() }}
+          <span class="material-icons" aria-hidden="true">savings</span>
+          Acumulativo
         </span>
       </div>
 
@@ -403,11 +403,11 @@
       </div>
       <p class="sub-card__price-note">
         O crédito abate as taxas da Comanda Única conforme os pagamentos entram. O saldo não usado
-        expira no fim do período — não acumula.
+        não expira: ele acumula e passa para o mês seguinte a cada renovação.
       </p>
 
       <dl class="credit-stats">
-        <div><dt>Concedido</dt><dd>{{ amountLabel(credit.granted) }}</dd></div>
+        <div><dt>Total acumulado</dt><dd>{{ amountLabel(credit.granted) }}</dd></div>
         <div><dt>Já usado</dt><dd>{{ amountLabel(credit.consumed) }}</dd></div>
         @if (credit.expired > 0) {
           <div><dt>Expirado</dt><dd>{{ amountLabel(credit.expired) }}</dd></div>

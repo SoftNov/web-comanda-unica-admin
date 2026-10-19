@@ -28,14 +28,14 @@ export class MovementGridComponent {
     SUBSCRIPTION_CREDIT: 'Crédito concedido',
     FEE_CREDIT_CONSUMPTION: 'Crédito usado em taxa',
     FEE_CREDIT_CONSUMPTION_REVERSAL: 'Crédito devolvido',
-    CREDIT_EXPIRATION: 'Crédito expirado'
+    CREDIT_EXPIRATION: 'Saldo transferido'
   };
 
   private static readonly ICONS: Record<CreditMovementType, string> = {
     SUBSCRIPTION_CREDIT: 'add_card',
     FEE_CREDIT_CONSUMPTION: 'receipt',
     FEE_CREDIT_CONSUMPTION_REVERSAL: 'undo',
-    CREDIT_EXPIRATION: 'hourglass_bottom'
+    CREDIT_EXPIRATION: 'swap_horiz'
   };
 
   label(type: CreditMovementType): string {
@@ -46,7 +46,7 @@ export class MovementGridComponent {
     return MovementGridComponent.ICONS[type] ?? 'swap_horiz';
   }
 
-  // Entra crédito na concessão / devolução; sai no consumo / expiração.
+  // Entra crédito na concessão / devolução; sai no consumo / transferência para o período novo.
   isIncoming(type: CreditMovementType): boolean {
     return type === 'SUBSCRIPTION_CREDIT' || type === 'FEE_CREDIT_CONSUMPTION_REVERSAL';
   }

@@ -561,10 +561,6 @@ export class AssinaturaComponent {
     return this.currencyFormatter.format(monthlyAmount);
   }
 
-  creditExpiryLabel(): string {
-    return this.dateLabel(this.status()?.credit?.periodEnd);
-  }
-
   amountLabel(value: number | null | undefined): string {
     return value != null ? this.currencyFormatter.format(value) : '—';
   }
