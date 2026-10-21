@@ -157,8 +157,10 @@ export function formatLeadPhone(phone: string): string {
 // Abre a conversa direto no WhatsApp (app no celular, WhatsApp Web no computador) com a
 // mensagem de abertura já preenchida.
 export function leadWhatsappUrl(lead: Pick<CampaignLead, 'name' | 'phone'>): string {
-  const digits = lead.phone.replace(/\D/g, '');
-  const number = digits.startsWith('55') && digits.length >= 12 ? digits : `55${digits}`;
+  // Só DDD + número (10/11 dígitos) recebe o 55; com 12/13 dígitos o código do país já veio junto.
+  // DDD 55 (RS) tem 10/11 dígitos, então não é confundido com o código do país.
+  const digits = lead.phone.replace(/\D/g, '').replace(/^0(?=\d{11,}$)/, '');
+  const number = digits.length <= 11 ? `55${digits}` : digits;
   const firstName = lead.name.trim().split(/\s+/)[0] ?? '';
   const message =
     `Olá, ${firstName}! Tudo bem? Aqui é da Comanda Única. ` +
