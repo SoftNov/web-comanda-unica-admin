@@ -194,14 +194,14 @@ export class MenuComponent {
   readonly priceInput = signal('');
   readonly promotionalPriceInput = signal('');
 
-  // Fator de acréscimo da taxa (preço no cardápio ÷ valor base) — a taxa embutida no preço é um
-  // percentual puro (ver PlatformFeeCalculator.applyMarkup no backend), então basta a razão de
-  // qualquer produto já cadastrado da empresa para projetar o preço de um novo valor.
+  // Fator de acréscimo da taxa (1 + percentual/100), a partir do feePercentage que a API devolve em
+  // qualquer produto da empresa — preço ÷ base não serve, porque o preço é arredondado para cima
+  // (ver PlatformFeeCalculator.applyMarkup no backend).
   readonly markupFactor = computed<number | null>(() => {
     const candidates = [this.editingItem(), ...this.items()];
     for (const candidate of candidates) {
-      if (candidate && candidate.basePrice > 0 && candidate.price > 0) {
-        return candidate.price / candidate.basePrice;
+      if (candidate?.feePercentage != null) {
+        return 1 + candidate.feePercentage / 100;
       }
     }
     return null;
@@ -754,7 +754,9 @@ export class MenuComponent {
     if (factor == null || base == null) {
       return null;
     }
-    const total = Math.round(base * factor * 100) / 100;
+    // Mesmo arredondamento do backend: sempre para cima, no próximo múltiplo de R$ 0,05. O
+    // toFixed(6) tira o ruído de ponto flutuante (10 * 1.05 = 10.500000000000002 viraria 10,55).
+    const total = Math.ceil(Number((base * factor * 20).toFixed(6))) / 20;
     return { base, fee: Math.round((total - base) * 100) / 100, total };
   }
 

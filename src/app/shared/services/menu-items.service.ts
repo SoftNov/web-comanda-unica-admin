@@ -36,6 +36,8 @@ export interface MenuItemResponse {
   basePrice: number;
   promotionalPrice?: number;
   basePromotionalPrice?: number;
+  // Percentual da taxa Comanda Única vigente para a empresa (ex.: 5 = 5%).
+  feePercentage?: number;
   promotionStart?: string;
   promotionEnd?: string;
   active: boolean;
