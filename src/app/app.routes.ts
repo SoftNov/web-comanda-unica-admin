@@ -213,6 +213,13 @@ export const routes: Routes = [
         title: 'Precificação da Assinatura — Comanda Única'
       },
       {
+        path: 'configuracoes/pix-comanda',
+        canActivate: [profileGuard(['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER'])],
+        loadComponent: () =>
+          import('./features/admin/pages/settings/comanda-pix/comanda-pix.component').then((m) => m.ComandaPixComponent),
+        title: 'Pix na Comanda — Comanda Única'
+      },
+      {
         path: 'configuracoes/mapa-salao',
         canActivate: [profileGuard(['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'])],
         loadComponent: () =>

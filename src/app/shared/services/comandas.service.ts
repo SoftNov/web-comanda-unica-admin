@@ -16,7 +16,8 @@ export type ComandaStatus = 'OPEN' | 'CLOSED';
 export type ComandaDisplayStatus = 'OPEN' | 'OPEN_PARTIAL' | 'CLOSED';
 export type ComandaOrderStatus = 'RECEIVED' | 'IN_PREPARATION' | 'READY' | 'DELIVERED' | 'CLOSED' | 'CANCELLED';
 export type ComandaPaymentType = 'FULL' | 'PARTIAL' | 'OWN_BILL';
-export type ComandaPaymentMethod = 'ONLINE' | 'CASH_REGISTER' | 'CASH_WAITER';
+// PIX_COMANDA = Pix pago pelo próprio cliente no cardápio (Asaas do estabelecimento) — a taxa vem por split.
+export type ComandaPaymentMethod = 'ONLINE' | 'CASH_REGISTER' | 'CASH_WAITER' | 'PIX_COMANDA';
 // Métodos aceitos para registro (ver ComandaApi#registerPayment no backend) — ONLINE só existe em
 // pagamentos antigos, de quando o cardápio processava pagamentos.
 export type ManualComandaPaymentMethod = Extract<ComandaPaymentMethod, 'CASH_REGISTER' | 'CASH_WAITER'>;
@@ -49,6 +50,8 @@ export interface ComandaPaymentResponse {
   // Taxa da Comanda Única gerada por este pagamento (cobrada na cobrança semanal) — nulo quando
   // não gerou taxa.
   pendingFeeAmount?: number;
+  // Taxa recebida na hora via split (só PIX_COMANDA).
+  splitFeeAmount?: number | null;
 }
 
 // Taxas da Comanda Única sobre os pagamentos da comanda (espelho de ComandaFeesResponse).

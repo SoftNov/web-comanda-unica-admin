@@ -33,12 +33,14 @@ const METHOD_OPTIONS: { value: ExtratoMetodo | ''; label: string }[] = [
   { value: '', label: 'Todos' },
   { value: 'CASH_REGISTER', label: 'Caixa' },
   { value: 'CASH_WAITER', label: 'Garçom' },
+  { value: 'PIX_COMANDA', label: 'Pix no app' },
   { value: 'ONLINE', label: 'App (antigo)' }
 ];
 
 const METHOD_LABELS: Record<ExtratoMetodo, string> = {
   CASH_REGISTER: 'Caixa',
   CASH_WAITER: 'Garçom',
+  PIX_COMANDA: 'Pix no app',
   ONLINE: 'App (antigo)'
 };
 

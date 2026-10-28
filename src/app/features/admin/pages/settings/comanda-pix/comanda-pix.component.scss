@@ -1,0 +1,188 @@
+:host { display: block; }
+
+.page-header { margin-bottom: 24px; }
+.page-title { font-size: 1.75rem; color: var(--color-text); }
+.page-subtitle { margin-top: 8px; font-size: 1rem; max-width: 70ch; }
+
+.field__hint { font-size: 0.8125rem; color: var(--color-text-muted); }
+.field__label { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; font-size: 0.8125rem; font-weight: 600; color: var(--color-text); }
+.field__label--narrow { max-width: 220px; }
+.field__input {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-bg-elevated);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.9rem;
+}
+.field__input:focus { outline: none; border-color: var(--color-accent); }
+
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+.section { padding: 24px; margin-bottom: 20px; }
+.section__title { font-size: 1.1rem; color: var(--color-text); margin-bottom: 6px; }
+.section__actions { margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+.form-alert { margin-top: 14px; }
+
+.account {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin: 14px 0 0;
+}
+.account dt {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+.account dd { margin: 4px 0 0; color: var(--color-text); font-size: 0.95rem; overflow-wrap: anywhere; }
+
+.steps {
+  margin: 12px 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--color-text);
+}
+
+.security-tips,
+.simulation {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  color: var(--color-text);
+}
+.security-tips .material-icons,
+.simulation .material-icons { font-size: 20px; color: var(--color-accent); }
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  cursor: pointer;
+}
+.toggle input { width: 18px; height: 18px; }
+
+.btn--danger-text { color: var(--color-danger, #ef4444); }
+
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.report-date { max-width: 180px; }
+
+.report-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.report-totals div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+}
+.report-totals span { font-size: 0.75rem; color: var(--color-text-muted); }
+.report-totals strong { font-size: 1.05rem; color: var(--color-text); }
+.report-totals__warn strong,
+.overpaid { color: var(--color-warning, #f59e0b); }
+
+/* Tabela e selos — mesmos de comandas.component.scss (estilos de componente, não globais). */
+.table-wrapper {
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+
+  th,
+  td {
+    padding: 14px 20px;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  thead th {
+    color: var(--color-text-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--color-border);
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+  }
+}
+
+.data-table--compact {
+  th,
+  td {
+    padding: 10px 14px;
+  }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.badge--success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+.badge--danger {
+  background: rgba(248, 113, 113, 0.14);
+  color: #f87171;
+}
+
+.btn--danger {
+  background: #f87171;
+  color: #2a0a0a;
+
+  &:hover {
+    filter: brightness(1.08);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

@@ -1,0 +1,241 @@
+<div class="page-header">
+  <h1 class="page-title">Pix na comanda</h1>
+  <p class="page-subtitle">
+    O cliente paga a comanda pelo celular, via Pix, sem esperar o caixa ou o garçom. O dinheiro cai direto
+    na sua conta Asaas; a taxa da Comanda Única é descontada na hora, no próprio Pix. Caixa e garçom
+    continuam funcionando normalmente.
+  </p>
+</div>
+
+@if (isLoading()) {
+  <div class="card section"><p class="field__hint">Carregando…</p></div>
+} @else if (loadError()) {
+  <div class="card section">
+    <div class="form-alert form-alert--error">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      Não foi possível carregar a configuração do Pix na comanda.
+    </div>
+    <div class="section__actions">
+      <button type="button" class="btn btn--ghost" (click)="load()">Tentar novamente</button>
+    </div>
+  </div>
+}
+
+@if (!isLoading() && !loadError() && settings(); as s) {
+  @if (!s.platformReady) {
+    <div class="form-alert">
+      <span class="material-icons" aria-hidden="true">info</span>
+      O Pix na comanda ainda não está liberado nesta plataforma. Fale com o suporte da Comanda Única.
+    </div>
+  }
+
+  <!-- ==================== CONTA ASAAS ==================== -->
+  <div class="card section">
+    <h2 class="section__title">Conta Asaas do estabelecimento</h2>
+
+    @if (s.configured && !editingKey()) {
+      <dl class="account">
+        <div>
+          <dt>Situação</dt>
+          <dd>
+            @if (s.status === 'ACTIVE') {
+              <span class="badge badge--success">Conectada</span>
+            } @else {
+              <span class="badge badge--danger">Chave recusada pela Asaas</span>
+            }
+          </dd>
+        </div>
+        <div><dt>Chave de API</dt><dd class="mono">{{ s.keyMasked }}</dd></div>
+        <div><dt>Conta</dt><dd>{{ s.asaasAccountName || '—' }}</dd></div>
+        <div><dt>CPF/CNPJ</dt><dd>{{ s.asaasAccountDoc || '—' }}</dd></div>
+      </dl>
+
+      @if (s.status === 'INVALID') {
+        <div class="form-alert form-alert--error">
+          <span class="material-icons" aria-hidden="true">error_outline</span>
+          A Asaas deixou de aceitar esta chave{{ s.lastError ? ' (' + s.lastError + ')' : '' }}. O Pix na comanda foi
+          desativado e os pagamentos voltaram para caixa/garçom. Substitua a chave para voltar a usar.
+        </div>
+      }
+
+      @if (canManage()) {
+        @if (confirmingRemoval()) {
+          <div class="form-alert">
+            <span class="material-icons" aria-hidden="true">warning_amber</span>
+            Remover a chave desativa o Pix na comanda e cancela os Pix ainda não pagos. Confirmar?
+          </div>
+          <div class="section__actions">
+            <button type="button" class="btn btn--ghost" [disabled]="isRemovingKey()" (click)="confirmingRemoval.set(false)">Voltar</button>
+            <button type="button" class="btn btn--danger" [disabled]="isRemovingKey()" (click)="removeKey()">
+              {{ isRemovingKey() ? 'Removendo…' : 'Sim, remover' }}
+            </button>
+          </div>
+        } @else {
+          <div class="section__actions">
+            <button type="button" class="btn btn--ghost" [disabled]="!s.platformReady" (click)="startKeyEdit()">Substituir chave</button>
+            <button type="button" class="btn btn--ghost btn--danger-text" (click)="confirmingRemoval.set(true)">Remover</button>
+          </div>
+        }
+      }
+    } @else if (canManage()) {
+      <ol class="steps">
+        <li>Crie (ou acesse) a conta do estabelecimento na <strong>Asaas</strong>.</li>
+        <li>No painel da Asaas, vá em <strong>Integrações &gt; Chaves de API</strong> e gere uma chave.</li>
+        <li>Cole a chave abaixo. Ela é validada na hora e guardada criptografada — nunca mais aparece nesta tela.</li>
+      </ol>
+
+      <div class="security-tips">
+        <span class="material-icons" aria-hidden="true">shield</span>
+        <div>
+          <strong>Recomendado na Asaas:</strong> ative a lista de IPs permitidos e a autorização de transferências
+          via API. A Comanda Única só cria e consulta cobranças — nunca faz transferências ou saques.
+        </div>
+      </div>
+
+      <label class="field__label">
+        Chave de API da Asaas
+        <input
+          type="password"
+          class="field__input mono"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="$aact_..."
+          [ngModel]="apiKey()"
+          (ngModelChange)="apiKey.set($event)">
+      </label>
+
+      <div class="section__actions">
+        @if (s.configured) {
+          <button type="button" class="btn btn--ghost" [disabled]="isSavingKey()" (click)="cancelKeyEdit()">Cancelar</button>
+        }
+        <button type="button" class="btn btn--primary" appRipple [disabled]="isSavingKey() || !s.platformReady" (click)="saveKey()">
+          {{ isSavingKey() ? 'Validando…' : 'Conectar conta' }}
+        </button>
+      </div>
+    } @else {
+      <p class="field__hint">Nenhuma conta Asaas conectada. Peça ao proprietário ou administrador para configurar.</p>
+    }
+
+    @if (keyMessage(); as msg) {
+      <div class="form-alert" [class.form-alert--error]="msg.type === 'error'" [class.form-alert--success]="msg.type === 'ok'">
+        <span class="material-icons" aria-hidden="true">{{ msg.type === 'ok' ? 'check_circle' : 'error_outline' }}</span>
+        {{ msg.text }}
+      </div>
+    }
+  </div>
+
+  <!-- ==================== ATIVAÇÃO E VALOR MÍNIMO ==================== -->
+  @if (s.configured) {
+    <div class="card section">
+      <h2 class="section__title">Ativação e valor mínimo</h2>
+      <p class="field__hint">
+        A Asaas cobra uma tarifa fixa por Pix recebido — em valores baixos ela pesa mais que a maquininha. O mínimo vale
+        por pagamento (não por comanda): abaixo dele, o cliente vê "peça a conta ao garçom".
+      </p>
+
+      <label class="toggle">
+        <input type="checkbox" [disabled]="!canManage() || s.status !== 'ACTIVE'"
+               [ngModel]="pixEnabled()" (ngModelChange)="pixEnabled.set($event)">
+        <span>Oferecer Pix na comanda aos clientes</span>
+      </label>
+
+      <label class="field__label field__label--narrow">
+        Valor mínimo por Pix
+        <input type="number" class="field__input" step="0.01" [min]="s.asaasMinAmount" [disabled]="!canManage()"
+               [ngModel]="minPixAmount()" (ngModelChange)="minPixAmount.set($event)">
+      </label>
+      <span class="field__hint">Sugerido: {{ currency(s.suggestedMinAmount) }} · mínimo aceito pela Asaas: {{ currency(s.asaasMinAmount) }}</span>
+
+      @if (feeSimulation(); as sim) {
+        <div class="simulation">
+          <span class="material-icons" aria-hidden="true">calculate</span>
+          Com mínimo de <strong>{{ currency(minPixAmount()) }}</strong>, a tarifa da Asaas
+          (≈ {{ currency(sim.fee) }} por Pix) equivale a no máximo <strong>{{ percent(sim.percent) }}</strong> da venda.
+          Confira a tarifa atual no seu contrato com a Asaas.
+        </div>
+      }
+
+      @if (settingsMessage(); as msg) {
+        <div class="form-alert" [class.form-alert--error]="msg.type === 'error'" [class.form-alert--success]="msg.type === 'ok'">
+          <span class="material-icons" aria-hidden="true">{{ msg.type === 'ok' ? 'check_circle' : 'error_outline' }}</span>
+          {{ msg.text }}
+        </div>
+      }
+
+      @if (canManage()) {
+        <div class="section__actions">
+          <button type="button" class="btn btn--primary" appRipple [disabled]="isSavingSettings()" (click)="saveSettings()">
+            {{ isSavingSettings() ? 'Salvando…' : 'Salvar' }}
+          </button>
+        </div>
+      }
+    </div>
+  }
+}
+
+<!-- ==================== RELATÓRIO DIÁRIO ==================== -->
+<div class="card section">
+  <div class="report-header">
+    <div>
+      <h2 class="section__title">Pagamentos por Pix na comanda</h2>
+      <p class="field__hint">
+        Esses pagamentos não passam pelo caixa: use esta lista para conferir as vendas e emitir a NFC-e (a emissão é
+        responsabilidade do estabelecimento).
+      </p>
+    </div>
+    <input type="date" class="field__input report-date" [value]="reportDate()" (change)="changeReportDate($any($event.target).value)">
+  </div>
+
+  @if (isLoadingReport()) {
+    <p class="field__hint">Carregando…</p>
+  }
+  @if (!isLoadingReport() && report(); as r) {
+    <div class="report-totals">
+      <div><span>Pagamentos</span><strong>{{ r.count }}</strong></div>
+      <div><span>Total recebido</span><strong>{{ currency(r.totalAmount) }}</strong></div>
+      <div><span>Taxa Comanda Única (split)</span><strong>{{ currency(r.totalPlatformFee) }}</strong></div>
+      @if (r.totalOverpaid > 0) {
+        <div class="report-totals__warn"><span>Pago a mais (avaliar estorno)</span><strong>{{ currency(r.totalOverpaid) }}</strong></div>
+      }
+    </div>
+
+    @if (r.payments.length === 0) {
+      <p class="field__hint">Nenhum Pix pago neste dia.</p>
+    } @else {
+      <div class="table-wrapper">
+        <table class="data-table data-table--compact">
+          <thead>
+            <tr>
+              <th>Horário</th>
+              <th>Mesa</th>
+              <th>Valor</th>
+              <th>Taxa</th>
+              <th>Situação</th>
+              <th>Cobrança Asaas</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of r.payments; track item.id) {
+              <tr>
+                <td>{{ dateTime(item.paidAt) }}</td>
+                <td>{{ tableLabel(item.tableName, item.tableNumber) }}</td>
+                <td>{{ currency(item.amount) }}</td>
+                <td>{{ currency(item.platformFeeAmount) }}</td>
+                <td>
+                  {{ statusLabel(item.status) }}
+                  @if (item.overpaidAmount) {
+                    <small class="overpaid">· {{ currency(item.overpaidAmount) }} a mais</small>
+                  }
+                </td>
+                <td class="mono">{{ item.asaasPaymentId || '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+  @if (!isLoadingReport() && !report()) {
+    <p class="field__hint">Não foi possível carregar o relatório.</p>
+  }
+</div>

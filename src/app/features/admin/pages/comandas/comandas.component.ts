@@ -196,6 +196,8 @@ export class ComandasComponent {
         return 'Caixa';
       case 'CASH_WAITER':
         return 'Garçom';
+      case 'PIX_COMANDA':
+        return 'Pix no app';
       default:
         return 'App do cliente (antigo)';
     }

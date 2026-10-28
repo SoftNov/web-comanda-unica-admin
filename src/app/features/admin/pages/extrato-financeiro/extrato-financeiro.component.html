@@ -74,6 +74,13 @@
           <span class="stat-card__label">Garçom</span>
           <span class="stat-card__value">{{ formatCurrency(resumo.recebidoGarcom) }}</span>
         </div>
+        @if (resumo.recebidoPixComanda > 0) {
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">qr_code_2</span>
+            <span class="stat-card__label">Pix no app</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.recebidoPixComanda) }}</span>
+          </div>
+        }
         @if (resumo.recebidoOnline > 0) {
           <div class="stat-card">
             <span class="material-icons stat-card__icon" aria-hidden="true">phone_iphone</span>

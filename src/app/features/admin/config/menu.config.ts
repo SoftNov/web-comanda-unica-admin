@@ -112,6 +112,7 @@ export const ADMIN_MENU_SEGMENTS: MenuSegment[] = [
     label: 'Financeiro',
     items: [
       { label: 'Financeiro', icon: 'payments', route: '/painel/financeiro', roles: ['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'] },
+      { label: 'Pix na Comanda', icon: 'qr_code_2', route: '/painel/configuracoes/pix-comanda', roles: ['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'] },
       { label: 'Assinatura', icon: 'card_membership', route: '/painel/assinatura', roles: ['OWNER', 'COMMERCIAL', 'ADMIN'] },
       {
         label: 'Cobranças da Plataforma',

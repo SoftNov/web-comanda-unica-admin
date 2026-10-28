@@ -299,7 +299,7 @@
       </section>
 
       <section class="comanda-section">
-        <h3 class="comanda-section__title">Pagamentos manuais</h3>
+        <h3 class="comanda-section__title">Pagamentos</h3>
         @if (comanda.payments.length === 0) {
           <p class="field__hint">Nenhum pagamento registrado nesta comanda.</p>
         } @else {
@@ -322,7 +322,13 @@
                     <td>{{ paymentMethodLabel(payment.method) }}</td>
                     <td>{{ paymentTypeLabel(payment.type) }}</td>
                     <td>{{ formatCurrency(payment.amount) }}</td>
-                    <td>{{ payment.pendingFeeAmount != null ? formatCurrency(payment.pendingFeeAmount) : '—' }}</td>
+                    <td>
+                      @if (payment.splitFeeAmount != null) {
+                        {{ formatCurrency(payment.splitFeeAmount) }} <small class="field__hint">(paga via split)</small>
+                      } @else {
+                        {{ payment.pendingFeeAmount != null ? formatCurrency(payment.pendingFeeAmount) : '—' }}
+                      }
+                    </td>
                     <td>{{ formatDateTime(payment.paidAt) }}</td>
                   </tr>
                 }

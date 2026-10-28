@@ -4,8 +4,9 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 // Onde o pagamento foi recebido — espelha PaymentMethod do backend. ONLINE só aparece em
-// pagamentos antigos, de quando o cardápio processava pagamentos.
-export type ExtratoMetodo = 'CASH_REGISTER' | 'CASH_WAITER' | 'ONLINE';
+// pagamentos antigos, de quando o cardápio processava pagamentos; PIX_COMANDA é o Pix pago pelo
+// cliente no cardápio (taxa recebida via split, já paga).
+export type ExtratoMetodo = 'CASH_REGISTER' | 'CASH_WAITER' | 'ONLINE' | 'PIX_COMANDA';
 
 // Situação da taxa da Comanda Única sobre o pagamento — espelha PendingPlatformFeeStatus.
 export type ExtratoStatusTaxa = 'PENDING' | 'PROCESSING' | 'SETTLED' | 'FAILED' | 'CANCELED';
@@ -16,6 +17,7 @@ export interface ExtratoResumo {
   recebidoCaixa: number;
   recebidoGarcom: number;
   recebidoOnline: number;
+  recebidoPixComanda: number;
   taxasComandaUnica: number;
   liquido: number;
   // Saldo ATUAL de taxas ainda não pagas (independe do período).
