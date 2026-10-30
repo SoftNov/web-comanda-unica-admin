@@ -14,12 +14,23 @@
 
 // --- Abas da home ----------------------------------------------------------
 
+// Fica presa logo abaixo do topbar (68px, ver AdminLayoutComponent) — trocar de aba não exige voltar
+// ao topo da página.
 .dashboard-tabs {
+  position: sticky;
+  top: 68px;
+  z-index: 20;
   display: flex;
   gap: 4px;
   border-bottom: 1px solid var(--color-border);
   margin-bottom: 24px;
   overflow-x: auto;
+  scrollbar-width: none;
+  background: var(--color-bg);
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .dashboard-tabs__tab {
@@ -49,6 +60,64 @@
 .dashboard-tabs__tab--active {
   color: var(--color-text);
   border-bottom-color: var(--color-accent);
+}
+
+// Ocupa o resto da tela mesmo com pouco conteúdo — a área vazia também aceita o gesto de arrastar.
+.dashboard-panel {
+  min-height: calc(100dvh - 68px - 160px);
+
+  > * {
+    animation: dashboard-panel-in var(--transition-base) both;
+  }
+}
+
+.dashboard-panel--prev > * {
+  animation-name: dashboard-panel-in-prev;
+}
+
+@keyframes dashboard-panel-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+@keyframes dashboard-panel-in-prev {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-panel > * {
+    animation: none;
+  }
+}
+
+// No mobile a saudação encolhe para sobrar tela para a aba.
+@media (max-width: 640px) {
+  .page-header {
+    margin-bottom: 16px;
+  }
+
+  .page-title {
+    font-size: 1.375rem;
+  }
+
+  .page-subtitle {
+    display: none;
+  }
+
+  .dashboard-tabs {
+    margin-inline: -16px;
+    padding-inline: 8px;
+    margin-bottom: 16px;
+  }
+
+  .dashboard-tabs__tab {
+    padding: 12px 14px;
+  }
 }
 
 .live-indicator {

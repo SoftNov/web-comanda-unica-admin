@@ -3,11 +3,11 @@ import {
 } from "./chunk-FWXXTQLH.js";
 import {
   homeGuard
-} from "./chunk-LN7W453O.js";
+} from "./chunk-CSEVLLZN.js";
 import {
   AuthService
-} from "./chunk-R46O43MN.js";
-import "./chunk-YI5DDYTJ.js";
+} from "./chunk-GDZY7PI7.js";
+import "./chunk-MQ3P2GIM.js";
 import "./chunk-HZABO7FL.js";
 import {
   environment
@@ -4645,12 +4645,12 @@ var routes = [
   },
   {
     path: "entrar",
-    loadComponent: () => import("./chunk-7J37O272.js").then((m) => m.LoginComponent),
+    loadComponent: () => import("./chunk-DASQAYVJ.js").then((m) => m.LoginComponent),
     title: "Entrar \u2014 Comanda \xDAnica"
   },
   {
     path: "recuperar-senha",
-    loadComponent: () => import("./chunk-OJVDVWAS.js").then((m) => m.ForgotPasswordComponent),
+    loadComponent: () => import("./chunk-HYWBZWFA.js").then((m) => m.ForgotPasswordComponent),
     title: "Recuperar Senha \u2014 Comanda \xDAnica"
   },
   {
@@ -4672,32 +4672,32 @@ var routes = [
     // AuthService#shouldChooseCompany).
     path: "escolher-empresa",
     canActivate: [authGuard],
-    loadComponent: () => import("./chunk-QUKE5OYR.js").then((m) => m.ChooseCompanyComponent),
+    loadComponent: () => import("./chunk-3UJWW5A5.js").then((m) => m.ChooseCompanyComponent),
     title: "Escolha sua empresa \u2014 Comanda \xDAnica"
   },
   {
     path: "painel",
     canActivate: [authGuard],
     canActivateChild: [subscriptionGuard],
-    loadComponent: () => import("./chunk-4I4X6N44.js").then((m) => m.AdminLayoutComponent),
+    loadComponent: () => import("./chunk-UW5GJ3CR.js").then((m) => m.AdminLayoutComponent),
     children: [
       { path: "", pathMatch: "full", canActivate: [homeGuard], children: [] },
       {
         // Sem profileGuard: um funcionário sem permissão de assinatura também pode cair aqui
         // (quando o backend bloqueia o acesso com 402) — a tela mostra "peça ao proprietário".
         path: "assinatura",
-        loadComponent: () => import("./chunk-Y7BNZWSO.js").then((m) => m.AssinaturaComponent),
+        loadComponent: () => import("./chunk-TFUXCWFL.js").then((m) => m.AssinaturaComponent),
         title: "Assinatura \u2014 Comanda \xDAnica"
       },
       {
         path: "dashboard",
-        loadComponent: () => import("./chunk-FV4TUPMB.js").then((m) => m.DashboardComponent),
+        loadComponent: () => import("./chunk-D2IB55GA.js").then((m) => m.DashboardComponent),
         title: "Dashboard \u2014 Comanda \xDAnica"
       },
       {
         path: "comandas",
         canActivate: [profileGuard(["OWNER", "COMMERCIAL", "ADMIN", "MANAGER", "CASHIER", "WAITER"])],
-        loadComponent: () => import("./chunk-E6P7H2CU.js").then((m) => m.ComandasComponent),
+        loadComponent: () => import("./chunk-A6L2JELU.js").then((m) => m.ComandasComponent),
         title: "Comandas \u2014 Comanda \xDAnica"
       },
       {
@@ -4707,7 +4707,7 @@ var routes = [
         // aqui, comanda já lançada numa rota separada (ver comanda/:tableId abaixo).
         path: "comandas/lancar-pedido",
         canActivate: [profileGuard(["OWNER", "COMMERCIAL", "ADMIN", "MANAGER", "CASHIER", "WAITER"])],
-        loadComponent: () => import("./chunk-N34DRCSA.js").then((m) => m.LancarPedidoComponent),
+        loadComponent: () => import("./chunk-XTDLTK2J.js").then((m) => m.LancarPedidoComponent),
         title: "Lan\xE7ar Pedido \u2014 Comanda \xDAnica"
       },
       {
@@ -4716,91 +4716,91 @@ var routes = [
         // grande de pedidos já lançados ao mesmo tempo.
         path: "comandas/lancar-pedido/comanda/:tableId",
         canActivate: [profileGuard(["OWNER", "COMMERCIAL", "ADMIN", "MANAGER", "CASHIER", "WAITER"])],
-        loadComponent: () => import("./chunk-YN4YXV4B.js").then((m) => m.ComandaMesaComponent),
+        loadComponent: () => import("./chunk-LFEASLTI.js").then((m) => m.ComandaMesaComponent),
         title: "Comanda da Mesa \u2014 Comanda \xDAnica"
       },
       {
         path: "mesas",
         canActivate: [profileGuard(["ADMIN", "OWNER", "COMMERCIAL", "MANAGER"])],
-        loadComponent: () => import("./chunk-VHOKNSUT.js").then((m) => m.TablesComponent),
+        loadComponent: () => import("./chunk-5D3K7CJH.js").then((m) => m.TablesComponent),
         title: "Mesas \u2014 Comanda \xDAnica"
       },
       {
         path: "cardapio",
         canActivate: [profileGuard(["ADMIN", "OWNER", "COMMERCIAL", "MANAGER"])],
-        loadComponent: () => import("./chunk-42R3RQTQ.js").then((m) => m.MenuComponent),
+        loadComponent: () => import("./chunk-Q7WYDNFM.js").then((m) => m.MenuComponent),
         title: "Card\xE1pio \u2014 Comanda \xDAnica"
       },
       {
         path: "pedidos",
-        loadComponent: () => import("./chunk-WIAVCZFU.js").then((m) => m.PedidosComponent),
+        loadComponent: () => import("./chunk-XMP2MOJG.js").then((m) => m.PedidosComponent),
         title: "Pedidos \u2014 Comanda \xDAnica"
       },
       {
         path: "reservas",
         canActivate: [profileGuard(["OWNER", "COMMERCIAL", "ADMIN", "MANAGER", "WAITER"])],
-        loadComponent: () => import("./chunk-CCQB5FNI.js").then((m) => m.ReservasComponent),
+        loadComponent: () => import("./chunk-URXPBOCX.js").then((m) => m.ReservasComponent),
         title: "Reservas \u2014 Comanda \xDAnica"
       },
       {
         // Recepção: leitura do Passe de Consumo na saída (só libera com a comanda quitada).
         path: "controle-saida",
         canActivate: [profileGuard(["OWNER", "COMMERCIAL", "ADMIN", "MANAGER", "CASHIER", "WAITER"])],
-        loadComponent: () => import("./chunk-RYHCULCR.js").then((m) => m.ControleSaidaComponent),
+        loadComponent: () => import("./chunk-IYBC5DX6.js").then((m) => m.ControleSaidaComponent),
         title: "Controle de Sa\xEDda \u2014 Comanda \xDAnica"
       },
       {
         path: "passes-consumo",
         canActivate: [profileGuard(["OWNER", "COMMERCIAL", "ADMIN", "MANAGER"])],
-        loadComponent: () => import("./chunk-XO4LJA45.js").then((m) => m.PassesConsumoComponent),
+        loadComponent: () => import("./chunk-VY54KMFT.js").then((m) => m.PassesConsumoComponent),
         title: "Passes de Consumo \u2014 Comanda \xDAnica"
       },
       {
         path: "servicos",
         canActivate: [profileGuard(["OWNER", "COMMERCIAL", "ADMIN", "MANAGER", "CASHIER", "WAITER"])],
-        loadComponent: () => import("./chunk-FMNMF3AR.js").then((m) => m.ServicosComponent),
+        loadComponent: () => import("./chunk-O53DN7CE.js").then((m) => m.ServicosComponent),
         title: "Servi\xE7os \u2014 Comanda \xDAnica"
       },
       {
         path: "financeiro",
         canActivate: [profileOrPlatformAdminGuard(["ADMIN", "OWNER", "COMMERCIAL", "MANAGER"])],
-        loadComponent: () => import("./chunk-4OYBOOQI.js").then((m) => m.ExtratoFinanceiroComponent),
+        loadComponent: () => import("./chunk-5KEBUCXQ.js").then((m) => m.ExtratoFinanceiroComponent),
         title: "Extrato Financeiro \u2014 Comanda \xDAnica"
       },
       {
         path: "cobrancas-plataforma",
         canActivate: [platformAdminGuard],
-        loadComponent: () => import("./chunk-SZS4KJ6U.js").then((m) => m.CobrancasPlataformaComponent),
+        loadComponent: () => import("./chunk-JQNHS6XN.js").then((m) => m.CobrancasPlataformaComponent),
         title: "Cobran\xE7as da Plataforma \u2014 Comanda \xDAnica"
       },
       {
         path: "financeiro-plataforma",
         canActivate: [platformAdminGuard],
-        loadComponent: () => import("./chunk-G22P7BBG.js").then((m) => m.FinanceiroPlataformaComponent),
+        loadComponent: () => import("./chunk-P37PPOF3.js").then((m) => m.FinanceiroPlataformaComponent),
         title: "Financeiro Comanda \xDAnica \u2014 Comanda \xDAnica"
       },
       {
         path: "relatorio-estabelecimentos",
         canActivate: [platformAdminGuard],
-        loadComponent: () => import("./chunk-L7PJI2S3.js").then((m) => m.RelatorioEstabelecimentosComponent),
+        loadComponent: () => import("./chunk-7TO2YUGT.js").then((m) => m.RelatorioEstabelecimentosComponent),
         title: "Relat\xF3rio de Estabelecimentos \u2014 Comanda \xDAnica"
       },
       {
         path: "campanhas",
         canActivate: [platformAdminOrProfileGuard(["COMMERCIAL"])],
-        loadComponent: () => import("./chunk-FROHOII7.js").then((m) => m.CampanhasComponent),
+        loadComponent: () => import("./chunk-SEGX55OF.js").then((m) => m.CampanhasComponent),
         title: "Campanhas \u2014 Comanda \xDAnica"
       },
       {
         path: "campanhas/:id",
         canActivate: [platformAdminOrProfileGuard(["COMMERCIAL"])],
-        loadComponent: () => import("./chunk-OVWP5BEM.js").then((m) => m.CampanhaDetalheComponent),
+        loadComponent: () => import("./chunk-GZYEWW6W.js").then((m) => m.CampanhaDetalheComponent),
         title: "Lead \u2014 Comanda \xDAnica"
       },
       {
         path: "funcionarios",
         canActivate: [profileGuard(["ADMIN", "OWNER", "COMMERCIAL", "MANAGER"])],
-        loadComponent: () => import("./chunk-56KFG55R.js").then((m) => m.EmployeesComponent),
+        loadComponent: () => import("./chunk-DI4WOXWC.js").then((m) => m.EmployeesComponent),
         title: "Funcion\xE1rios \u2014 Comanda \xDAnica"
       },
       {
@@ -4811,12 +4811,12 @@ var routes = [
       },
       {
         path: "configuracoes/perfil",
-        loadComponent: () => import("./chunk-X7PX6UHO.js").then((m) => m.ProfileComponent),
+        loadComponent: () => import("./chunk-LOPWGFG6.js").then((m) => m.ProfileComponent),
         title: "Meu Perfil \u2014 Comanda \xDAnica"
       },
       {
         path: "configuracoes/redefinir-senha",
-        loadComponent: () => import("./chunk-KMXKKVMI.js").then((m) => m.SecurityComponent),
+        loadComponent: () => import("./chunk-X46TNMGZ.js").then((m) => m.SecurityComponent),
         title: "Redefinir Senha \u2014 Comanda \xDAnica"
       },
       {
@@ -4824,6 +4824,12 @@ var routes = [
         canActivate: [platformAdminGuard],
         loadComponent: () => import("./chunk-IGOPLL3O.js").then((m) => m.SubscriptionPricingComponent),
         title: "Precifica\xE7\xE3o da Assinatura \u2014 Comanda \xDAnica"
+      },
+      {
+        path: "configuracoes/pix-comanda",
+        canActivate: [profileGuard(["OWNER", "COMMERCIAL", "ADMIN", "MANAGER"])],
+        loadComponent: () => import("./chunk-UYZCQZSP.js").then((m) => m.ComandaPixComponent),
+        title: "Pix na Comanda \u2014 Comanda \xDAnica"
       },
       {
         path: "configuracoes/mapa-salao",
@@ -4834,7 +4840,7 @@ var routes = [
       {
         path: "configuracoes/mapa-salao/:id",
         canActivate: [profileGuard(["ADMIN", "OWNER", "COMMERCIAL", "MANAGER"])],
-        loadComponent: () => import("./chunk-KHPPHL67.js").then((m) => m.FloorPlanEditorComponent),
+        loadComponent: () => import("./chunk-AFMLHT4Z.js").then((m) => m.FloorPlanEditorComponent),
         title: "Mapa do Sal\xE3o \u2014 Comanda \xDAnica"
       },
       { path: "**", canActivate: [homeGuard], children: [] }

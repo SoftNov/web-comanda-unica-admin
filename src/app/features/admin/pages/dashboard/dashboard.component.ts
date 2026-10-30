@@ -1,4 +1,4 @@
-import { Component, OnDestroy, computed, effect, inject, signal, untracked } from '@angular/core';
+import { Component, ElementRef, OnDestroy, computed, effect, inject, signal, untracked } from '@angular/core';
 import { EMPTY, Subscription, defer, retry, timer } from 'rxjs';
 import { AuthService } from '../../../auth/services/auth.service';
 import { FloorPlanViewerComponent } from '../../../../shared/components/floor-plan-viewer/floor-plan-viewer.component';
@@ -31,13 +31,19 @@ const QUEUE_HOME_PROFILES = ['WAITER', 'KITCHEN'];
 // Só WAITER: quem chama/atende limpeza, garçom, caixa, reclamação e ajuda de mesa — o backend nem
 // libera esses endpoints pra KITCHEN (ver TableServiceRequestController#@RequireProfile).
 const SERVICE_HOME_PROFILES = ['WAITER'];
-// Garçom e caixa: atendimento rápido no topo da home — QR Code da mesa ou do cartão de consumo
-// direto para lançar pedido ou abrir a comanda (ver QuickServiceComponent).
-const QUICK_SERVICE_PROFILES = ['WAITER', 'CASHIER'];
-// Dono e gerente: o mesmo atendimento, mas numa aba própria — a home deles abre na Visão geral.
-const QUICK_SERVICE_TAB_PROFILES = ['OWNER', 'COMMERCIAL', 'MANAGER'];
+// Atendimento rápido numa aba própria — QR Code da mesa ou do cartão de consumo direto para lançar
+// pedido ou abrir a comanda (ver QuickServiceComponent). Garçom e caixa abrem a home nela (é a
+// primeira aba deles); dono e gerente abrem na Visão geral.
+const QUICK_SERVICE_PROFILES = ['WAITER', 'CASHIER', 'OWNER', 'COMMERCIAL', 'MANAGER'];
 const WS_RETRY_DELAY_MS = 5000;
 const WS_SILENT_RETRIES = 3;
+// Troca de aba arrastando para o lado (mobile): deslocamento horizontal mínimo, bem mais
+// horizontal que vertical (senão é rolagem) e gesto rápido (senão é o usuário lendo/arrastando).
+const SWIPE_MIN_DISTANCE_PX = 60;
+const SWIPE_MAX_DURATION_MS = 700;
+// Gestos que começam nesses elementos são deles: mapa (Konva arrasta o palco), campos, câmera do
+// QR e listas com rolagem horizontal própria.
+const SWIPE_IGNORE_SELECTOR = 'canvas, input, textarea, select, video, [data-no-swipe]';
 
 type DashboardTabId = 'platform' | 'overview' | 'atendimento' | 'pedidos' | 'servicos' | 'floorplan';
 
@@ -81,6 +87,7 @@ export class DashboardComponent implements OnDestroy {
   private readonly subscriptionService = inject(SubscriptionService);
   private readonly extratoService = inject(ExtratoService);
   private readonly platformFinanceService = inject(PlatformFinanceService);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   // Crédito da assinatura — vem do SubscriptionService (REST, já carregado pelo subscriptionGuard),
   // NÃO do resumo operacional do WebSocket: o crédito não é métrica de tempo real e o payload do
@@ -120,11 +127,6 @@ export class DashboardComponent implements OnDestroy {
   readonly isQuickServiceProfile = computed(() => {
     const profileCode = this.selectedCompany()?.profileCode;
     return !!profileCode && QUICK_SERVICE_PROFILES.includes(profileCode);
-  });
-
-  readonly isQuickServiceTabProfile = computed(() => {
-    const profileCode = this.selectedCompany()?.profileCode;
-    return !!profileCode && QUICK_SERVICE_TAB_PROFILES.includes(profileCode);
   });
 
   // Indicadores operacionais, atualizados em tempo real via WebSocket (ver connectRealtime) —
@@ -203,7 +205,7 @@ export class DashboardComponent implements OnDestroy {
     if (this.isManagementProfile()) {
       tabs.push({ id: 'overview', label: 'Visão geral', icon: 'insights' });
     }
-    if (this.isQuickServiceTabProfile()) {
+    if (this.isQuickServiceProfile()) {
       tabs.push({ id: 'atendimento', label: 'Atendimento', icon: 'bolt' });
     }
     if (this.isQueueHomeProfile()) {
@@ -217,6 +219,9 @@ export class DashboardComponent implements OnDestroy {
   });
 
   readonly activeTab = signal<DashboardTabId>('floorplan');
+  // Sentido da última troca — a aba nova entra deslizando do lado certo.
+  readonly slideDirection = signal<'next' | 'prev'>('next');
+  private swipeStart: { x: number; y: number; time: number } | null = null;
 
   // Reage à troca de empresa (seletor do topo ou empresa recém-criada — ver
   // AdminLayoutComponent#selectCompany/onCompanyCreated), não só à primeira montagem: a home
@@ -256,7 +261,58 @@ export class DashboardComponent implements OnDestroy {
   }
 
   selectTab(tabId: DashboardTabId): void {
+    const tabs = this.availableTabs();
+    const from = tabs.findIndex((tab) => tab.id === this.activeTab());
+    const to = tabs.findIndex((tab) => tab.id === tabId);
+    this.slideDirection.set(to >= from ? 'next' : 'prev');
     this.activeTab.set(tabId);
+    // A barra de abas rola na horizontal no mobile — mantém a aba ativa à vista.
+    setTimeout(() => this.host.nativeElement
+      .querySelector(`#dashboard-tab-${tabId}`)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' }));
+  }
+
+  onPanelTouchStart(event: TouchEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (event.touches.length !== 1 || !target || target.closest(SWIPE_IGNORE_SELECTOR) || this.isInsideHorizontalScroll(target)) {
+      this.swipeStart = null;
+      return;
+    }
+    const touch = event.touches[0];
+    this.swipeStart = { x: touch.clientX, y: touch.clientY, time: Date.now() };
+  }
+
+  onPanelTouchEnd(event: TouchEvent): void {
+    const start = this.swipeStart;
+    this.swipeStart = null;
+    if (!start || event.changedTouches.length === 0) {
+      return;
+    }
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) < SWIPE_MIN_DISTANCE_PX || Math.abs(dx) < Math.abs(dy) * 1.5
+      || Date.now() - start.time > SWIPE_MAX_DURATION_MS) {
+      return;
+    }
+    const tabs = this.availableTabs();
+    const next = tabs[tabs.findIndex((tab) => tab.id === this.activeTab()) + (dx < 0 ? 1 : -1)];
+    if (next) {
+      this.selectTab(next.id);
+    }
+  }
+
+  // Tabelas e listas que rolam na horizontal dentro da aba ficam com o gesto — só troca de aba se
+  // nenhum elemento entre o toque e o painel puder rolar para o lado.
+  private isInsideHorizontalScroll(element: HTMLElement): boolean {
+    const panel = this.host.nativeElement.querySelector('.dashboard-panel');
+    for (let node: HTMLElement | null = element; node && node !== panel; node = node.parentElement) {
+      const overflowX = getComputedStyle(node).overflowX;
+      if ((overflowX === 'auto' || overflowX === 'scroll') && node.scrollWidth > node.clientWidth) {
+        return true;
+      }
+    }
+    return false;
   }
 
   ngOnDestroy(): void {
