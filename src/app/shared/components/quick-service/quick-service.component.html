@@ -1,19 +1,28 @@
-<section class="card quick-service" aria-labelledby="quick-service-title">
-  <div class="quick-service__header">
-    <span class="quick-service__icon material-icons" aria-hidden="true">bolt</span>
-    <div class="quick-service__heading">
-      <h2 id="quick-service-title" class="quick-service__title">Atendimento</h2>
-      <p class="quick-service__subtitle">
-        Escolha a mesa{{ passEnabled() ? ' ou o cartão' : '' }} para lançar pedido ou abrir a comanda.
-      </p>
-    </div>
-    @if (!target() && !isScanning()) {
-      <button type="button" class="btn btn--primary quick-service__scan" appRipple [disabled]="isResolving()" (click)="startScan()">
+<!-- A aba da home já diz "Atendimento": aqui fica só o que se usa — Mesa/Cartão e o leitor de QR. -->
+<section class="card quick-service" aria-label="Atendimento">
+  @if (!target() && !isScanning()) {
+    <div class="quick-service__toolbar">
+      @if (passEnabled()) {
+        <div class="quick-service__modes" role="tablist" aria-label="Atender por">
+          <button type="button" role="tab" class="quick-service__mode" [class.quick-service__mode--active]="mode() === 'table'"
+                  [attr.aria-selected]="mode() === 'table'" (click)="setMode('table')">
+            <span class="material-icons" aria-hidden="true">table_restaurant</span>
+            Mesa
+          </button>
+          <button type="button" role="tab" class="quick-service__mode" [class.quick-service__mode--active]="mode() === 'pass'"
+                  [attr.aria-selected]="mode() === 'pass'" (click)="setMode('pass')">
+            <span class="material-icons" aria-hidden="true">credit_card</span>
+            Cartão
+          </button>
+        </div>
+      }
+      <button type="button" class="btn btn--primary quick-service__scan" appRipple [disabled]="isResolving()"
+              title="Escanear QR Code da mesa{{ passEnabled() ? ' ou do cartão' : '' }}" (click)="startScan()">
         <span class="material-icons" aria-hidden="true">qr_code_scanner</span>
         <span>{{ isResolving() ? 'Identificando…' : 'Escanear QR' }}</span>
       </button>
-    }
-  </div>
+    </div>
+  }
 
   @if (error()) {
     <div class="form-alert form-alert--error" role="alert">
@@ -83,21 +92,6 @@
       </div>
     </div>
   } @else {
-    @if (passEnabled()) {
-      <div class="quick-service__modes" role="tablist" aria-label="Atender por">
-        <button type="button" role="tab" class="quick-service__mode" [class.quick-service__mode--active]="mode() === 'table'"
-                [attr.aria-selected]="mode() === 'table'" (click)="setMode('table')">
-          <span class="material-icons" aria-hidden="true">table_restaurant</span>
-          Mesa
-        </button>
-        <button type="button" role="tab" class="quick-service__mode" [class.quick-service__mode--active]="mode() === 'pass'"
-                [attr.aria-selected]="mode() === 'pass'" (click)="setMode('pass')">
-          <span class="material-icons" aria-hidden="true">credit_card</span>
-          Cartão de consumo
-        </button>
-      </div>
-    }
-
     @if (mode() === 'table' || !passEnabled()) {
       <div class="quick-service__table-tools">
         <div class="quick-service__search">
@@ -106,7 +100,7 @@
             type="search"
             inputmode="search"
             class="field__input"
-            placeholder="Buscar mesa (número, nome ou setor)"
+            placeholder="Buscar mesa"
             aria-label="Buscar mesa"
             autocomplete="off"
             [ngModel]="tableSearch()"
@@ -180,7 +174,6 @@
               (ngModelChange)="passInput.set($event)"
               [disabled]="isResolving()">
           </div>
-          <span class="field__hint">Leitor USB: é só escanear — o cursor já fica no campo.</span>
         </div>
         <button type="submit" class="btn btn--primary" appRipple [disabled]="!passInput().trim() || isResolving()">
           {{ isResolving() ? 'Buscando…' : 'Buscar' }}
@@ -192,11 +185,7 @@
           <span class="quick-service__counter-icon material-icons" aria-hidden="true">storefront</span>
           <span class="quick-service__counter-text">
             <strong>{{ counterLabel }}</strong>
-            <span>
-              {{ passInput().trim()
-                ? 'Vincula o cartão digitado ao balcão e já abre o cardápio.'
-                : 'Lê o QR do cartão, vincula ao balcão e já abre o cardápio.' }}
-            </span>
+            <span>Vincula o cartão ao balcão e abre o cardápio.</span>
           </span>
           <span class="material-icons" aria-hidden="true">chevron_right</span>
         </button>

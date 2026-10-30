@@ -185,6 +185,8 @@ export class ComandasComponent {
         return 'Integral';
       case 'OWN_BILL':
         return 'Própria conta';
+      case 'ITEMS':
+        return 'Por itens';
       default:
         return 'Parcial';
     }

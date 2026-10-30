@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, input, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { EMPTY, Subscription, defer, retry, timer } from 'rxjs';
 import {
@@ -18,6 +18,13 @@ import { AuthService } from '../../../auth/services/auth.service';
 
 const WS_RETRY_DELAY_MS = 5000;
 const WS_SILENT_RETRIES = 3;
+// Mesmo cuidado da fila de pedidos (ver PedidosComponent): snapshot atrasado não devolve o card.
+const RECENT_MOVE_GUARD_MS = 8000;
+const STATUS_RANK: Record<ServiceRequestStatus, number> = {
+  OPEN: 0,
+  IN_PROGRESS: 1,
+  RESOLVED: 2
+};
 
 // RESOLVED nunca vira coluna: o backend já não retorna solicitações resolvidas (ver
 // TableServiceRequestServiceImpl#listActive), então só existem duas colunas ativas no board.
@@ -69,6 +76,8 @@ const NEXT_ACTION_LABEL: Partial<Record<ServiceRequestStatus, string>> = {
   styleUrl: './servicos.component.scss'
 })
 export class ServicosComponent implements OnDestroy {
+  // Dentro da home (aba do DashboardComponent): sem o cabeçalho da página, que a aba já faz.
+  readonly embedded = input(false);
   private readonly fb = new FormBuilder();
   private readonly serviceRequestsService = inject(ServiceRequestsService);
   private readonly tablesService = inject(TablesService);
@@ -112,6 +121,8 @@ export class ServicosComponent implements OnDestroy {
   });
 
   private requestsSubscription?: Subscription;
+  // Solicitações movidas/concluídas por esta tela há pouco: id -> estado gravado (null = resolvida).
+  private readonly recentMoves = new Map<string, { request: TableServiceRequestResponse | null; until: number }>();
 
   constructor() {
     this.loadTables();
@@ -136,7 +147,6 @@ export class ServicosComponent implements OnDestroy {
     return TYPE_ICONS[type];
   }
 
-  readonly legendTypes = LEGEND_TYPES;
 
   // Quantas solicitações ativas (abertas + em atendimento) há de cada tipo — números da legenda.
   readonly countByType = computed<Map<ServiceRequestType, number>>(() => {
@@ -148,6 +158,8 @@ export class ServicosComponent implements OnDestroy {
     }
     return counts;
   });
+
+  readonly activeLegendTypes = computed(() => LEGEND_TYPES.filter((type) => this.countByType().get(type)));
 
   nextActionLabel(status: ServiceRequestStatus): string | undefined {
     return NEXT_ACTION_LABEL[status];
@@ -225,7 +237,7 @@ export class ServicosComponent implements OnDestroy {
       )
       .subscribe({
         next: (response) => {
-          this.requests.set(response);
+          this.requests.set(this.withRecentMoves(response));
           this.isLoading.set(false);
           this.listError.set(null);
         },
@@ -253,13 +265,48 @@ export class ServicosComponent implements OnDestroy {
       },
       error: (error: HttpErrorResponse) => {
         this.movingRequestId.set(null);
-        this.actionError.set(this.resolveErrorMessage(error));
+        // 422 = já tinha mudado de status (outra pessoa assumiu/concluiu) — recarrega o estado real.
+        if (error.status === 422) {
+          this.actionError.set('Esta solicitação já tinha sido atualizada — a lista foi recarregada.');
+          this.refresh();
+        } else {
+          this.actionError.set(this.resolveErrorMessage(error));
+        }
         autoDismiss(this.actionError, null);
       }
     });
   }
 
+  private withRecentMoves(snapshot: TableServiceRequestResponse[]): TableServiceRequestResponse[] {
+    const now = Date.now();
+    for (const [id, move] of this.recentMoves) {
+      if (move.until <= now) {
+        this.recentMoves.delete(id);
+      }
+    }
+    if (this.recentMoves.size === 0) {
+      return snapshot;
+    }
+    const merged: TableServiceRequestResponse[] = [];
+    for (const request of snapshot) {
+      const move = this.recentMoves.get(request.id);
+      if (!move) {
+        merged.push(request);
+      } else if (move.request && STATUS_RANK[request.status] < STATUS_RANK[move.request.status]) {
+        merged.push(move.request);
+      } else if (move.request) {
+        this.recentMoves.delete(request.id);
+        merged.push(request);
+      }
+    }
+    return merged;
+  }
+
   private applyUpdatedRequest(original: TableServiceRequestResponse, updated: TableServiceRequestResponse): void {
+    this.recentMoves.set(original.id, {
+      request: updated.status === 'RESOLVED' ? null : updated,
+      until: Date.now() + RECENT_MOVE_GUARD_MS
+    });
     this.requests.update((list) => {
       if (updated.status === 'RESOLVED') {
         return list.filter((current) => current.id !== original.id);

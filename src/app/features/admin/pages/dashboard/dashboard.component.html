@@ -386,16 +386,11 @@
           <span class="material-icons stat-card__icon" aria-hidden="true">table_bar</span>
           <span class="stat-card__label">Mesas ocupadas</span>
           <span class="stat-card__value">{{ isLoadingSummary() ? '—' : summary()?.occupiedTables }}</span>
-        </div>
-        <div class="stat-card">
-          <span class="material-icons stat-card__icon" aria-hidden="true">check_circle</span>
-          <span class="stat-card__label">Mesas livres</span>
-          <span class="stat-card__value">{{ isLoadingSummary() ? '—' : summary()?.freeTables }}</span>
-        </div>
-        <div class="stat-card">
-          <span class="material-icons stat-card__icon" aria-hidden="true">cleaning_services</span>
-          <span class="stat-card__label">Mesas em limpeza</span>
-          <span class="stat-card__value">{{ isLoadingSummary() ? '—' : summary()?.cleaningTables }}</span>
+          @if (summary(); as current) {
+            <span class="stat-card__detail">
+              {{ current.freeTables }} livres{{ current.cleaningTables ? ' · ' + current.cleaningTables + ' em limpeza' : '' }}
+            </span>
+          }
         </div>
         <div class="stat-card">
           <span class="material-icons stat-card__icon" aria-hidden="true">groups</span>
@@ -438,18 +433,18 @@
   }
 
   @if (activeTab() === 'pedidos') {
-    <app-admin-pedidos />
+    <app-admin-pedidos [embedded]="true" />
   }
 
   @if (activeTab() === 'servicos') {
-    <app-admin-servicos />
+    <app-admin-servicos [embedded]="true" />
   }
 
   @if (activeTab() === 'floorplan') {
     <div class="card floor-plan-section">
-      <div class="floor-plan-section__header">
-        <h2 class="floor-plan-section__title">Mapa do estabelecimento</h2>
-        @if (floorPlans().length > 1) {
+      <!-- Sem título (a aba já é "Mapa do salão"); os ambientes só aparecem se houver mais de um. -->
+      @if (floorPlans().length > 1) {
+        <div class="floor-plan-section__header">
           <div class="floor-plan-section__tabs">
             @for (floorPlan of floorPlans(); track floorPlan.id) {
               <button
@@ -462,8 +457,8 @@
               </button>
             }
           </div>
-        }
-      </div>
+        </div>
+      }
 
       @if (isLoadingFloorPlans()) {
         <p class="field__hint">Carregando mapa…</p>

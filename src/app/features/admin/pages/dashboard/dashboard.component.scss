@@ -461,8 +461,11 @@
 // --- Mapa do estabelecimento -----------------------------------------------
 
 .floor-plan-section {
-  margin-top: 20px;
-  padding: 24px;
+  padding: 20px;
+
+  @media (max-width: 640px) {
+    padding: 12px;
+  }
 }
 
 .floor-plan-section__header {
@@ -472,12 +475,6 @@
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 16px;
-}
-
-.floor-plan-section__title {
-  font-size: 1.125rem;
-  color: var(--color-text);
-  margin: 0;
 }
 
 .floor-plan-section__tabs {

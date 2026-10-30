@@ -76,12 +76,30 @@ select.field__input {
   --tone-bg: rgba(248, 113, 113, 0.16);
 }
 
-// --- Legenda ------------------------------------------------------------------------
+// --- Legenda + nova solicitação (linha única) ------------------------------------------
+.services-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.services-toolbar__new {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.services-toolbar__idle {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
 .type-legend {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 0 0 16px;
+  min-width: 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -104,10 +122,6 @@ select.field__input {
   }
 }
 
-.type-legend__item--empty {
-  opacity: 0.55;
-}
-
 .type-legend__count {
   min-width: 22px;
   padding: 1px 7px;
@@ -117,11 +131,6 @@ select.field__input {
   font-size: 0.75rem;
   font-weight: 700;
   text-align: center;
-}
-
-.type-legend__item--empty .type-legend__count {
-  background: transparent;
-  color: var(--color-text-muted);
 }
 
 // --- Board (solicitações em colunas por status — kanban) --------------------------

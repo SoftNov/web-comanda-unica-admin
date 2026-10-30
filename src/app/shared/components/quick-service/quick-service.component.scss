@@ -6,42 +6,21 @@
   margin-bottom: 24px;
 }
 
-.quick-service__header {
+// Mesa/Cartão e o leitor de QR na mesma linha — sem título, a aba da home já diz o que é.
+.quick-service__toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-}
+  gap: 8px;
 
-.quick-service__heading {
-  flex: 1;
-  min-width: 0;
-}
-
-.quick-service__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  border-radius: var(--radius-full);
-  background: var(--color-accent-bg);
-  color: var(--color-accent);
-}
-
-.quick-service__title {
-  margin: 0;
-  font-size: 1.125rem;
-}
-
-.quick-service__subtitle {
-  margin: 4px 0 0;
-  font-size: 0.875rem;
-  color: var(--color-text-muted);
+  .quick-service__modes {
+    flex: 1;
+    max-width: 360px;
+  }
 }
 
 .quick-service__scan {
   flex-shrink: 0;
+  margin-left: auto;
   min-height: 48px;
   justify-content: center;
 }
@@ -401,13 +380,18 @@
     grid-template-columns: 1fr;
   }
 
-  .quick-service__scan span:last-child {
-    display: none;
-  }
-
-  .quick-service__scan {
+  // Ao lado de Mesa/Cartão o leitor vira só o ícone; sozinho na linha, ocupa a largura toda.
+  .quick-service__modes + .quick-service__scan {
     width: 48px;
     padding: 0;
+
+    span:last-child {
+      display: none;
+    }
+  }
+
+  .quick-service__scan:only-child {
+    flex: 1;
   }
 
   .quick-service__grid {

@@ -15,7 +15,7 @@ export interface PageResponse<T> {
 export type ComandaStatus = 'OPEN' | 'CLOSED';
 export type ComandaDisplayStatus = 'OPEN' | 'OPEN_PARTIAL' | 'CLOSED';
 export type ComandaOrderStatus = 'RECEIVED' | 'IN_PREPARATION' | 'READY' | 'DELIVERED' | 'CLOSED' | 'CANCELLED';
-export type ComandaPaymentType = 'FULL' | 'PARTIAL' | 'OWN_BILL';
+export type ComandaPaymentType = 'FULL' | 'PARTIAL' | 'OWN_BILL' | 'ITEMS';
 // PIX_COMANDA = Pix pago pelo próprio cliente no cardápio (Asaas do estabelecimento) — a taxa vem por split.
 export type ComandaPaymentMethod = 'ONLINE' | 'CASH_REGISTER' | 'CASH_WAITER' | 'PIX_COMANDA';
 // Métodos aceitos para registro (ver ComandaApi#registerPayment no backend) — ONLINE só existe em

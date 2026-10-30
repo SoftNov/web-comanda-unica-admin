@@ -32,7 +32,7 @@ export interface ExtratoTransacao {
   mesaNome: string | null;
   cliente: string | null;
   metodo: ExtratoMetodo;
-  tipo: 'FULL' | 'PARTIAL' | 'OWN_BILL' | null;
+  tipo: 'FULL' | 'PARTIAL' | 'OWN_BILL' | 'ITEMS' | null;
   valor: number;
   taxaComandaUnica: number | null;
   statusTaxa: ExtratoStatusTaxa | null;

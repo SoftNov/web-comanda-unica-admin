@@ -1,48 +1,43 @@
-<div class="page-header page-header--row">
-  <div>
+<!-- Na home (aba Pedidos) o cabeçalho sai: a aba já diz o que é. -->
+@if (!embedded()) {
+  <div class="page-header">
     <h1 class="page-title">Pedidos</h1>
-    <p class="page-subtitle">
-      Fila de pedidos de {{ selectedCompany()?.companyName ?? 'sua empresa' }} — acompanhe e movimente cada item do recebimento até a entrega.
-    </p>
+    <p class="page-subtitle">Acompanhe e movimente cada item do recebimento até a entrega.</p>
   </div>
-</div>
+}
 
-<div class="card filters-card">
-  <div class="filters-row">
-    <div class="sector-filter" role="group" aria-labelledby="sector-filter-label">
-      <span id="sector-filter-label" class="field__label">Área</span>
-      <div class="sector-filter__chips">
+<div class="queue-toolbar">
+  @if (sectors().length > 1) {
+    <div class="sector-filter__chips" role="group" aria-label="Filtrar por área">
+      <button
+        type="button"
+        class="sector-chip sector-chip--all"
+        [class.sector-chip--active]="sectorFilter() === ''"
+        [attr.aria-pressed]="sectorFilter() === ''"
+        (click)="setSectorFilter('')"
+      >
+        Todas
+      </button>
+      @for (sector of sectors(); track sector) {
         <button
           type="button"
-          class="sector-chip sector-chip--all"
-          [class.sector-chip--active]="sectorFilter() === ''"
-          [attr.aria-pressed]="sectorFilter() === ''"
-          (click)="setSectorFilter('')"
+          class="sector-chip"
+          [attr.data-sector]="sector"
+          [class.sector-chip--active]="sectorFilter() === sector"
+          [attr.aria-pressed]="sectorFilter() === sector"
+          (click)="setSectorFilter(sector)"
         >
-          <span class="material-icons" aria-hidden="true">apps</span>
-          Todas
+          <span class="material-icons" aria-hidden="true">{{ sectorIcon(sector) }}</span>
+          {{ sectorLabel(sector) }}
         </button>
-        @for (sector of sectors(); track sector) {
-          <button
-            type="button"
-            class="sector-chip"
-            [attr.data-sector]="sector"
-            [class.sector-chip--active]="sectorFilter() === sector"
-            [attr.aria-pressed]="sectorFilter() === sector"
-            (click)="setSectorFilter(sector)"
-          >
-            <span class="material-icons" aria-hidden="true">{{ sectorIcon(sector) }}</span>
-            {{ sectorLabel(sector) }}
-          </button>
-        }
-      </div>
+      }
     </div>
+  }
 
-    <button type="button" class="btn btn--ghost btn--sm" [disabled]="isLoading()" (click)="refresh()">
-      <span class="material-icons" aria-hidden="true">refresh</span>
-      Atualizar
-    </button>
-  </div>
+  <button type="button" class="icon-btn queue-toolbar__refresh" title="Atualizar" aria-label="Atualizar pedidos"
+          [disabled]="isLoading()" (click)="refresh()">
+    <span class="material-icons" aria-hidden="true">refresh</span>
+  </button>
 </div>
 
 @if (actionError()) {
@@ -73,7 +68,7 @@
 
         <div class="board-column__list">
           @if (itemsFor(column).length === 0) {
-            <p class="board-column__empty">Nenhum item aqui.</p>
+            <p class="board-column__empty">Vazio</p>
           }
           @for (item of itemsFor(column); track item.id) {
             <div class="order-card card" [attr.data-sector]="item.kitchenSector">
@@ -82,7 +77,7 @@
                 <span class="order-card__time" [title]="formatDateTime(item.createdAt)">{{ formatTime(item.createdAt) }}</span>
               </div>
 
-              @if (item.kitchenSector) {
+              @if (item.kitchenSector && !sectorFilter()) {
                 <span class="sector-tag">
                   <span class="material-icons" aria-hidden="true">{{ sectorIcon(item.kitchenSector) }}</span>
                   {{ sectorLabel(item.kitchenSector) }}

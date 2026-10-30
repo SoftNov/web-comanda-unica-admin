@@ -187,11 +187,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/pages/employees/employees.component').then((m) => m.EmployeesComponent),
         title: 'Funcionários — Comanda Única'
       },
+      // "Geral" saiu do menu (era só um placeholder) — links antigos caem no perfil.
       {
         path: 'configuracoes',
-        loadComponent: () => import('./features/admin/pages/placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
-        data: { title: 'Configurações' },
-        title: 'Configurações — Comanda Única'
+        pathMatch: 'full',
+        redirectTo: 'configuracoes/perfil'
       },
       {
         path: 'configuracoes/perfil',

@@ -147,7 +147,6 @@ export const ADMIN_MENU_SEGMENTS: MenuSegment[] = [
         label: 'Configurações',
         icon: 'settings',
         children: [
-          { label: 'Geral', icon: 'tune', route: '/painel/configuracoes' },
           { label: 'Meu perfil', icon: 'person', route: '/painel/configuracoes/perfil' },
           { label: 'Redefinir senha', icon: 'lock_reset', route: '/painel/configuracoes/redefinir-senha' }
         ]

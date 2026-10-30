@@ -25,7 +25,7 @@
   @if (!s.platformReady) {
     <div class="form-alert">
       <span class="material-icons" aria-hidden="true">info</span>
-      O Pix na comanda ainda não está liberado nesta plataforma. Fale com o suporte da Comanda Única.
+      <span>O Pix na comanda ainda não está liberado nesta plataforma. Fale com o suporte da Comanda Única.</span>
     </div>
   }
 
@@ -53,8 +53,10 @@
       @if (s.status === 'INVALID') {
         <div class="form-alert form-alert--error">
           <span class="material-icons" aria-hidden="true">error_outline</span>
-          A Asaas deixou de aceitar esta chave{{ s.lastError ? ' (' + s.lastError + ')' : '' }}. O Pix na comanda foi
-          desativado e os pagamentos voltaram para caixa/garçom. Substitua a chave para voltar a usar.
+          <span>
+            A Asaas deixou de aceitar esta chave{{ s.lastError ? ' (' + s.lastError + ')' : '' }}. O Pix na comanda foi
+            desativado e os pagamentos voltaram para caixa/garçom. Substitua a chave para voltar a usar.
+          </span>
         </div>
       }
 
@@ -62,7 +64,7 @@
         @if (confirmingRemoval()) {
           <div class="form-alert">
             <span class="material-icons" aria-hidden="true">warning_amber</span>
-            Remover a chave desativa o Pix na comanda e cancela os Pix ainda não pagos. Confirmar?
+            <span>Remover a chave desativa o Pix na comanda e cancela os Pix ainda não pagos. Confirmar?</span>
           </div>
           <div class="section__actions">
             <button type="button" class="btn btn--ghost" [disabled]="isRemovingKey()" (click)="confirmingRemoval.set(false)">Voltar</button>
@@ -119,7 +121,7 @@
     @if (keyMessage(); as msg) {
       <div class="form-alert" [class.form-alert--error]="msg.type === 'error'" [class.form-alert--success]="msg.type === 'ok'">
         <span class="material-icons" aria-hidden="true">{{ msg.type === 'ok' ? 'check_circle' : 'error_outline' }}</span>
-        {{ msg.text }}
+        <span>{{ msg.text }}</span>
       </div>
     }
   </div>
@@ -149,16 +151,18 @@
       @if (feeSimulation(); as sim) {
         <div class="simulation">
           <span class="material-icons" aria-hidden="true">calculate</span>
-          Com mínimo de <strong>{{ currency(minPixAmount()) }}</strong>, a tarifa da Asaas
-          (≈ {{ currency(sim.fee) }} por Pix) equivale a no máximo <strong>{{ percent(sim.percent) }}</strong> da venda.
-          Confira a tarifa atual no seu contrato com a Asaas.
+          <span>
+            Com mínimo de <strong>{{ currency(minPixAmount()) }}</strong>, a tarifa da Asaas
+            (≈ {{ currency(sim.fee) }} por Pix) equivale a no máximo <strong>{{ percent(sim.percent) }}</strong> da venda.
+            Confira a tarifa atual no seu contrato com a Asaas.
+          </span>
         </div>
       }
 
       @if (settingsMessage(); as msg) {
         <div class="form-alert" [class.form-alert--error]="msg.type === 'error'" [class.form-alert--success]="msg.type === 'ok'">
           <span class="material-icons" aria-hidden="true">{{ msg.type === 'ok' ? 'check_circle' : 'error_outline' }}</span>
-          {{ msg.text }}
+          <span>{{ msg.text }}</span>
         </div>
       }
 

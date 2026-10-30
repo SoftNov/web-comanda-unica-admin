@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnDestroy, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, computed, inject, input, signal } from '@angular/core';
 import { EMPTY, Subscription, defer, retry, timer } from 'rxjs';
 import {
   ApiErrorResponse,
@@ -15,6 +15,17 @@ import { AuthService } from '../../../auth/services/auth.service';
 import { formatTableLabel } from '../../../../shared/utils/table-label.util';
 const WS_RETRY_DELAY_MS = 5000;
 const WS_SILENT_RETRIES = 3;
+// Depois de mover um card, um snapshot do WebSocket montado antes da mudança não pode devolvê-lo à
+// coluna anterior — por esse tempo vale o que esta tela acabou de gravar.
+const RECENT_MOVE_GUARD_MS = 8000;
+// Ordem do fluxo, para saber se o snapshot está "atrás" do que foi gravado aqui.
+const STATUS_RANK: Record<OrderQueueItemStatus, number> = {
+  REQUESTED: 0,
+  PREPARING: 1,
+  ON_THE_WAY: 2,
+  DELIVERED: 3,
+  CANCELLED: 4
+};
 
 // Perfis que podem movimentar a fila (pegar/preparar/entregar/cancelar) — mesma regra de
 // @RequireProfile em OrderQueueController#updateStatus no backend. CASHIER só visualiza.
@@ -86,6 +97,8 @@ const CANCELLABLE_STATUSES: OrderQueueItemStatus[] = ['REQUESTED', 'PREPARING', 
   styleUrl: './pedidos.component.scss'
 })
 export class PedidosComponent implements OnDestroy {
+  // Dentro da home (aba do DashboardComponent): sem o cabeçalho da página, que a aba já faz.
+  readonly embedded = input(false);
   readonly tableLabel = formatTableLabel;
 
   private readonly orderQueueService = inject(OrderQueueService);
@@ -128,6 +141,8 @@ export class PedidosComponent implements OnDestroy {
   readonly cancelError = signal<string | null>(null);
 
   private queueSubscription?: Subscription;
+  // Itens movidos/cancelados por esta tela há pouco: id -> estado gravado (null = cancelado).
+  private readonly recentMoves = new Map<string, { item: OrderQueueItemResponse | null; until: number }>();
 
   constructor() {
     this.loadSectors();
@@ -260,7 +275,7 @@ export class PedidosComponent implements OnDestroy {
       )
       .subscribe({
         next: (response) => {
-          this.items.set(response);
+          this.items.set(this.withRecentMoves(response));
           this.isLoading.set(false);
           this.listError.set(null);
         },
@@ -323,16 +338,57 @@ export class PedidosComponent implements OnDestroy {
       },
       error: (error: HttpErrorResponse) => {
         this.movingItemId.set(null);
-        this.actionError.set(this.resolveErrorMessage(error));
-        autoDismiss(this.actionError, null);
+        this.handleMoveError(error);
       }
     });
+  }
+
+  // 422 = o item já não está no status que a tela mostrava (outra pessoa/aba moveu antes) — em vez
+  // de deixar o card errado com o botão ativo, recarrega a fila com o estado real.
+  private handleMoveError(error: HttpErrorResponse): void {
+    if (error.status === 422) {
+      this.actionError.set('Este item já tinha sido atualizado — a fila foi recarregada.');
+      this.refresh();
+    } else {
+      this.actionError.set(this.resolveErrorMessage(error));
+    }
+    autoDismiss(this.actionError, null);
+  }
+
+  private withRecentMoves(snapshot: OrderQueueItemResponse[]): OrderQueueItemResponse[] {
+    const now = Date.now();
+    for (const [id, move] of this.recentMoves) {
+      if (move.until <= now) {
+        this.recentMoves.delete(id);
+      }
+    }
+    if (this.recentMoves.size === 0) {
+      return snapshot;
+    }
+    const merged: OrderQueueItemResponse[] = [];
+    for (const item of snapshot) {
+      const move = this.recentMoves.get(item.id);
+      if (!move) {
+        merged.push(item);
+      } else if (move.item && STATUS_RANK[item.status] < STATUS_RANK[move.item.status]) {
+        merged.push(move.item);
+      } else if (move.item) {
+        // O servidor já alcançou (ou passou) o que foi gravado aqui — volta a valer o snapshot.
+        this.recentMoves.delete(item.id);
+        merged.push(item);
+      }
+    }
+    return merged;
   }
 
   // Todas as colunas do board (REQUESTED/PREPARING/ON_THE_WAY/DELIVERED) ficam sempre visíveis —
   // só CANCELLED não tem coluna, então um item cancelado some da lista; os demais são só movidos
   // para a coluna do novo status, sem precisar recarregar a fila inteira a cada ação.
   private applyUpdatedItem(original: OrderQueueItemResponse, updated: OrderQueueItemResponse): void {
+    this.recentMoves.set(original.id, {
+      item: updated.status === 'CANCELLED' ? null : updated,
+      until: Date.now() + RECENT_MOVE_GUARD_MS
+    });
     this.items.update((list) => {
       if (updated.status === 'CANCELLED') {
         return list.filter((current) => current.id !== original.id);

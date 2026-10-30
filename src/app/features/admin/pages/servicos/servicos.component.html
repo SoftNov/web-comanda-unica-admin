@@ -1,16 +1,10 @@
-<div class="page-header page-header--row">
-  <div>
+<!-- Na home (aba Serviços) o cabeçalho sai: a aba já diz o que é. -->
+@if (!embedded()) {
+  <div class="page-header">
     <h1 class="page-title">Serviços</h1>
-    <p class="page-subtitle">
-      Solicitações de atendimento das mesas de {{ selectedCompany()?.companyName ?? 'sua empresa' }} — limpeza, chamar garçom/caixa, reclamação e ajuda.
-    </p>
+    <p class="page-subtitle">Limpeza, chamar garçom/caixa, reclamação e ajuda pedidos pelas mesas.</p>
   </div>
-
-  <button type="button" class="btn btn--primary" appRipple (click)="openCreateModal()">
-    <span class="material-icons" aria-hidden="true">add</span>
-    Nova solicitação
-  </button>
-</div>
+}
 
 @if (actionError()) {
   <div class="form-alert form-alert--error" role="alert">
@@ -27,16 +21,25 @@
     {{ listError() }}
   </div>
 } @else {
-  <!-- Legenda: cada tipo de solicitação tem uma cor, repetida no card e no botão. -->
-  <ul class="type-legend" aria-label="Cores por tipo de solicitação">
-    @for (type of legendTypes; track type) {
-      <li class="type-legend__item" [attr.data-type]="type" [class.type-legend__item--empty]="!countByType().get(type)">
-        <span class="material-icons" aria-hidden="true">{{ typeIcon(type) }}</span>
-        {{ typeLabel(type) }}
-        <span class="type-legend__count">{{ countByType().get(type) ?? 0 }}</span>
-      </li>
-    }
-  </ul>
+  <!-- Só os tipos com solicitação ativa — cada um com a cor repetida no card. -->
+  <div class="services-toolbar">
+    <ul class="type-legend" aria-label="Solicitações ativas por tipo">
+      @for (type of activeLegendTypes(); track type) {
+        <li class="type-legend__item" [attr.data-type]="type">
+          <span class="material-icons" aria-hidden="true">{{ typeIcon(type) }}</span>
+          {{ typeLabel(type) }}
+          <span class="type-legend__count">{{ countByType().get(type) }}</span>
+        </li>
+      } @empty {
+        <li class="services-toolbar__idle">Nenhuma solicitação no momento.</li>
+      }
+    </ul>
+
+    <button type="button" class="btn btn--primary btn--sm services-toolbar__new" appRipple (click)="openCreateModal()">
+      <span class="material-icons" aria-hidden="true">add</span>
+      Nova
+    </button>
+  </div>
 
   <div class="board">
     @for (column of columns; track column) {
@@ -48,7 +51,7 @@
 
         <div class="board-column__list">
           @if (requestsFor(column).length === 0) {
-            <p class="board-column__empty">Nenhuma solicitação aqui.</p>
+            <p class="board-column__empty">Vazio</p>
           }
           @for (request of requestsFor(column); track request.id) {
             <div class="request-card card" [attr.data-type]="request.type" [class.request-card--in-progress]="request.status === 'IN_PROGRESS'">
