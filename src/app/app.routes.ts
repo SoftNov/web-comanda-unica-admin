@@ -220,6 +220,13 @@ export const routes: Routes = [
         title: 'Pix na Comanda — Comanda Única'
       },
       {
+        path: 'configuracoes/impressoras',
+        canActivate: [profileGuard(['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER', 'CASHIER'])],
+        loadComponent: () =>
+          import('./features/admin/pages/settings/printing/printing.component').then((m) => m.PrintingComponent),
+        title: 'Impressoras e Setores — Comanda Única'
+      },
+      {
         path: 'configuracoes/mapa-salao',
         canActivate: [profileGuard(['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'])],
         loadComponent: () =>

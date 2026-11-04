@@ -1,0 +1,529 @@
+<div class="page-header">
+  <h1 class="page-title">Impressoras e Setores</h1>
+  <p class="page-subtitle">
+    Cada setor recebe automaticamente, na sua impressora, só os itens das categorias dele. Basta instalar o programa
+    em um computador do estabelecimento e escolher as impressoras que ele encontrar.
+  </p>
+</div>
+
+<div class="tabs" role="tablist">
+  @if (canManage()) {
+    <button type="button" role="tab" class="tab" [class.tab--active]="tab() === 'printers'" (click)="selectTab('printers')">
+      <span class="material-icons" aria-hidden="true">print</span> Impressoras
+    </button>
+    <button type="button" role="tab" class="tab" [class.tab--active]="tab() === 'sectors'" (click)="selectTab('sectors')">
+      <span class="material-icons" aria-hidden="true">account_tree</span> Setores
+    </button>
+    <button type="button" role="tab" class="tab" [class.tab--active]="tab() === 'agents'" (click)="selectTab('agents')">
+      <span class="material-icons" aria-hidden="true">computer</span> Computadores
+    </button>
+  }
+  <button type="button" role="tab" class="tab" [class.tab--active]="tab() === 'history'" (click)="selectTab('history')">
+    <span class="material-icons" aria-hidden="true">history</span> Histórico
+  </button>
+</div>
+
+@if (message(); as m) {
+  <div class="form-alert" [class.form-alert--success]="m.type === 'ok'" [class.form-alert--error]="m.type === 'error'">
+    <span class="material-icons" aria-hidden="true">{{ m.type === 'ok' ? 'check_circle' : 'error_outline' }}</span>
+    <span>{{ m.text }}</span>
+  </div>
+}
+
+@if (isLoading()) {
+  <div class="card section"><p class="field__hint">Carregando…</p></div>
+} @else if (loadError()) {
+  <div class="card section">
+    <div class="form-alert form-alert--error">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      <span>Não foi possível carregar a configuração de impressão.</span>
+    </div>
+    <div class="section__actions">
+      <button type="button" class="btn btn--ghost" (click)="load()">Tentar novamente</button>
+    </div>
+  </div>
+} @else {
+  <!-- ==================== IMPRESSORAS ==================== -->
+  @if (tab() === 'printers') {
+    @if (!hasOnlineAgent()) {
+      <div class="form-alert form-alert--info">
+        <span class="material-icons" aria-hidden="true">info</span>
+        <span>
+          Nenhum computador conectado, então não há como procurar impressoras. Os pedidos ficam guardados e saem quando
+          um computador conectar.
+          <button type="button" class="link-button" (click)="selectTab('agents')">Instalar o programa</button>
+        </span>
+      </div>
+    } @else {
+      <div class="section-bar">
+        <h2 class="section__title">Impressoras encontradas</h2>
+      </div>
+      @if (discovered().length === 0) {
+        <div class="card section">
+          <p class="field__hint">
+            Procurando… Confira se a impressora está ligada e na mesma rede do computador, ou ligada nele por USB.
+            A lista atualiza sozinha em até 2 minutos.
+          </p>
+        </div>
+      }
+      <div class="grid">
+        @for (found of discovered(); track found.key) {
+          <div class="card item">
+            <div class="item__head">
+              <strong>{{ discoveredLabel(found) }}</strong>
+              <span class="material-icons" aria-hidden="true">{{ found.connectionType === 'USB' ? 'usb' : 'lan' }}</span>
+            </div>
+            <p class="item__line item__line--muted">
+              Encontrada por {{ found.agentName }}@if (found.host) { · {{ found.host }} }
+            </p>
+            @if (found.connectionType === 'NETWORK' && !found.respondsToStatus) {
+              <p class="item__line item__line--muted">Pode não ser uma impressora de cupom. Use Testar depois de adicionar.</p>
+            }
+            <div class="item__actions">
+              <button type="button" class="btn btn--primary btn--sm" appRipple (click)="addDiscovered(found)">Adicionar</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+    <div class="section-bar">
+      <h2 class="section__title">Minhas impressoras</h2>
+    </div>
+    @if (printers().length === 0) {
+      <div class="card section"><p class="field__hint">Nenhuma impressora adicionada ainda.</p></div>
+    }
+    <div class="grid">
+      @for (printer of printers(); track printer.id) {
+        <div class="card item" [class.item--inactive]="!printer.active">
+          <div class="item__head">
+            <strong>{{ printer.name }}</strong>
+            @if (printer.active) {
+              <span class="badge badge--{{ printerStatus(printer.status).tone }}">{{ printerStatus(printer.status).label }}</span>
+            } @else {
+              <span class="badge badge--muted">Inativa</span>
+            }
+          </div>
+          <p class="item__line">
+            @if (printer.connectionType === 'NETWORK') {
+              <span class="material-icons" aria-hidden="true">lan</span> Rede · {{ printer.host }}
+            } @else {
+              <span class="material-icons" aria-hidden="true">usb</span> {{ printer.usbTarget }}
+            }
+          </p>
+          <p class="item__line">Papel {{ printer.paperWidthMm }} mm · Computador: {{ printer.agentName || 'qualquer um' }}</p>
+          @if (printer.statusMessage) {
+            <p class="item__line item__line--muted">{{ printer.statusMessage }}</p>
+          }
+          @if (printer.statusCheckedAt) {
+            <p class="item__line item__line--muted">Verificada em {{ dateTime(printer.statusCheckedAt) }}</p>
+          }
+          <div class="item__actions">
+            <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === printer.id || !printer.active" (click)="testPrinter(printer)">Testar</button>
+            <button type="button" class="btn btn--ghost btn--sm" (click)="editPrinter(printer)">Editar</button>
+            <button type="button" class="btn btn--ghost btn--sm" (click)="confirming.set({ kind: 'printer', id: printer.id, name: printer.name })">Excluir</button>
+          </div>
+        </div>
+      }
+    </div>
+    <p class="field__hint manual-hint">
+      A impressora não apareceu?
+      <button type="button" class="link-button" (click)="newPrinter()">Cadastrar manualmente</button>
+    </p>
+  }
+
+  <!-- ==================== SETORES ==================== -->
+  @if (tab() === 'sectors') {
+    @if (unassignedCategories().length > 0) {
+      <div class="form-alert">
+        <span class="material-icons" aria-hidden="true">warning_amber</span>
+        <span>
+          Estas categorias não têm setor e os produtos delas não serão impressos:
+          <strong>{{ unassignedCategoryNames() }}</strong>.
+        </span>
+      </div>
+    }
+    @if (missingReceiptSector()) {
+      <div class="form-alert">
+        <span class="material-icons" aria-hidden="true">warning_amber</span>
+        <span>
+          Nenhum setor imprime os comprovantes de pagamento. Edite o setor do caixa e marque
+          <strong>Imprimir comprovantes de pagamento</strong>.
+        </span>
+      </div>
+    }
+    <div class="section-bar">
+      <h2 class="section__title">Setores</h2>
+      <button type="button" class="btn btn--primary btn--sm" appRipple (click)="newSector()">
+        <span class="material-icons" aria-hidden="true">add</span> Novo setor
+      </button>
+    </div>
+    @if (sectors().length === 0) {
+      <div class="card section"><p class="field__hint">Nenhum setor cadastrado. Sem setor ativo, nenhum pedido é impresso.</p></div>
+    }
+    <div class="grid">
+      @for (sector of sectors(); track sector.id) {
+        <div class="card item" [class.item--inactive]="!sector.active">
+          <div class="item__head">
+            <strong>{{ sector.name }}</strong>
+            @if (!sector.active) {
+              <span class="badge badge--muted">Inativo</span>
+            } @else if (!sector.printerName) {
+              <span class="badge badge--warning">Sem impressora</span>
+            }
+          </div>
+          @if (sector.description) {
+            <p class="item__line item__line--muted">{{ sector.description }}</p>
+          }
+          <p class="item__line"><span class="material-icons" aria-hidden="true">print</span> {{ sector.printerName || 'Nenhuma impressora' }}</p>
+          @if (sector.fullOrderCopy) {
+            <p class="item__line">Recebe cópia do pedido inteiro</p>
+          } @else {
+            <div class="chips">
+              @for (category of sector.categories; track category.id) {
+                <span class="chip">{{ category.name }}</span>
+              } @empty {
+                <span class="item__line item__line--muted">Nenhuma categoria vinculada</span>
+              }
+            </div>
+          }
+          @if (sector.paymentReceipt) {
+            <p class="item__line">Imprime os comprovantes de pagamento</p>
+          }
+          <div class="item__actions">
+            <button type="button" class="btn btn--ghost btn--sm" (click)="editSector(sector)">Editar</button>
+            <button type="button" class="btn btn--ghost btn--sm" (click)="confirming.set({ kind: 'sector', id: sector.id, name: sector.name })">Excluir</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ==================== AGENTES ==================== -->
+  @if (tab() === 'agents') {
+    <div class="card section">
+      <h2 class="section__title">Instalar em um computador</h2>
+      <ol class="steps">
+        <li>
+          No computador que fica ligado durante o expediente, baixe o instalador.
+          <a class="btn btn--ghost btn--sm steps__action" [href]="installerUrl" download>
+            <span class="material-icons" aria-hidden="true">download</span> Baixar instalador
+          </a>
+        </li>
+        <li>
+          Gere a chave de instalação.
+          <span class="inline-form steps__action">
+            <input class="field__input" type="text" maxlength="100" placeholder="Nome (opcional). Ex.: PC do caixa" [ngModel]="newAgentName()" (ngModelChange)="newAgentName.set($event)">
+            <button type="button" class="btn btn--primary" appRipple [disabled]="isSaving()" (click)="createAgent()">Gerar chave</button>
+          </span>
+        </li>
+        <li>Abra o instalador, permita a instalação e digite a chave. É só isso.</li>
+      </ol>
+    </div>
+    <div class="grid">
+      @for (agent of agents(); track agent.id) {
+        <div class="card item">
+          <div class="item__head">
+            <strong>{{ agent.name }}</strong>
+            @if (agent.revoked) {
+              <span class="badge badge--danger">Revogado</span>
+            } @else if (agent.online) {
+              <span class="badge badge--success">Online</span>
+            } @else if (agent.paired) {
+              <span class="badge badge--warning">Offline</span>
+            } @else {
+              <span class="badge badge--muted">Aguardando instalação</span>
+            }
+          </div>
+          @if (agent.hostname) {
+            <p class="item__line">{{ agent.hostname }} · {{ agent.osName }} · v{{ agent.agentVersion }}</p>
+          }
+          <p class="item__line item__line--muted">Último contato: {{ dateTime(agent.lastSeenAt) }}</p>
+          <div class="item__actions">
+            <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === agent.id" (click)="regenerateCode(agent)">
+              {{ agent.paired ? 'Reinstalar (nova chave)' : 'Nova chave' }}
+            </button>
+            @if (agent.paired) {
+              <button type="button" class="btn btn--ghost btn--sm" (click)="confirming.set({ kind: 'agent-revoke', id: agent.id, name: agent.name })">Desconectar</button>
+            }
+            <button type="button" class="btn btn--ghost btn--sm" (click)="confirming.set({ kind: 'agent-delete', id: agent.id, name: agent.name })">Excluir</button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ==================== HISTÓRICO ==================== -->
+  @if (tab() === 'history') {
+    <div class="card section">
+      <div class="filters">
+        <label class="field__label">
+          Nº do pedido
+          <input class="field__input" type="number" min="1" [ngModel]="filterOrderNumber()" (ngModelChange)="filterOrderNumber.set($event)" (keyup.enter)="applyJobFilter()">
+        </label>
+        <label class="field__label">
+          Situação
+          <select class="field__input" [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event); applyJobFilter()">
+            <option value="">Todas</option>
+            @for (status of jobStatuses; track status) {
+              <option [value]="status">{{ jobStatus(status).label }}</option>
+            }
+          </select>
+        </label>
+        <button type="button" class="btn btn--ghost" (click)="applyJobFilter()">Filtrar</button>
+      </div>
+    </div>
+
+    @if (isLoadingJobs() && !jobs()) {
+      <div class="card section"><p class="field__hint">Carregando…</p></div>
+    } @else {
+      @if (jobs(); as page) {
+      @if (page.content.length === 0) {
+        <div class="card section"><p class="field__hint">Nenhum trabalho de impressão encontrado.</p></div>
+      }
+      <div class="jobs">
+        @for (job of page.content; track job.id) {
+          <div class="card job">
+            <div class="job__head">
+              <div>
+                @if (job.orderNumber) {
+                  <button type="button" class="job__order" title="Ver histórico deste pedido" (click)="showOrderHistory(job)">Pedido #{{ job.orderNumber }}</button>
+                } @else {
+                  <strong>{{ eventLabel(job.eventType) }}</strong>
+                }
+                @if (job.tableLabel) {
+                  <span class="job__table">· {{ job.tableLabel }}</span>
+                }
+              </div>
+              <span class="badge badge--{{ jobStatus(job.status).tone }}" [title]="deliveryHint(job.deliveryState)">{{ jobStatus(job.status).label }}</span>
+            </div>
+            <p class="item__line">
+              {{ eventLabel(job.eventType) }}{{ job.reprint ? ' (reimpressão)' : '' }} ·
+              {{ job.sectorName || '—' }} → {{ job.printerName || 'sem impressora' }} · {{ dateTime(job.createdAt) }}
+            </p>
+            @if (job.itemLines.length > 0) {
+              <p class="item__line item__line--muted">{{ job.itemLines.join(', ') }}</p>
+            }
+            @if (job.status === 'UNCONFIRMED') {
+              <p class="item__line item__line--warning">{{ deliveryHint(job.deliveryState) }}</p>
+            }
+            @if (job.errorMessage) {
+              <p class="item__line item__line--danger">{{ job.errorMessage }}</p>
+            }
+            <div class="item__actions">
+              @if (job.status === 'ERROR') {
+                <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === job.id" (click)="jobAction(job, 'retry')">Tentar de novo</button>
+              }
+              @if (canReprint(job)) {
+                <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === job.id" (click)="jobAction(job, 'reprint')">Reimprimir</button>
+              }
+              @if (job.status === 'PENDING' || job.status === 'ERROR') {
+                <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === job.id" (click)="jobAction(job, 'cancel')">Cancelar</button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+      @if (page.totalPages > 1) {
+        <div class="pagination">
+          <button type="button" class="btn btn--ghost btn--sm" [disabled]="page.page === 0" (click)="changeJobPage(-1)">Anterior</button>
+          <span class="field__hint">Página {{ page.page + 1 }} de {{ page.totalPages }}</span>
+          <button type="button" class="btn btn--ghost btn--sm" [disabled]="page.last" (click)="changeJobPage(1)">Próxima</button>
+        </div>
+      }
+      }
+    }
+  }
+}
+
+<!-- ==================== MODAL IMPRESSORA ==================== -->
+@if (printerForm(); as form) {
+  <div class="modal-backdrop" (click)="printerForm.set(null)">
+    <div class="modal-card card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="section__title">{{ form.id ? 'Editar impressora' : 'Adicionar impressora' }}</h2>
+        <button type="button" class="icon-button" aria-label="Fechar" (click)="printerForm.set(null)"><span class="material-icons">close</span></button>
+      </div>
+      <label class="field__label">
+        Nome
+        <input class="field__input" type="text" maxlength="100" placeholder="Ex.: Impressora do bar" [ngModel]="form.name" (ngModelChange)="updatePrinterForm('name', $event)">
+      </label>
+      <label class="field__label">
+        Largura do papel
+        <select class="field__input" [ngModel]="form.paperWidthMm" (ngModelChange)="updatePrinterForm('paperWidthMm', +$event)">
+          <option [ngValue]="80">80 mm (a mais comum)</option>
+          <option [ngValue]="58">58 mm</option>
+        </select>
+      </label>
+      <details class="advanced" [open]="!form.id && !form.fromDiscovery">
+        <summary>Opções avançadas</summary>
+        @if (!form.fromDiscovery) {
+          <label class="field__label">
+            Conexão
+            <select class="field__input" [ngModel]="form.connectionType" (ngModelChange)="updatePrinterForm('connectionType', $event)">
+              <option value="NETWORK">Rede (Ethernet/Wi-Fi)</option>
+              <option value="USB">USB</option>
+            </select>
+          </label>
+          @if (form.connectionType === 'NETWORK') {
+            <div class="field-row">
+              <label class="field__label">
+                Endereço IP
+                <input class="field__input" type="text" placeholder="192.168.0.50" [ngModel]="form.host" (ngModelChange)="updatePrinterForm('host', $event)">
+              </label>
+              <label class="field__label field__label--narrow">
+                Porta
+                <input class="field__input" type="number" min="1" max="65535" [ngModel]="form.port" (ngModelChange)="updatePrinterForm('port', $event)">
+              </label>
+            </div>
+          } @else {
+            <label class="field__label">
+              Nome no sistema ou dispositivo
+              <input class="field__input" type="text" placeholder="ELGIN i9, /dev/usb/lp0 ou COM3" [ngModel]="form.usbTarget" (ngModelChange)="updatePrinterForm('usbTarget', $event)">
+            </label>
+          }
+          <label class="field__label">
+            Computador
+            <select class="field__input" [ngModel]="form.agentId" (ngModelChange)="updatePrinterForm('agentId', $event)">
+              @if (form.connectionType === 'NETWORK') {
+                <option value="">Qualquer computador do estabelecimento</option>
+              } @else {
+                <option value="">Selecione o computador em que está ligada</option>
+              }
+              @for (agent of agents(); track agent.id) {
+                <option [value]="agent.id">{{ agent.name }}</option>
+              }
+            </select>
+          </label>
+        }
+        <label class="field__label">
+          Tabela de caracteres
+          <select class="field__input" [ngModel]="form.codePage" (ngModelChange)="updatePrinterForm('codePage', $event)">
+            <option value="CP850">CP850 (mais comum)</option>
+            <option value="CP860">CP860 (português)</option>
+            <option value="WPC1252">WPC1252</option>
+            <option value="ASCII">Sem acentos</option>
+          </select>
+        </label>
+        <p class="field__hint capabilities-hint">Recursos do equipamento. Desmarque o que o modelo não suporta; se os acentos saírem errados no teste, troque a tabela.</p>
+        <label class="check"><input type="checkbox" [ngModel]="form.supportsCut" (ngModelChange)="updatePrinterForm('supportsCut', $event)"> Tem guilhotina</label>
+        <label class="check"><input type="checkbox" [ngModel]="form.supportsQrCode" (ngModelChange)="updatePrinterForm('supportsQrCode', $event)"> Imprime QR Code</label>
+        <label class="check"><input type="checkbox" [ngModel]="form.supportsStatus" (ngModelChange)="updatePrinterForm('supportsStatus', $event)"> Informa o estado (papel, tampa)</label>
+        <label class="check"><input type="checkbox" [ngModel]="form.active" (ngModelChange)="updatePrinterForm('active', $event)"> Ativa</label>
+      </details>
+      @if (formError(); as error) {
+        <div class="form-alert form-alert--error"><span class="material-icons" aria-hidden="true">error_outline</span><span>{{ error }}</span></div>
+      }
+      <div class="section__actions">
+        <button type="button" class="btn btn--ghost" (click)="printerForm.set(null)">Voltar</button>
+        <button type="button" class="btn btn--primary" appRipple [disabled]="isSaving()" (click)="savePrinter()">Salvar</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ==================== MODAL SETOR ==================== -->
+@if (sectorForm(); as form) {
+  <div class="modal-backdrop" (click)="sectorForm.set(null)">
+    <div class="modal-card card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="section__title">{{ form.id ? 'Editar setor' : 'Novo setor' }}</h2>
+        <button type="button" class="icon-button" aria-label="Fechar" (click)="sectorForm.set(null)"><span class="material-icons">close</span></button>
+      </div>
+      <label class="field__label">
+        Nome
+        <input class="field__input" type="text" maxlength="100" placeholder="Ex.: Bar" [ngModel]="form.name" (ngModelChange)="updateSectorForm('name', $event)">
+      </label>
+      <label class="field__label">
+        Descrição
+        <input class="field__input" type="text" maxlength="255" [ngModel]="form.description" (ngModelChange)="updateSectorForm('description', $event)">
+      </label>
+      <label class="field__label">
+        Impressora
+        <select class="field__input" [ngModel]="form.printerId" (ngModelChange)="updateSectorForm('printerId', $event)">
+          <option value="">Nenhuma</option>
+          @for (printer of printers(); track printer.id) {
+            <option [value]="printer.id">{{ printer.name }}{{ printer.active ? '' : ' (inativa)' }}</option>
+          }
+        </select>
+      </label>
+      <label class="check"><input type="checkbox" [ngModel]="form.fullOrderCopy" (ngModelChange)="updateSectorForm('fullOrderCopy', $event)"> Receber cópia do pedido inteiro (ex.: Caixa)</label>
+      <label class="check"><input type="checkbox" [ngModel]="form.paymentReceipt" (ngModelChange)="updateSectorForm('paymentReceipt', $event)"> Imprimir comprovantes de pagamento</label>
+      <label class="check"><input type="checkbox" [ngModel]="form.active" (ngModelChange)="updateSectorForm('active', $event)"> Ativo</label>
+      @if (!form.fullOrderCopy) {
+        <p class="field__label">Categorias</p>
+        <p class="field__hint">Cada categoria imprime em um único setor; as que já têm setor não aparecem aqui.</p>
+        <div class="category-list">
+          @for (category of selectableCategories(); track category.id) {
+            <label class="check">
+              <input type="checkbox" [ngModel]="form.categoryIds.includes(category.id)" (ngModelChange)="toggleSectorCategory(category.id, $event)">
+              {{ category.name }}
+            </label>
+          } @empty {
+            <p class="field__hint">Nenhuma categoria disponível. Cadastre em Cardápio.</p>
+          }
+        </div>
+      }
+      @if (formError(); as error) {
+        <div class="form-alert form-alert--error"><span class="material-icons" aria-hidden="true">error_outline</span><span>{{ error }}</span></div>
+      }
+      <div class="section__actions">
+        <button type="button" class="btn btn--ghost" (click)="sectorForm.set(null)">Voltar</button>
+        <button type="button" class="btn btn--primary" appRipple [disabled]="isSaving()" (click)="saveSector()">Salvar</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ==================== MODAL CÓDIGO DE PAREAMENTO ==================== -->
+@if (pairingAgent(); as agent) {
+  <div class="modal-backdrop" (click)="pairingAgent.set(null)">
+    <div class="modal-card card" (click)="$event.stopPropagation()">
+      <div class="modal-card__header">
+        <h2 class="section__title">Chave de instalação</h2>
+        <button type="button" class="icon-button" aria-label="Fechar" (click)="pairingAgent.set(null)"><span class="material-icons">close</span></button>
+      </div>
+      <p class="pairing-code mono">{{ agent.pairingCode }}</p>
+      <div class="section__actions section__actions--center">
+        <button type="button" class="btn btn--ghost btn--sm" (click)="copyKey(agent.pairingCode)">
+          <span class="material-icons" aria-hidden="true">{{ keyCopied() ? 'check' : 'content_copy' }}</span>
+          {{ keyCopied() ? 'Copiada' : 'Copiar chave' }}
+        </button>
+        <a class="btn btn--ghost btn--sm" [href]="installerUrl" download>
+          <span class="material-icons" aria-hidden="true">download</span> Baixar instalador
+        </a>
+      </div>
+      <p class="field__hint">Vale até {{ dateTime(agent.pairingExpiresAt) }} e só pode ser usada uma vez. Abra o instalador no computador e digite esta chave quando ele pedir.</p>
+      <div class="section__actions">
+        <button type="button" class="btn btn--primary" (click)="pairingAgent.set(null)">Concluir</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ==================== CONFIRMAÇÃO ==================== -->
+@if (confirming(); as action) {
+  <div class="modal-backdrop" (click)="confirming.set(null)">
+    <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
+      <h2 class="section__title">
+        @switch (action.kind) {
+          @case ('printer') { Excluir impressora "{{ action.name }}"? }
+          @case ('sector') { Excluir setor "{{ action.name }}"? }
+          @case ('agent-revoke') { Desconectar "{{ action.name }}"? }
+          @case ('agent-delete') { Excluir o computador "{{ action.name }}"? }
+        }
+      </h2>
+      <p class="field__hint">
+        @switch (action.kind) {
+          @case ('printer') { Os setores ficam sem impressora e os trabalhos na fila dela vão para o histórico com erro. }
+          @case ('sector') { As categorias ficam livres para outro setor. O histórico é mantido. }
+          @case ('agent-revoke') { Ele para de imprimir na hora. Para voltar, gere uma nova chave. }
+          @case ('agent-delete') { Ele para de imprimir na hora e as impressoras deixam de estar vinculadas a ele. }
+        }
+      </p>
+      <div class="section__actions">
+        <button type="button" class="btn btn--ghost" [disabled]="isSaving()" (click)="confirming.set(null)">Voltar</button>
+        <button type="button" class="btn btn--primary" [disabled]="isSaving()" (click)="confirmAction()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+}

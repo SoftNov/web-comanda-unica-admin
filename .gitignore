@@ -1,1 +1,4 @@
 node_modules
+
+# Instalador do agente de impressão: copiado no servidor antes do docker build
+public/downloads/

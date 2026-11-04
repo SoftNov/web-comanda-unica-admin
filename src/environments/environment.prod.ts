@@ -1,5 +1,7 @@
 export const environment = {
   production: true,
+  // Instalador do agente de impressão: não é versionado, ver public/downloads na documentação.
+  printAgentInstallerUrl: '/downloads/ComandaUnicaImpressao-Setup.exe',
   // TODO: replace with the production API URL once it is provisioned.
   apiBaseUrl: 'https://api.comandaunica.com.br/comanda-unica-api',
   // TODO: replace with the production menu API URL once it is provisioned.

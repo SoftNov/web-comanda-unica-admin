@@ -1,5 +1,7 @@
 export const environment = {
   production: false,
+  // Instalador do agente de impressão: não é versionado, ver public/downloads na documentação.
+  printAgentInstallerUrl: '/downloads/ComandaUnicaImpressao-Setup.exe',
   // Relative path: proxied to http://localhost:8080 by proxy.conf.json (ng serve) to avoid CORS in dev.
   apiBaseUrl: '/comanda-unica-api',
   // API do cardápio digital (api-comanda-unica-menu) — usada pelo painel só para o fluxo de

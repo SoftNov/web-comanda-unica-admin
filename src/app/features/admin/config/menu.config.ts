@@ -148,7 +148,13 @@ export const ADMIN_MENU_SEGMENTS: MenuSegment[] = [
         icon: 'settings',
         children: [
           { label: 'Meu perfil', icon: 'person', route: '/painel/configuracoes/perfil' },
-          { label: 'Redefinir senha', icon: 'lock_reset', route: '/painel/configuracoes/redefinir-senha' }
+          { label: 'Redefinir senha', icon: 'lock_reset', route: '/painel/configuracoes/redefinir-senha' },
+          {
+            label: 'Impressoras e Setores',
+            icon: 'print',
+            route: '/painel/configuracoes/impressoras',
+            roles: ['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER', 'CASHIER']
+          }
         ]
       }
     ]
