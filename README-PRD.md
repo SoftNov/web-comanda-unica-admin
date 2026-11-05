@@ -5,6 +5,9 @@ Guia exclusivo de produção. Para homologação, ver `README.md` (mesmo fluxo, 
 
 ## Build e salvar em arquivo (rodar localmente, no PowerShell)
 
+Antes do build, confira se o instalador de impressão de produção está em
+`installers/prd/ComandaUnicaImpressao-Setup.exe`. Sem ele, o botão **Baixar instalador** responde 404.
+
 ```powershell
 docker build --no-cache --build-arg CONFIGURATION=production -t web-comanda-unica-admin:prd .
 

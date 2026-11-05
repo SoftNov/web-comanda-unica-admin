@@ -19,6 +19,9 @@ docker run -d --name web-comanda-unica-admin-prd --restart always -p 3000:80 web
 
 ## Build e salvar em arquivo (rodar localmente, no PowerShell)
 
+Antes do build, confira se o instalador de impressão de homologação está em
+`installers/hml/ComandaUnicaImpressao-Setup.exe`. Sem ele, o botão **Baixar instalador** responde 404.
+
 ```powershell
 docker build --no-cache --build-arg CONFIGURATION=homologation -t web-comanda-unica-admin:hml .
 

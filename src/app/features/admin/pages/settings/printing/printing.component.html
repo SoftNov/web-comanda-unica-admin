@@ -119,6 +119,7 @@
           }
           <div class="item__actions">
             <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === printer.id || !printer.active" (click)="testPrinter(printer)">Testar</button>
+            <button type="button" class="btn btn--ghost btn--sm" (click)="showPrinterHistory(printer)">Histórico</button>
             <button type="button" class="btn btn--ghost btn--sm" (click)="editPrinter(printer)">Editar</button>
             <button type="button" class="btn btn--ghost btn--sm" (click)="confirming.set({ kind: 'printer', id: printer.id, name: printer.name })">Excluir</button>
           </div>
@@ -254,81 +255,178 @@
 
   <!-- ==================== HISTÓRICO ==================== -->
   @if (tab() === 'history') {
-    <div class="card section">
-      <div class="filters">
-        <label class="field__label">
-          Nº do pedido
-          <input class="field__input" type="number" min="1" [ngModel]="filterOrderNumber()" (ngModelChange)="filterOrderNumber.set($event)" (keyup.enter)="applyJobFilter()">
-        </label>
-        <label class="field__label">
-          Situação
-          <select class="field__input" [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event); applyJobFilter()">
-            <option value="">Todas</option>
-            @for (status of jobStatuses; track status) {
-              <option [value]="status">{{ jobStatus(status).label }}</option>
+    @if (canManage() && !hasOnlineAgent()) {
+      <div class="form-alert form-alert--info">
+        <span class="material-icons" aria-hidden="true">info</span>
+        <span>
+          Nenhum computador conectado. As impressões ficam na fila e saem quando um computador conectar.
+          <button type="button" class="link-button" (click)="selectTab('agents')">Ver computadores</button>
+        </span>
+      </div>
+    }
+
+    <div class="card history-filters" #jobsTop>
+      <div class="status-filters" role="group" aria-label="Filtrar por situação">
+        <button type="button" class="status-filter" [class.status-filter--active]="filterStatus() === ''" [attr.aria-pressed]="filterStatus() === ''" (click)="selectStatusFilter('')">Todas</button>
+        @for (status of jobStatuses; track status) {
+          <button type="button" class="status-filter" [class.status-filter--active]="filterStatus() === status" [attr.aria-pressed]="filterStatus() === status" (click)="selectStatusFilter(status)">
+            {{ jobStatus(status).label }}
+            @if (problemCounts()[status]; as count) {
+              <span class="status-filter__count status-filter__count--{{ jobStatus(status).tone }}">{{ count }}</span>
             }
-          </select>
+          </button>
+        }
+      </div>
+      <div class="filters">
+        <label class="field__label filters__order">
+          Nº do pedido
+          <input class="field__input" type="number" min="1" inputmode="numeric" placeholder="Ex.: 1025" [ngModel]="orderNumberInput()" (ngModelChange)="onOrderNumberInput($event)" (keyup.enter)="applyJobFilter()">
         </label>
-        <button type="button" class="btn btn--ghost" (click)="applyJobFilter()">Filtrar</button>
+        @if (printers().length > 0) {
+          <label class="field__label">
+            Impressora
+            <select class="field__input" [ngModel]="filterPrinterId()" (ngModelChange)="selectPrinterFilter($event)">
+              <option value="">Todas</option>
+              @for (printer of printers(); track printer.id) {
+                <option [value]="printer.id">{{ printer.name }}</option>
+              }
+            </select>
+          </label>
+        }
+        @if (hasJobFilters()) {
+          <button type="button" class="btn btn--ghost filters__clear" (click)="clearJobFilters()">
+            <span class="material-icons" aria-hidden="true">close</span> Limpar filtros
+          </button>
+        }
       </div>
     </div>
 
     @if (isLoadingJobs() && !jobs()) {
-      <div class="card section"><p class="field__hint">Carregando…</p></div>
+      <div class="jobs" aria-busy="true" aria-label="Carregando o histórico">
+        @for (row of [1, 2, 3, 4]; track row) {
+          <div class="card job job--skeleton"><span class="skeleton skeleton--title"></span><span class="skeleton"></span></div>
+        }
+      </div>
+    } @else if (loadJobsFailed() && !jobs()) {
+      <div class="card empty-state">
+        <span class="material-icons" aria-hidden="true">cloud_off</span>
+        <p class="empty-state__title">Não foi possível carregar o histórico</p>
+        <button type="button" class="btn btn--ghost" (click)="loadJobs()">Tentar novamente</button>
+      </div>
     } @else {
       @if (jobs(); as page) {
       @if (page.content.length === 0) {
-        <div class="card section"><p class="field__hint">Nenhum trabalho de impressão encontrado.</p></div>
+        <div class="card empty-state">
+          <span class="material-icons" aria-hidden="true">{{ hasJobFilters() ? 'search_off' : 'print' }}</span>
+          @if (hasJobFilters()) {
+            <p class="empty-state__title">Nenhuma impressão com esses filtros</p>
+            <button type="button" class="btn btn--ghost" (click)="clearJobFilters()">Limpar filtros</button>
+          } @else {
+            <p class="empty-state__title">Nenhuma impressão ainda</p>
+            <p class="field__hint">Pedidos, cancelamentos e comprovantes de pagamento aparecem aqui assim que forem enviados à impressora.</p>
+          }
+        </div>
+      } @else {
+        <div class="history-summary" aria-live="polite">
+          <span>{{ page.totalElements }} {{ page.totalElements === 1 ? 'impressão' : 'impressões' }}</span>
+          <span class="history-summary__live"><span class="live-dot" aria-hidden="true"></span> Atualiza sozinho</span>
+        </div>
       }
-      <div class="jobs">
+
+      <div class="jobs" [class.jobs--loading]="isLoadingJobs()">
         @for (job of page.content; track job.id) {
-          <div class="card job">
-            <div class="job__head">
-              <div>
-                @if (job.orderNumber) {
-                  <button type="button" class="job__order" title="Ver histórico deste pedido" (click)="showOrderHistory(job)">Pedido #{{ job.orderNumber }}</button>
-                } @else {
-                  <strong>{{ eventLabel(job.eventType) }}</strong>
-                }
-                @if (job.tableLabel) {
-                  <span class="job__table">· {{ job.tableLabel }}</span>
+          <article class="card job job--{{ jobStatus(job.status).tone }}">
+            <div class="job__main">
+              <span class="job__icon material-icons" aria-hidden="true">{{ eventIcon(job.eventType) }}</span>
+              <div class="job__body">
+                <div class="job__head">
+                  <div class="job__title">
+                    @if (job.orderNumber) {
+                      <button type="button" class="job__order" title="Ver todas as impressões deste pedido" (click)="showOrderHistory(job)">Pedido #{{ job.orderNumber }}</button>
+                    } @else {
+                      <strong>{{ eventLabel(job.eventType) }}</strong>
+                    }
+                    @if (job.tableLabel) {
+                      <span class="job__table">{{ job.tableLabel }}</span>
+                    }
+                    @if (job.reprint) {
+                      <span class="chip">Reimpressão</span>
+                    }
+                  </div>
+                  <span class="badge badge--{{ jobStatus(job.status).tone }}">{{ jobStatus(job.status).label }}</span>
+                </div>
+                <p class="job__meta">
+                  @if (job.orderNumber && job.eventType !== 'ORDER_CREATED') {
+                    <span>{{ eventLabel(job.eventType) }}</span>
+                  }
+                  <span>{{ jobTime(job.createdAt) }}</span>
+                  <span>{{ job.sectorName || 'Sem setor' }}</span>
+                  <span>{{ job.printerName || 'Sem impressora' }}</span>
+                </p>
+                @if (jobSummary(job); as summary) {
+                  <p class="job__summary" [title]="summary">{{ summary }}</p>
                 }
               </div>
-              <span class="badge badge--{{ jobStatus(job.status).tone }}" [title]="deliveryHint(job.deliveryState)">{{ jobStatus(job.status).label }}</span>
             </div>
-            <p class="item__line">
-              {{ eventLabel(job.eventType) }}{{ job.reprint ? ' (reimpressão)' : '' }} ·
-              {{ job.sectorName || '—' }} → {{ job.printerName || 'sem impressora' }} · {{ dateTime(job.createdAt) }}
-            </p>
-            @if (job.itemLines.length > 0) {
-              <p class="item__line item__line--muted">{{ job.itemLines.join(', ') }}</p>
+
+            @if (jobGuidance(job); as guidance) {
+              <p class="job__guidance job__guidance--{{ jobStatus(job.status).tone }}">{{ guidance }}</p>
             }
-            @if (job.status === 'UNCONFIRMED') {
-              <p class="item__line item__line--warning">{{ deliveryHint(job.deliveryState) }}</p>
+            @if (jobNotice()?.jobId === job.id) {
+              <p class="job__notice" [class.job__notice--error]="jobNotice()?.type === 'error'" role="status">{{ jobNotice()?.text }}</p>
             }
-            @if (job.errorMessage) {
-              <p class="item__line item__line--danger">{{ job.errorMessage }}</p>
+
+            @if (expandedJobId() === job.id) {
+              <div class="job__details">
+                <dl class="job__facts">
+                  <div><dt>Tipo</dt><dd>{{ eventLabel(job.eventType) }}</dd></div>
+                  <div><dt>Criado em</dt><dd>{{ dateTime(job.createdAt) }}</dd></div>
+                  <div><dt>Impresso em</dt><dd>{{ dateTime(job.printedAt) }}</dd></div>
+                  <div><dt>Tentativas</dt><dd>{{ job.attempts }}</dd></div>
+                </dl>
+                @if (job.status !== 'UNCONFIRMED') {
+                  <p class="item__line item__line--muted">{{ deliveryHint(job.deliveryState) }}</p>
+                }
+                @if (job.errorMessage && job.status !== 'ERROR') {
+                  <p class="item__line item__line--muted">{{ job.errorMessage }}</p>
+                }
+                @if (job.itemLines.length > 0) {
+                  <ul class="job__lines">
+                    @for (line of job.itemLines; track $index) {
+                      <li>{{ line }}</li>
+                    }
+                  </ul>
+                }
+              </div>
             }
-            <div class="item__actions">
-              @if (job.status === 'ERROR') {
-                <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === job.id" (click)="jobAction(job, 'retry')">Tentar de novo</button>
-              }
-              @if (canReprint(job)) {
-                <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === job.id" (click)="jobAction(job, 'reprint')">Reimprimir</button>
-              }
-              @if (job.status === 'PENDING' || job.status === 'ERROR') {
-                <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === job.id" (click)="jobAction(job, 'cancel')">Cancelar</button>
-              }
+
+            <div class="job__actions">
+              <button type="button" class="job__toggle" [attr.aria-expanded]="expandedJobId() === job.id" (click)="toggleJobDetails(job)">
+                <span class="material-icons" aria-hidden="true">{{ expandedJobId() === job.id ? 'expand_less' : 'expand_more' }}</span>
+                Detalhes
+              </button>
+              <div class="job__buttons">
+                @if (job.status === 'PENDING') {
+                  <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === job.id" (click)="confirmCancelJob(job)">Cancelar</button>
+                }
+                @if (job.status === 'ERROR') {
+                  <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === job.id" (click)="confirmCancelJob(job)">Descartar</button>
+                  <button type="button" class="btn btn--primary btn--sm" [disabled]="busyId() === job.id" (click)="jobAction(job, 'retry')">Tentar de novo</button>
+                }
+                @if (canReprint(job)) {
+                  <button type="button" class="btn btn--sm" [class.btn--primary]="job.status === 'UNCONFIRMED'" [class.btn--ghost]="job.status !== 'UNCONFIRMED'" [disabled]="busyId() === job.id" (click)="jobAction(job, 'reprint')">Reimprimir</button>
+                }
+              </div>
             </div>
-          </div>
+          </article>
         }
       </div>
       @if (page.totalPages > 1) {
-        <div class="pagination">
-          <button type="button" class="btn btn--ghost btn--sm" [disabled]="page.page === 0" (click)="changeJobPage(-1)">Anterior</button>
+        <nav class="pagination" aria-label="Páginas do histórico">
+          <button type="button" class="btn btn--ghost btn--sm" [disabled]="page.page === 0" (click)="changeJobPage(-1, jobsTop)">Anterior</button>
           <span class="field__hint">Página {{ page.page + 1 }} de {{ page.totalPages }}</span>
-          <button type="button" class="btn btn--ghost btn--sm" [disabled]="page.last" (click)="changeJobPage(1)">Próxima</button>
-        </div>
+          <button type="button" class="btn btn--ghost btn--sm" [disabled]="page.last" (click)="changeJobPage(1, jobsTop)">Próxima</button>
+        </nav>
       }
       }
     }
@@ -510,6 +608,7 @@
           @case ('sector') { Excluir setor "{{ action.name }}"? }
           @case ('agent-revoke') { Desconectar "{{ action.name }}"? }
           @case ('agent-delete') { Excluir o computador "{{ action.name }}"? }
+          @case ('job-cancel') { Cancelar a impressão de "{{ action.name }}"? }
         }
       </h2>
       <p class="field__hint">
@@ -518,6 +617,7 @@
           @case ('sector') { As categorias ficam livres para outro setor. O histórico é mantido. }
           @case ('agent-revoke') { Ele para de imprimir na hora. Para voltar, gere uma nova chave. }
           @case ('agent-delete') { Ele para de imprimir na hora e as impressoras deixam de estar vinculadas a ele. }
+          @case ('job-cancel') { Ela não será impressa e fica no histórico como cancelada. }
         }
       </p>
       <div class="section__actions">

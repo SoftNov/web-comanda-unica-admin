@@ -1,6 +1,6 @@
 export const environment = {
   production: false,
-  // Instalador do agente de impressão: não é versionado, ver public/downloads na documentação.
+  // Instalador do agente de impressão: só existe nos builds de hml e prd, ver angular.json.
   printAgentInstallerUrl: '/downloads/ComandaUnicaImpressao-Setup.exe',
   // Relative path: proxied to http://localhost:8080 by proxy.conf.json (ng serve) to avoid CORS in dev.
   apiBaseUrl: '/comanda-unica-api',

@@ -55,6 +55,17 @@
                 }
               ],
               "outputHashing": "all",
+              "assets": [
+                {
+                  "glob": "**/*",
+                  "input": "public"
+                },
+                {
+                  "glob": "*.exe",
+                  "input": "installers/prd",
+                  "output": "downloads"
+                }
+              ],
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",
@@ -76,6 +87,17 @@
                 }
               ],
               "outputHashing": "all",
+              "assets": [
+                {
+                  "glob": "**/*",
+                  "input": "public"
+                },
+                {
+                  "glob": "*.exe",
+                  "input": "installers/hml",
+                  "output": "downloads"
+                }
+              ],
               "fileReplacements": [
                 {
                   "replace": "src/environments/environment.ts",

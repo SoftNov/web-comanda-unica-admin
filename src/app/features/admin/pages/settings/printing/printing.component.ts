@@ -58,6 +58,8 @@ interface SectorForm {
 const DEFAULT_PORT = 9100;
 const REFRESH_MS = 10_000;
 const COPIED_FEEDBACK_MS = 2_000;
+const FILTER_DEBOUNCE_MS = 400;
+const JOB_NOTICE_MS = 5_000;
 
 const PRINTER_STATUS: Record<PrinterStatus, { label: string; tone: string }> = {
   UNKNOWN: { label: 'Aguardando agente', tone: 'muted' },
@@ -76,6 +78,18 @@ const JOB_STATUS: Record<PrintJobStatus, { label: string; tone: string }> = {
   UNCONFIRMED: { label: 'Sem confirmação', tone: 'warning' },
   ERROR: { label: 'Erro', tone: 'danger' },
   CANCELLED: { label: 'Cancelado', tone: 'muted' }
+};
+
+// O que precisa de atenção vem primeiro: é o que quem está ao lado da impressora procura.
+const JOB_STATUS_FILTERS: PrintJobStatus[] = ['ERROR', 'UNCONFIRMED', 'PENDING', 'PROCESSING', 'PRINTED', 'CANCELLED'];
+
+const EVENT_ICON: Record<PrintEventType, string> = {
+  ORDER_CREATED: 'receipt_long',
+  ORDER_CANCELLED: 'cancel',
+  ITEM_CANCELLED: 'remove_circle_outline',
+  ORDER_NOTES_CHANGED: 'edit_note',
+  PAYMENT_RECEIVED: 'payments',
+  TEST: 'print'
 };
 
 const EVENT_LABEL: Record<PrintEventType, string> = {
@@ -110,6 +124,11 @@ export class PrintingComponent implements OnInit, OnDestroy {
   private readonly categoriesService = inject(MenuCategoriesService);
   private readonly authService = inject(AuthService);
   private readonly dateTimeFormatter = brDateTimeFormat({ day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+  private readonly timeFormatter = brDateTimeFormat({ hour: '2-digit', minute: '2-digit' });
+  private readonly dayFormatter = brDateTimeFormat({ day: '2-digit', month: '2-digit', year: 'numeric' });
+  private filterTimer: ReturnType<typeof setTimeout> | null = null;
+  private noticeTimer: ReturnType<typeof setTimeout> | null = null;
+  private jobsRequest = 0;
   private refreshTimer: ReturnType<typeof setInterval> | null = null;
 
   readonly canManage = computed(() => {
@@ -138,14 +157,26 @@ export class PrintingComponent implements OnInit, OnDestroy {
   readonly pairingAgent = signal<PrintAgentResponse | null>(null);
   readonly keyCopied = signal(false);
   readonly installerUrl = this.printing.installerUrl;
-  readonly confirming = signal<{ kind: 'printer' | 'sector' | 'agent-revoke' | 'agent-delete'; id: string; name: string } | null>(null);
+  readonly confirming = signal<{ kind: 'printer' | 'sector' | 'agent-revoke' | 'agent-delete' | 'job-cancel'; id: string; name: string } | null>(null);
 
   readonly jobs = signal<PrintJobPage | null>(null);
   readonly isLoadingJobs = signal(false);
+  readonly loadJobsFailed = signal(false);
+  // O que está sendo digitado fica separado do filtro aplicado: a atualização automática não pode
+  // buscar um número pela metade.
+  readonly orderNumberInput = signal<number | null>(null);
   readonly filterOrderNumber = signal<number | null>(null);
   readonly filterStatus = signal<PrintJobStatus | ''>('');
+  readonly filterPrinterId = signal('');
   readonly jobPage = signal(0);
-  readonly jobStatuses = Object.keys(JOB_STATUS) as PrintJobStatus[];
+  readonly jobStatuses = JOB_STATUS_FILTERS;
+  readonly problemCounts = signal<Partial<Record<PrintJobStatus, number>>>({});
+  readonly expandedJobId = signal<string | null>(null);
+  readonly jobNotice = signal<{ jobId: string; type: 'ok' | 'error'; text: string } | null>(null);
+
+  readonly hasJobFilters = computed(
+    () => this.orderNumberInput() != null || this.filterStatus() !== '' || this.filterPrinterId() !== ''
+  );
 
   // Categoria sem setor não imprime: melhor avisar do que o cupom simplesmente não sair.
   readonly unassignedCategories = computed(() => {
@@ -189,6 +220,14 @@ export class PrintingComponent implements OnInit, OnDestroy {
     if (this.refreshTimer) {
       clearInterval(this.refreshTimer);
     }
+    this.clearTimer(this.filterTimer);
+    this.clearTimer(this.noticeTimer);
+  }
+
+  private clearTimer(timer: ReturnType<typeof setTimeout> | null): void {
+    if (timer) {
+      clearTimeout(timer);
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -231,6 +270,9 @@ export class PrintingComponent implements OnInit, OnDestroy {
   private refresh(): void {
     if (this.tab() === 'history') {
       this.loadJobs(true);
+      if (this.canManage()) {
+        this.printing.listAgents().subscribe({ next: (v) => this.agents.set(v), error: () => undefined });
+      }
     } else if (this.canManage() && !this.printerForm() && !this.sectorForm()) {
       this.printing.listPrinters().subscribe({ next: (v) => this.printers.set(v), error: () => undefined });
       this.printing.listAgents().subscribe({ next: (v) => this.agents.set(v), error: () => undefined });
@@ -512,13 +554,19 @@ export class PrintingComponent implements OnInit, OnDestroy {
       printer: () => this.printing.deletePrinter(action.id),
       sector: () => this.printing.deleteSector(action.id),
       'agent-revoke': () => this.printing.revokeAgent(action.id),
-      'agent-delete': () => this.printing.deleteAgent(action.id)
+      'agent-delete': () => this.printing.deleteAgent(action.id),
+      'job-cancel': () => this.printing.cancelJob(action.id)
     };
     this.isSaving.set(true);
     calls[action.kind]().subscribe({
       next: () => {
         this.isSaving.set(false);
         this.confirming.set(null);
+        if (action.kind === 'job-cancel') {
+          this.showJobNotice(action.id, 'ok', 'Impressão cancelada.');
+          this.loadJobs(true);
+          return;
+        }
         this.message.set({ type: 'ok', text: 'Feito.' });
         this.load();
       },
@@ -535,64 +583,143 @@ export class PrintingComponent implements OnInit, OnDestroy {
   // -------------------------------------------------------------------------
 
   applyJobFilter(): void {
+    this.clearTimer(this.filterTimer);
+    this.filterOrderNumber.set(this.orderNumberInput());
     this.jobPage.set(0);
+    this.expandedJobId.set(null);
     this.loadJobs();
   }
 
-  changeJobPage(delta: number): void {
+  onOrderNumberInput(value: number | null): void {
+    this.orderNumberInput.set(value);
+    this.clearTimer(this.filterTimer);
+    this.filterTimer = setTimeout(() => this.applyJobFilter(), FILTER_DEBOUNCE_MS);
+  }
+
+  selectStatusFilter(status: PrintJobStatus | ''): void {
+    this.filterStatus.set(status);
+    this.applyJobFilter();
+  }
+
+  selectPrinterFilter(printerId: string): void {
+    this.filterPrinterId.set(printerId);
+    this.applyJobFilter();
+  }
+
+  clearJobFilters(): void {
+    this.orderNumberInput.set(null);
+    this.filterStatus.set('');
+    this.filterPrinterId.set('');
+    this.applyJobFilter();
+  }
+
+  changeJobPage(delta: number, listTop: HTMLElement): void {
     this.jobPage.update((page) => Math.max(0, page + delta));
+    this.expandedJobId.set(null);
     this.loadJobs();
+    listTop.scrollIntoView({ block: 'start' });
   }
 
   loadJobs(silent = false): void {
     if (!silent) {
       this.isLoadingJobs.set(true);
     }
+    // Só a resposta mais recente vale: a atualização automática pode responder depois de um filtro novo.
+    const request = ++this.jobsRequest;
     this.printing
-      .searchJobs({ status: this.filterStatus(), orderNumber: this.filterOrderNumber(), page: this.jobPage() })
+      .searchJobs({
+        status: this.filterStatus(),
+        orderNumber: this.filterOrderNumber(),
+        printerId: this.filterPrinterId(),
+        page: this.jobPage()
+      })
       .subscribe({
         next: (page) => {
-          this.jobs.set(page);
+          if (request !== this.jobsRequest) {
+            return;
+          }
           this.isLoadingJobs.set(false);
+          this.loadJobsFailed.set(false);
+          // A lista encolheu e a página atual deixou de existir (ex.: impressões canceladas).
+          if (page.content.length === 0 && page.page > 0) {
+            this.jobPage.set(Math.max(page.totalPages - 1, 0));
+            this.loadJobs(silent);
+            return;
+          }
+          this.jobs.set(page);
         },
         error: (error) => {
+          if (request !== this.jobsRequest) {
+            return;
+          }
           this.isLoadingJobs.set(false);
           if (!silent) {
+            this.loadJobsFailed.set(true);
             this.message.set({ type: 'error', text: this.errorText(error, 'Não foi possível carregar o histórico.') });
           }
         }
       });
+    this.loadProblemCount('ERROR');
+    this.loadProblemCount('UNCONFIRMED');
+  }
+
+  private loadProblemCount(status: PrintJobStatus): void {
+    this.printing.searchJobs({ status, printerId: this.filterPrinterId(), size: 1 }).subscribe({
+      next: (page) => this.problemCounts.update((counts) => ({ ...counts, [status]: page.totalElements })),
+      error: () => undefined
+    });
   }
 
   showOrderHistory(job: PrintJobResponse): void {
-    this.filterOrderNumber.set(job.orderNumber);
+    this.orderNumberInput.set(job.orderNumber);
     this.filterStatus.set('');
+    this.filterPrinterId.set('');
     this.applyJobFilter();
   }
 
-  canReprint(job: PrintJobResponse): boolean {
-    return job.status !== 'PENDING' && job.status !== 'PROCESSING';
+  showPrinterHistory(printer: PrinterResponse): void {
+    this.orderNumberInput.set(null);
+    this.filterStatus.set('');
+    this.filterPrinterId.set(printer.id);
+    this.filterOrderNumber.set(null);
+    this.jobPage.set(0);
+    this.selectTab('history');
   }
 
-  jobAction(job: PrintJobResponse, action: 'reprint' | 'retry' | 'cancel'): void {
+  toggleJobDetails(job: PrintJobResponse): void {
+    this.expandedJobId.update((id) => (id === job.id ? null : job.id));
+  }
+
+  // Em ERROR nada saiu: quem resolve é "Tentar de novo", sem a marca de reimpressão no cupom.
+  canReprint(job: PrintJobResponse): boolean {
+    return job.status !== 'PENDING' && job.status !== 'PROCESSING' && job.status !== 'ERROR';
+  }
+
+  jobAction(job: PrintJobResponse, action: 'reprint' | 'retry'): void {
     this.busyId.set(job.id);
-    const call =
-      action === 'reprint'
-        ? this.printing.reprintJob(job.id)
-        : action === 'retry'
-          ? this.printing.retryJob(job.id)
-          : this.printing.cancelJob(job.id);
+    const call = action === 'reprint' ? this.printing.reprintJob(job.id) : this.printing.retryJob(job.id);
     call.subscribe({
       next: () => {
         this.busyId.set(null);
-        this.message.set({ type: 'ok', text: action === 'cancel' ? 'Trabalho cancelado.' : 'Enviado para a fila de impressão.' });
+        this.showJobNotice(job.id, 'ok', 'Enviado para a fila de impressão.');
         this.loadJobs(true);
       },
       error: (error) => {
         this.busyId.set(null);
-        this.message.set({ type: 'error', text: this.errorText(error, 'Não foi possível concluir.') });
+        this.showJobNotice(job.id, 'error', this.errorText(error, 'Não foi possível concluir.'));
       }
     });
+  }
+
+  confirmCancelJob(job: PrintJobResponse): void {
+    this.confirming.set({ kind: 'job-cancel', id: job.id, name: this.jobTitle(job) });
+  }
+
+  // O aviso fica no próprio cartão: quem clicou pode estar longe do topo da página.
+  private showJobNotice(jobId: string, type: 'ok' | 'error', text: string): void {
+    this.clearTimer(this.noticeTimer);
+    this.jobNotice.set({ jobId, type, text });
+    this.noticeTimer = setTimeout(() => this.jobNotice.set(null), JOB_NOTICE_MS);
   }
 
   // -------------------------------------------------------------------------
@@ -609,6 +736,53 @@ export class PrintingComponent implements OnInit, OnDestroy {
 
   eventLabel(type: PrintEventType): string {
     return EVENT_LABEL[type] ?? type;
+  }
+
+  eventIcon(type: PrintEventType): string {
+    return EVENT_ICON[type] ?? 'print';
+  }
+
+  jobTitle(job: PrintJobResponse): string {
+    return job.orderNumber ? `Pedido #${job.orderNumber}` : this.eventLabel(job.eventType);
+  }
+
+  // Comprovante: o valor pago diz o essencial; o restante fica nos detalhes.
+  jobSummary(job: PrintJobResponse): string {
+    const paid = job.itemLines.find((line) => line.startsWith('Valor pago'));
+    return job.eventType === 'PAYMENT_RECEIVED' && paid ? paid : job.itemLines.join(', ');
+  }
+
+  // O que aconteceu e o que fazer, sem depender de dica de mouse (que não existe no celular).
+  jobGuidance(job: PrintJobResponse): string | null {
+    switch (job.status) {
+      case 'PENDING':
+        return 'Aguardando o computador da loja enviar para a impressora.';
+      case 'PROCESSING':
+        return 'Enviando para a impressora.';
+      case 'UNCONFIRMED':
+        return `${this.deliveryHint(job.deliveryState)} Se não saiu, reimprima.`;
+      case 'ERROR':
+        return job.errorMessage || 'O cupom não foi impresso.';
+      default:
+        return null;
+    }
+  }
+
+  jobTime(value: string | null | undefined): string {
+    const parsed = parseApiDate(value);
+    if (!parsed) {
+      return '—';
+    }
+    const day = this.dayFormatter.format(parsed);
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (day === this.dayFormatter.format(new Date())) {
+      return `Hoje, ${this.timeFormatter.format(parsed)}`;
+    }
+    if (day === this.dayFormatter.format(yesterday)) {
+      return `Ontem, ${this.timeFormatter.format(parsed)}`;
+    }
+    return this.dateTimeFormatter.format(parsed);
   }
 
   deliveryHint(state: PrintDeliveryState): string {

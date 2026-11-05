@@ -1,4 +1,7 @@
 node_modules
 
-# Instalador do agente de impressão: copiado no servidor antes do docker build
-public/downloads/
+# Instaladores do agente de impressão, um por ambiente: entram na imagem pelo docker build
+*.exe
+
+# Imagens Docker exportadas: vão para a VPS por scp, e passam do limite de 100 MB do GitHub
+*.tar

@@ -127,6 +127,7 @@ export interface PrintJobFilter {
   status?: PrintJobStatus | '';
   orderNumber?: number | null;
   sectorId?: string;
+  printerId?: string;
   page?: number;
   size?: number;
 }
@@ -213,6 +214,9 @@ export class PrintingService {
     }
     if (filter.sectorId) {
       params['sectorId'] = filter.sectorId;
+    }
+    if (filter.printerId) {
+      params['printerId'] = filter.printerId;
     }
     return this.http.get<PrintJobPage>(`${this.baseUrl}/print-jobs`, { params });
   }
