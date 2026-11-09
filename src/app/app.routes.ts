@@ -217,7 +217,7 @@ export const routes: Routes = [
         canActivate: [profileGuard(['OWNER', 'COMMERCIAL', 'ADMIN', 'MANAGER'])],
         loadComponent: () =>
           import('./features/admin/pages/settings/comanda-pix/comanda-pix.component').then((m) => m.ComandaPixComponent),
-        title: 'Pix na Comanda — Comanda Única'
+        title: 'Pagamento na Comanda — Comanda Única'
       },
       {
         path: 'configuracoes/impressoras',

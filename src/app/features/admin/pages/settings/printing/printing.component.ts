@@ -60,6 +60,7 @@ const REFRESH_MS = 10_000;
 const COPIED_FEEDBACK_MS = 2_000;
 const FILTER_DEBOUNCE_MS = 400;
 const JOB_NOTICE_MS = 5_000;
+const JOB_PAGE_SIZES = [10, 20, 50];
 
 const PRINTER_STATUS: Record<PrinterStatus, { label: string; tone: string }> = {
   UNKNOWN: { label: 'Aguardando agente', tone: 'muted' },
@@ -108,6 +109,21 @@ const DELIVERY_HINT: Record<PrintDeliveryState, string> = {
   DEVICE_CONFIRMED: 'A impressora respondeu sem erro depois do envio.',
   UNKNOWN: 'O envio começou, mas o resultado é desconhecido. Confira se o cupom saiu antes de reimprimir.'
 };
+
+// Primeira, última e vizinhas da atual; null marca o salto. Esconder uma página só não economiza espaço
+// (as reticências ocupam o mesmo lugar), então ela aparece.
+function pageItems(current: number, total: number): (number | null)[] {
+  const pages = [...new Set([0, current - 1, current, current + 1, total - 1])]
+    .filter((page) => page >= 0 && page < total)
+    .sort((a, b) => a - b);
+  return pages.flatMap((page, index) => {
+    const gap = index > 0 ? page - pages[index - 1] : 1;
+    if (gap === 2) {
+      return [page - 1, page];
+    }
+    return gap > 2 ? [null, page] : [page];
+  });
+}
 
 // Impressoras, setores, agentes e histórico de impressão. CASHIER só enxerga o histórico: é quem está
 // ao lado da impressora quando um cupom não sai, mas não mexe na configuração (o backend também
@@ -169,6 +185,8 @@ export class PrintingComponent implements OnInit, OnDestroy {
   readonly filterStatus = signal<PrintJobStatus | ''>('');
   readonly filterPrinterId = signal('');
   readonly jobPage = signal(0);
+  readonly jobPageSize = signal(JOB_PAGE_SIZES[0]);
+  readonly jobPageSizes = JOB_PAGE_SIZES;
   readonly jobStatuses = JOB_STATUS_FILTERS;
   readonly problemCounts = signal<Partial<Record<PrintJobStatus, number>>>({});
   readonly expandedJobId = signal<string | null>(null);
@@ -177,6 +195,27 @@ export class PrintingComponent implements OnInit, OnDestroy {
   readonly hasJobFilters = computed(
     () => this.orderNumberInput() != null || this.filterStatus() !== '' || this.filterPrinterId() !== ''
   );
+
+  readonly jobPageItems = computed(() => {
+    const page = this.jobs();
+    return page ? pageItems(page.page, page.totalPages) : [];
+  });
+
+  // A API devolve do mais novo para o mais antigo, então cada dia já vem junto.
+  readonly jobGroups = computed(() => {
+    const groups: { day: string; label: string; jobs: PrintJobResponse[] }[] = [];
+    for (const job of this.jobs()?.content ?? []) {
+      const parsed = parseApiDate(job.createdAt);
+      const day = parsed ? this.dayFormatter.format(parsed) : '—';
+      const last = groups[groups.length - 1];
+      if (last?.day === day) {
+        last.jobs.push(job);
+      } else {
+        groups.push({ day, label: this.dayLabel(day), jobs: [job] });
+      }
+    }
+    return groups;
+  });
 
   // Categoria sem setor não imprime: melhor avisar do que o cupom simplesmente não sair.
   readonly unassignedCategories = computed(() => {
@@ -613,11 +652,22 @@ export class PrintingComponent implements OnInit, OnDestroy {
     this.applyJobFilter();
   }
 
-  changeJobPage(delta: number, listTop: HTMLElement): void {
-    this.jobPage.update((page) => Math.max(0, page + delta));
+  goToJobPage(page: number, listTop: HTMLElement): void {
+    this.jobPage.set(page);
     this.expandedJobId.set(null);
     this.loadJobs();
     listTop.scrollIntoView({ block: 'start' });
+  }
+
+  selectJobPageSize(size: number, listTop: HTMLElement): void {
+    this.jobPageSize.set(size);
+    this.goToJobPage(0, listTop);
+  }
+
+  jobRange(page: PrintJobPage): string {
+    const first = page.page * page.size + 1;
+    const last = first + page.content.length - 1;
+    return `${first}–${last} de ${page.totalElements} ${page.totalElements === 1 ? 'impressão' : 'impressões'}`;
   }
 
   loadJobs(silent = false): void {
@@ -631,7 +681,8 @@ export class PrintingComponent implements OnInit, OnDestroy {
         status: this.filterStatus(),
         orderNumber: this.filterOrderNumber(),
         printerId: this.filterPrinterId(),
-        page: this.jobPage()
+        page: this.jobPage(),
+        size: this.jobPageSize()
       })
       .subscribe({
         next: (page) => {
@@ -688,6 +739,11 @@ export class PrintingComponent implements OnInit, OnDestroy {
 
   toggleJobDetails(job: PrintJobResponse): void {
     this.expandedJobId.update((id) => (id === job.id ? null : job.id));
+  }
+
+  // Só estes pedem uma decisão de quem está na loja: as ações ficam à vista, sem abrir os detalhes.
+  jobNeedsAttention(job: PrintJobResponse): boolean {
+    return job.status === 'ERROR' || job.status === 'UNCONFIRMED';
   }
 
   // Em ERROR nada saiu: quem resolve é "Tentar de novo", sem a marca de reimpressão no cupom.
@@ -768,21 +824,22 @@ export class PrintingComponent implements OnInit, OnDestroy {
     }
   }
 
-  jobTime(value: string | null | undefined): string {
+  jobClock(value: string | null | undefined): string {
     const parsed = parseApiDate(value);
-    if (!parsed) {
-      return '—';
-    }
-    const day = this.dayFormatter.format(parsed);
+    return parsed ? this.timeFormatter.format(parsed) : '—';
+  }
+
+  jobPlace(job: PrintJobResponse): string {
+    return `${job.sectorName || 'Sem setor'} · ${job.printerName || 'Sem impressora'}`;
+  }
+
+  private dayLabel(day: string): string {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
     if (day === this.dayFormatter.format(new Date())) {
-      return `Hoje, ${this.timeFormatter.format(parsed)}`;
+      return 'Hoje';
     }
-    if (day === this.dayFormatter.format(yesterday)) {
-      return `Ontem, ${this.timeFormatter.format(parsed)}`;
-    }
-    return this.dateTimeFormatter.format(parsed);
+    return day === this.dayFormatter.format(yesterday) ? 'Ontem' : day;
   }
 
   deliveryHint(state: PrintDeliveryState): string {

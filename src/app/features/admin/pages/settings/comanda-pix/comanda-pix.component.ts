@@ -12,13 +12,27 @@ import {
 import { brDateTimeFormat, brToday, parseApiDate } from '../../../../../shared/utils/datetime.util';
 
 type Message = { type: 'ok' | 'error'; text: string } | null;
+type Tone = 'ok' | 'warning' | 'error' | 'neutral';
+type Overview = { tone: Tone; icon: string; title: string; text: string };
+
+const KEY_PREFIX = '$aact_';
+
+const STATUS_TONES: Record<ComandaPixChargeStatus, Tone> = {
+  PENDING: 'neutral',
+  PAID: 'ok',
+  EXPIRED: 'neutral',
+  CANCELED: 'neutral',
+  REFUNDED: 'warning',
+  CHARGEBACK: 'error'
+};
 
 const STATUS_LABELS: Record<ComandaPixChargeStatus, string> = {
   PENDING: 'Aguardando',
   PAID: 'Pago',
   EXPIRED: 'Expirado',
   CANCELED: 'Cancelado',
-  REFUNDED: 'Estornado'
+  REFUNDED: 'Estornado',
+  CHARGEBACK: 'Contestado (chargeback)'
 };
 
 // Pix na comanda (opt-in): o cliente paga a comanda pelo celular, via Pix, na conta Asaas DO
@@ -52,6 +66,8 @@ export class ComandaPixComponent {
   // Ativação e valor mínimo.
   readonly pixEnabled = signal(false);
   readonly minPixAmount = signal<number | null>(null);
+  readonly cardEnabled = signal(false);
+  readonly minCardAmount = signal<number | null>(null);
   readonly isSavingSettings = signal(false);
   readonly settingsMessage = signal<Message>(null);
 
@@ -65,6 +81,52 @@ export class ComandaPixComponent {
     const company = this.authService.selectedCompany();
     return !!company && ['OWNER', 'ADMIN'].includes(company.profileCode);
   });
+
+  // Cadastro da chave: aviso na hora quando o texto colado não parece uma chave da Asaas.
+  readonly keyVisible = signal(false);
+  readonly keyFormatError = computed(() => {
+    const key = this.apiKey().trim();
+    return key.length > 0 && !key.startsWith(KEY_PREFIX);
+  });
+
+  // Situação geral, no topo da página.
+  readonly overview = computed<Overview | null>(() => {
+    const s = this.settings();
+    if (!s) {
+      return null;
+    }
+    if (!s.configured) {
+      return { tone: 'neutral', icon: 'link', title: 'Pagamento pelo cardápio desligado',
+        text: 'Conecte a conta Asaas do estabelecimento para os clientes pagarem a comanda pelo celular.' };
+    }
+    if (s.status !== 'ACTIVE') {
+      return { tone: 'error', icon: 'error', title: 'Conta Asaas desconectada',
+        text: 'A Asaas recusou a chave. Os clientes estão pagando só no caixa ou com o garçom até você informar uma nova chave.' };
+    }
+    const methods = [s.pixEnabled ? 'Pix' : null, s.cardEnabled ? 'cartão de crédito' : null].filter(Boolean);
+    if (!methods.length) {
+      return { tone: 'warning', icon: 'toggle_off', title: 'Conta conectada, nenhuma forma ativa',
+        text: 'Ative o Pix, o cartão de crédito ou os dois para os clientes verem a opção de pagar no cardápio.' };
+    }
+    return { tone: 'ok', icon: 'check_circle', title: `Ativo: ${methods.join(' e ')}`,
+      text: 'Os clientes já veem a opção de pagar a comanda pelo cardápio.' };
+  });
+
+  // Ativação e mínimos editados e ainda não salvos.
+  readonly settingsDirty = computed(() => {
+    const s = this.settings();
+    return !!s && (
+      this.pixEnabled() !== s.pixEnabled
+      || this.cardEnabled() !== s.cardEnabled
+      || Number(this.minPixAmount()) !== s.minPixAmount
+      || Number(this.minCardAmount()) !== s.minCardAmount
+    );
+  });
+  readonly pixMinError = computed(() => this.minError(this.minPixAmount()));
+  readonly cardMinError = computed(() => this.minError(this.minCardAmount()));
+
+  readonly today = brToday();
+  readonly isReportToday = computed(() => this.reportDate() >= this.today);
 
   // "Com mínimo de R$ X, a tarifa equivale a no máximo Y% da venda."
   readonly feeSimulation = computed(() => {
@@ -101,6 +163,10 @@ export class ComandaPixComponent {
     return STATUS_LABELS[status] ?? status;
   }
 
+  statusTone(status: ComandaPixChargeStatus): Tone {
+    return STATUS_TONES[status] ?? 'neutral';
+  }
+
   tableLabel(name: string | null, number: number | null): string {
     return name?.trim() ? name : number != null ? `Mesa ${number}` : '—';
   }
@@ -128,6 +194,7 @@ export class ComandaPixComponent {
 
   cancelKeyEdit(): void {
     this.apiKey.set('');
+    this.keyVisible.set(false);
     this.editingKey.set(false);
   }
 
@@ -137,16 +204,26 @@ export class ComandaPixComponent {
       this.keyMessage.set({ type: 'error', text: 'Cole a chave de API da Asaas.' });
       return;
     }
+    if (this.isSavingKey() || this.keyFormatError()) {
+      return;
+    }
     this.isSavingKey.set(true);
     this.keyMessage.set(null);
     this.pixService.saveApiKey(key).subscribe({
       next: (settings) => {
         // A chave sai da memória da tela assim que o backend confirma.
+        const firstConnection = !this.settings()?.configured;
         this.apiKey.set('');
+        this.keyVisible.set(false);
         this.editingKey.set(false);
         this.isSavingKey.set(false);
         this.applySettings(settings);
-        this.keyMessage.set({ type: 'ok', text: 'Conta Asaas conectada. Agora defina o valor mínimo e ative o Pix na comanda.' });
+        this.keyMessage.set({
+          type: 'ok',
+          text: firstConnection
+            ? 'Conta Asaas conectada. Agora escolha abaixo as formas de pagamento e salve.'
+            : 'Chave salva. Os dados do estabelecimento foram atualizados na Asaas.'
+        });
       },
       error: (error) => {
         this.isSavingKey.set(false);
@@ -162,7 +239,7 @@ export class ComandaPixComponent {
         this.isRemovingKey.set(false);
         this.confirmingRemoval.set(false);
         this.applySettings(settings);
-        this.keyMessage.set({ type: 'ok', text: 'Chave removida. O Pix na comanda foi desativado.' });
+        this.keyMessage.set({ type: 'ok', text: 'Conta Asaas removida. O pagamento pelo cardápio foi desativado.' });
       },
       error: (error) => {
         this.isRemovingKey.set(false);
@@ -174,19 +251,23 @@ export class ComandaPixComponent {
   saveSettings(): void {
     const s = this.settings();
     const min = this.minPixAmount();
-    if (!s || min == null || min < s.asaasMinAmount) {
-      this.settingsMessage.set({ type: 'error', text: `O valor mínimo precisa ser de pelo menos ${this.currency(s?.asaasMinAmount)}.` });
+    const cardMin = this.minCardAmount();
+    if (!s || min == null || cardMin == null || this.pixMinError() || this.cardMinError()) {
+      this.settingsMessage.set({ type: 'error', text: 'Confira os valores mínimos destacados.' });
       return;
     }
     this.isSavingSettings.set(true);
     this.settingsMessage.set(null);
-    this.pixService.update(this.pixEnabled(), min).subscribe({
+    this.pixService.update(this.pixEnabled(), min, this.cardEnabled(), cardMin).subscribe({
       next: (settings) => {
         this.isSavingSettings.set(false);
         this.applySettings(settings);
+        const active = [settings.pixEnabled ? 'Pix' : null, settings.cardEnabled ? 'cartão de crédito' : null].filter(Boolean);
         this.settingsMessage.set({
           type: 'ok',
-          text: settings.pixEnabled ? 'Pix na comanda ativo. Os clientes já veem a opção no cardápio.' : 'Configuração salva. Pix na comanda desativado.'
+          text: active.length
+            ? `Ativo na comanda: ${active.join(' e ')}. Os clientes já veem a opção no cardápio.`
+            : 'Configuração salva. Pagamento pelo cardápio desativado.'
         });
       },
       error: (error) => {
@@ -210,9 +291,26 @@ export class ComandaPixComponent {
     });
   }
 
+  discardSettings(): void {
+    const s = this.settings();
+    if (s) {
+      this.applySettings(s);
+    }
+    this.settingsMessage.set(null);
+  }
+
+  shiftReportDate(days: number): void {
+    const [year, month, day] = this.reportDate().split('-').map(Number);
+    const shifted = new Date(Date.UTC(year, month - 1, day + days));
+    this.changeReportDate(shifted.toISOString().slice(0, 10));
+  }
+
   changeReportDate(value: string): void {
     if (!value) {
       return;
+    }
+    if (value > this.today) {
+      value = this.today;
     }
     this.reportDate.set(value);
     this.loadReport();
@@ -222,6 +320,19 @@ export class ComandaPixComponent {
     this.settings.set(settings);
     this.pixEnabled.set(settings.pixEnabled);
     this.minPixAmount.set(settings.minPixAmount);
+    this.cardEnabled.set(settings.cardEnabled);
+    this.minCardAmount.set(settings.minCardAmount);
+  }
+
+  private minError(value: number | null): string | null {
+    const s = this.settings();
+    if (!s) {
+      return null;
+    }
+    if (value == null || (value as unknown) === '' || isNaN(Number(value))) {
+      return 'Informe o valor mínimo.';
+    }
+    return Number(value) < s.asaasMinAmount ? `O mínimo aceito pela Asaas é ${this.currency(s.asaasMinAmount)}.` : null;
   }
 
   private errorText(error: unknown, fallback: string): string {

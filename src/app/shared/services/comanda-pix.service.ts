@@ -4,7 +4,8 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 export type AsaasIntegrationStatus = 'ACTIVE' | 'INVALID';
-export type ComandaPixChargeStatus = 'PENDING' | 'PAID' | 'EXPIRED' | 'CANCELED' | 'REFUNDED';
+export type ComandaPixChargeStatus = 'PENDING' | 'PAID' | 'EXPIRED' | 'CANCELED' | 'REFUNDED' | 'CHARGEBACK';
+export type ComandaChargeBillingType = 'PIX' | 'CREDIT_CARD';
 
 // A chave de API nunca volta do backend — só keyMasked (••••1234).
 export interface ComandaPixSettings {
@@ -18,6 +19,8 @@ export interface ComandaPixSettings {
   lastError: string | null;
   pixEnabled: boolean;
   minPixAmount: number;
+  cardEnabled: boolean;
+  minCardAmount: number;
   asaasMinAmount: number;
   suggestedMinAmount: number;
   asaasPixFeeReference: number;
@@ -26,6 +29,7 @@ export interface ComandaPixSettings {
 export interface ComandaPixReportItem {
   id: string;
   asaasPaymentId: string | null;
+  billingType: ComandaChargeBillingType;
   status: ComandaPixChargeStatus;
   paidAt: string;
   amount: number;
@@ -64,8 +68,8 @@ export class ComandaPixService {
     return this.http.delete<ComandaPixSettings>(`${this.baseUrl}/settings/api-key`);
   }
 
-  update(pixEnabled: boolean, minPixAmount: number): Observable<ComandaPixSettings> {
-    return this.http.put<ComandaPixSettings>(`${this.baseUrl}/settings`, { pixEnabled, minPixAmount });
+  update(pixEnabled: boolean, minPixAmount: number, cardEnabled: boolean, minCardAmount: number): Observable<ComandaPixSettings> {
+    return this.http.put<ComandaPixSettings>(`${this.baseUrl}/settings`, { pixEnabled, minPixAmount, cardEnabled, minCardAmount });
   }
 
   // date = yyyy-MM-dd (dia de Brasília); sem date, hoje.

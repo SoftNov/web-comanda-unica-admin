@@ -1,37 +1,85 @@
 <div class="page-header">
-  <h1 class="page-title">Pix na comanda</h1>
+  <h1 class="page-title">Pagamento na comanda</h1>
   <p class="page-subtitle">
-    O cliente paga a comanda pelo celular, via Pix, sem esperar o caixa ou o garçom. O dinheiro cai direto
-    na sua conta Asaas; a taxa da Comanda Única é descontada na hora, no próprio Pix. Caixa e garçom
-    continuam funcionando normalmente.
+    O cliente paga a comanda pelo celular, com Pix ou cartão de crédito, sem esperar o caixa ou o garçom. O dinheiro
+    cai na sua conta Asaas e a taxa da Comanda Única é descontada no próprio pagamento.
   </p>
 </div>
 
 @if (isLoading()) {
-  <div class="card section"><p class="field__hint">Carregando…</p></div>
+  <div class="card section">
+    <div class="skeleton skeleton--title"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton skeleton--short"></div>
+  </div>
 } @else if (loadError()) {
   <div class="card section">
     <div class="form-alert form-alert--error">
       <span class="material-icons" aria-hidden="true">error_outline</span>
-      Não foi possível carregar a configuração do Pix na comanda.
+      <span>Não foi possível carregar a configuração do pagamento na comanda.</span>
     </div>
     <div class="section__actions">
-      <button type="button" class="btn btn--ghost" (click)="load()">Tentar novamente</button>
+      <button type="button" class="btn btn--ghost" (click)="load()">
+        <span class="material-icons" aria-hidden="true">refresh</span>
+        Tentar novamente
+      </button>
     </div>
   </div>
 }
 
 @if (!isLoading() && !loadError() && settings(); as s) {
+  <!-- ==================== SITUAÇÃO GERAL ==================== -->
+  @if (overview(); as o) {
+    <div class="overview" [attr.data-tone]="o.tone" role="status">
+      <span class="material-icons overview__icon" aria-hidden="true">{{ o.icon }}</span>
+      <div class="overview__text">
+        <strong>{{ o.title }}</strong>
+        <span>{{ o.text }}</span>
+      </div>
+    </div>
+  }
+
+  <ol class="progress" aria-label="Etapas da configuração">
+    <li [class.progress__step--done]="s.configured && s.status === 'ACTIVE'"
+        [class.progress__step--error]="s.configured && s.status !== 'ACTIVE'"
+        [class.progress__step--current]="!s.configured">
+      <span class="progress__dot">{{ s.configured && s.status === 'ACTIVE' ? '✓' : '1' }}</span>
+      Conectar a conta Asaas
+    </li>
+    <li [class.progress__step--done]="s.pixEnabled || s.cardEnabled"
+        [class.progress__step--current]="s.configured && s.status === 'ACTIVE' && !s.pixEnabled && !s.cardEnabled">
+      <span class="progress__dot">{{ s.pixEnabled || s.cardEnabled ? '✓' : '2' }}</span>
+      Escolher as formas de pagamento
+    </li>
+    <li [class.progress__step--done]="s.pixEnabled || s.cardEnabled">
+      <span class="progress__dot">{{ s.pixEnabled || s.cardEnabled ? '✓' : '3' }}</span>
+      Clientes pagando pelo cardápio
+    </li>
+  </ol>
+
   @if (!s.platformReady) {
     <div class="form-alert">
       <span class="material-icons" aria-hidden="true">info</span>
-      <span>O Pix na comanda ainda não está liberado nesta plataforma. Fale com o suporte da Comanda Única.</span>
+      <span>O pagamento na comanda ainda não está liberado nesta plataforma. Fale com o suporte da Comanda Única.</span>
+    </div>
+  }
+
+  @if (!canManage()) {
+    <div class="form-alert">
+      <span class="material-icons" aria-hidden="true">lock</span>
+      <span>Só o proprietário ou um administrador pode alterar esta configuração. Você pode acompanhar os pagamentos abaixo.</span>
     </div>
   }
 
   <!-- ==================== CONTA ASAAS ==================== -->
   <div class="card section">
-    <h2 class="section__title">Conta Asaas do estabelecimento</h2>
+    <div class="section__head">
+      <span class="material-icons section__icon" aria-hidden="true">account_balance</span>
+      <div>
+        <h2 class="section__title">Conta Asaas do estabelecimento</h2>
+        <p class="field__hint">É nela que o dinheiro dos pagamentos pelo cardápio é recebido.</p>
+      </div>
+    </div>
 
     @if (s.configured && !editingKey()) {
       <dl class="account">
@@ -39,138 +87,252 @@
           <dt>Situação</dt>
           <dd>
             @if (s.status === 'ACTIVE') {
-              <span class="badge badge--success">Conectada</span>
+              <span class="badge badge--success"><span class="material-icons" aria-hidden="true">check_circle</span>Conectada</span>
             } @else {
-              <span class="badge badge--danger">Chave recusada pela Asaas</span>
+              <span class="badge badge--danger"><span class="material-icons" aria-hidden="true">error</span>Chave recusada</span>
             }
           </dd>
         </div>
-        <div><dt>Chave de API</dt><dd class="mono">{{ s.keyMasked }}</dd></div>
         <div><dt>Conta</dt><dd>{{ s.asaasAccountName || '—' }}</dd></div>
         <div><dt>CPF/CNPJ</dt><dd>{{ s.asaasAccountDoc || '—' }}</dd></div>
+        <div><dt>Chave de API</dt><dd class="mono">{{ s.keyMasked }}</dd></div>
       </dl>
 
       @if (s.status === 'INVALID') {
         <div class="form-alert form-alert--error">
           <span class="material-icons" aria-hidden="true">error_outline</span>
           <span>
-            A Asaas deixou de aceitar esta chave{{ s.lastError ? ' (' + s.lastError + ')' : '' }}. O Pix na comanda foi
-            desativado e os pagamentos voltaram para caixa/garçom. Substitua a chave para voltar a usar.
+            A Asaas deixou de aceitar esta chave{{ s.lastError ? ' (' + s.lastError + ')' : '' }}. O pagamento pelo cardápio
+            foi desativado e os clientes voltaram a pagar no caixa ou com o garçom. Substitua a chave para voltar a usar.
           </span>
         </div>
       }
 
       @if (canManage()) {
         @if (confirmingRemoval()) {
-          <div class="form-alert">
+          <div class="confirm">
             <span class="material-icons" aria-hidden="true">warning_amber</span>
-            <span>Remover a chave desativa o Pix na comanda e cancela os Pix ainda não pagos. Confirmar?</span>
+            <div>
+              <strong>Remover a conta Asaas?</strong>
+              <span>Pix e cartão no cardápio são desativados e os pagamentos ainda não concluídos são cancelados.</span>
+            </div>
           </div>
           <div class="section__actions">
-            <button type="button" class="btn btn--ghost" [disabled]="isRemovingKey()" (click)="confirmingRemoval.set(false)">Voltar</button>
+            <button type="button" class="btn btn--ghost" [disabled]="isRemovingKey()" (click)="confirmingRemoval.set(false)">Manter conta</button>
             <button type="button" class="btn btn--danger" [disabled]="isRemovingKey()" (click)="removeKey()">
               {{ isRemovingKey() ? 'Removendo…' : 'Sim, remover' }}
             </button>
           </div>
         } @else {
           <div class="section__actions">
-            <button type="button" class="btn btn--ghost" [disabled]="!s.platformReady" (click)="startKeyEdit()">Substituir chave</button>
-            <button type="button" class="btn btn--ghost btn--danger-text" (click)="confirmingRemoval.set(true)">Remover</button>
+            <button type="button" class="btn btn--ghost" [disabled]="!s.platformReady" (click)="startKeyEdit()">
+              <span class="material-icons" aria-hidden="true">sync</span>
+              {{ s.status === 'ACTIVE' ? 'Substituir chave' : 'Informar nova chave' }}
+            </button>
+            <button type="button" class="btn btn--ghost btn--danger-text" (click)="confirmingRemoval.set(true)">
+              <span class="material-icons" aria-hidden="true">link_off</span>
+              Remover conta
+            </button>
           </div>
+          @if (s.status === 'ACTIVE') {
+            <p class="field__hint field__hint--spaced">
+              Mudou o endereço ou o telefone do estabelecimento? Salve a mesma chave de novo para atualizar esses dados na Asaas.
+            </p>
+          }
         }
       }
     } @else if (canManage()) {
       <ol class="steps">
-        <li>Crie (ou acesse) a conta do estabelecimento na <strong>Asaas</strong>.</li>
-        <li>No painel da Asaas, vá em <strong>Integrações &gt; Chaves de API</strong> e gere uma chave.</li>
-        <li>Cole a chave abaixo. Ela é validada na hora e guardada criptografada — nunca mais aparece nesta tela.</li>
+        <li>
+          Crie ou acesse a conta do estabelecimento na
+          <a href="https://www.asaas.com" target="_blank" rel="noopener noreferrer">Asaas <span class="material-icons" aria-hidden="true">open_in_new</span></a>.
+        </li>
+        <li>No painel da Asaas, abra <strong>Integrações &gt; Chaves de API</strong> e gere uma chave.</li>
+        <li>Cole a chave abaixo. Ela é validada na hora e guardada criptografada. Depois de salva, não aparece mais nesta tela.</li>
       </ol>
 
-      <div class="security-tips">
-        <span class="material-icons" aria-hidden="true">shield</span>
-        <div>
-          <strong>Recomendado na Asaas:</strong> ative a lista de IPs permitidos e a autorização de transferências
-          via API. A Comanda Única só cria e consulta cobranças — nunca faz transferências ou saques.
+      <form class="key-form" (ngSubmit)="saveKey()">
+        <label class="field__label" for="asaas-key">Chave de API da Asaas</label>
+        <div class="key-input" [class.key-input--error]="keyFormatError()">
+          <input
+            id="asaas-key"
+            name="apiKey"
+            [type]="keyVisible() ? 'text' : 'password'"
+            class="field__input mono"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="$aact_..."
+            [attr.aria-invalid]="keyFormatError() ? true : null"
+            aria-describedby="asaas-key-hint"
+            [ngModel]="apiKey()"
+            (ngModelChange)="apiKey.set($event)">
+          <button type="button" class="key-input__toggle" (click)="keyVisible.set(!keyVisible())"
+                  [attr.aria-label]="keyVisible() ? 'Ocultar chave' : 'Mostrar chave'">
+            <span class="material-icons" aria-hidden="true">{{ keyVisible() ? 'visibility_off' : 'visibility' }}</span>
+          </button>
         </div>
-      </div>
+        <span id="asaas-key-hint" class="field__hint" [class.field__error]="keyFormatError()">
+          {{ keyFormatError() ? 'A chave da Asaas começa com $aact_. Confira se copiou a chave inteira.' : 'Começa com $aact_.' }}
+        </span>
 
-      <label class="field__label">
-        Chave de API da Asaas
-        <input
-          type="password"
-          class="field__input mono"
-          autocomplete="off"
-          spellcheck="false"
-          placeholder="$aact_..."
-          [ngModel]="apiKey()"
-          (ngModelChange)="apiKey.set($event)">
-      </label>
+        <details class="security-tips">
+          <summary>
+            <span class="material-icons" aria-hidden="true">shield</span>
+            Segurança da chave
+          </summary>
+          <p>
+            A Comanda Única só cria e consulta cobranças, e nunca faz transferências ou saques. Mesmo assim, recomendamos
+            ativar na Asaas a <strong>lista de IPs permitidos</strong> e a <strong>autorização de transferências via API</strong>.
+          </p>
+        </details>
 
-      <div class="section__actions">
-        @if (s.configured) {
-          <button type="button" class="btn btn--ghost" [disabled]="isSavingKey()" (click)="cancelKeyEdit()">Cancelar</button>
-        }
-        <button type="button" class="btn btn--primary" appRipple [disabled]="isSavingKey() || !s.platformReady" (click)="saveKey()">
-          {{ isSavingKey() ? 'Validando…' : 'Conectar conta' }}
-        </button>
-      </div>
+        <div class="section__actions">
+          @if (s.configured) {
+            <button type="button" class="btn btn--ghost" [disabled]="isSavingKey()" (click)="cancelKeyEdit()">Cancelar</button>
+          }
+          <button type="submit" class="btn btn--primary" appRipple
+                  [disabled]="isSavingKey() || !s.platformReady || !apiKey().trim() || keyFormatError()">
+            {{ isSavingKey() ? 'Validando na Asaas…' : (s.configured ? 'Salvar chave' : 'Conectar conta') }}
+          </button>
+        </div>
+      </form>
     } @else {
-      <p class="field__hint">Nenhuma conta Asaas conectada. Peça ao proprietário ou administrador para configurar.</p>
+      <p class="field__hint field__hint--spaced">Nenhuma conta Asaas conectada. Peça ao proprietário ou a um administrador para configurar.</p>
     }
 
     @if (keyMessage(); as msg) {
-      <div class="form-alert" [class.form-alert--error]="msg.type === 'error'" [class.form-alert--success]="msg.type === 'ok'">
+      <div class="form-alert" [class.form-alert--error]="msg.type === 'error'" [class.form-alert--success]="msg.type === 'ok'" role="status">
         <span class="material-icons" aria-hidden="true">{{ msg.type === 'ok' ? 'check_circle' : 'error_outline' }}</span>
         <span>{{ msg.text }}</span>
       </div>
     }
   </div>
 
-  <!-- ==================== ATIVAÇÃO E VALOR MÍNIMO ==================== -->
+  <!-- ==================== FORMAS DE PAGAMENTO ==================== -->
   @if (s.configured) {
     <div class="card section">
-      <h2 class="section__title">Ativação e valor mínimo</h2>
-      <p class="field__hint">
-        A Asaas cobra uma tarifa fixa por Pix recebido — em valores baixos ela pesa mais que a maquininha. O mínimo vale
-        por pagamento (não por comanda): abaixo dele, o cliente vê "peça a conta ao garçom".
-      </p>
+      <div class="section__head">
+        <span class="material-icons section__icon" aria-hidden="true">payments</span>
+        <div>
+          <h2 class="section__title">Formas de pagamento no cardápio</h2>
+          <p class="field__hint">
+            Ative uma ou as duas. O valor mínimo vale por pagamento: abaixo dele, o cliente vê "peça a conta ao garçom".
+          </p>
+        </div>
+      </div>
 
-      <label class="toggle">
-        <input type="checkbox" [disabled]="!canManage() || s.status !== 'ACTIVE'"
-               [ngModel]="pixEnabled()" (ngModelChange)="pixEnabled.set($event)">
-        <span>Oferecer Pix na comanda aos clientes</span>
-      </label>
-
-      <label class="field__label field__label--narrow">
-        Valor mínimo por Pix
-        <input type="number" class="field__input" step="0.01" [min]="s.asaasMinAmount" [disabled]="!canManage()"
-               [ngModel]="minPixAmount()" (ngModelChange)="minPixAmount.set($event)">
-      </label>
-      <span class="field__hint">Sugerido: {{ currency(s.suggestedMinAmount) }} · mínimo aceito pela Asaas: {{ currency(s.asaasMinAmount) }}</span>
-
-      @if (feeSimulation(); as sim) {
-        <div class="simulation">
-          <span class="material-icons" aria-hidden="true">calculate</span>
-          <span>
-            Com mínimo de <strong>{{ currency(minPixAmount()) }}</strong>, a tarifa da Asaas
-            (≈ {{ currency(sim.fee) }} por Pix) equivale a no máximo <strong>{{ percent(sim.percent) }}</strong> da venda.
-            Confira a tarifa atual no seu contrato com a Asaas.
-          </span>
+      @if (s.status !== 'ACTIVE') {
+        <div class="form-alert">
+          <span class="material-icons" aria-hidden="true">info</span>
+          <span>Para ativar, a conta Asaas precisa estar conectada. Substitua a chave acima.</span>
         </div>
       }
 
+      <div class="methods">
+        <!-- Pix -->
+        <section class="method" [class.method--on]="pixEnabled()" aria-labelledby="method-pix-title">
+          <header class="method__head">
+            <span class="material-icons method__icon" aria-hidden="true">qr_code_2</span>
+            <div class="method__name">
+              <h3 id="method-pix-title">Pix</h3>
+              <span>Dinheiro na hora na conta Asaas</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" role="switch" aria-labelledby="method-pix-title"
+                     [disabled]="!canManage() || s.status !== 'ACTIVE'"
+                     [ngModel]="pixEnabled()" (ngModelChange)="pixEnabled.set($event)">
+              <span class="switch__track" aria-hidden="true"></span>
+            </label>
+          </header>
+
+          <label class="field__label" for="min-pix">Valor mínimo por Pix</label>
+          <div class="money" [class.money--error]="pixMinError()">
+            <span class="money__prefix">R$</span>
+            <input id="min-pix" type="number" inputmode="decimal" class="field__input" step="0.01" [min]="s.asaasMinAmount"
+                   [disabled]="!canManage()" [attr.aria-invalid]="pixMinError() ? true : null"
+                   [ngModel]="minPixAmount()" (ngModelChange)="minPixAmount.set($event)">
+          </div>
+          @if (pixMinError()) {
+            <span class="field__hint field__error">{{ pixMinError() }}</span>
+          } @else {
+            <span class="field__hint">Sugerido: {{ currency(s.suggestedMinAmount) }} · mínimo da Asaas: {{ currency(s.asaasMinAmount) }}</span>
+          }
+
+          @if (feeSimulation(); as sim) {
+            <div class="simulation">
+              <span class="material-icons" aria-hidden="true">calculate</span>
+              <span>
+                A tarifa da Asaas (≈ {{ currency(sim.fee) }} por Pix) fica em no máximo
+                <strong>{{ percent(sim.percent) }}</strong> de cada venda. Confira a tarifa no seu contrato com a Asaas.
+              </span>
+            </div>
+          }
+        </section>
+
+        <!-- Cartão de crédito -->
+        <section class="method" [class.method--on]="cardEnabled()" aria-labelledby="method-card-title">
+          <header class="method__head">
+            <span class="material-icons method__icon" aria-hidden="true">credit_card</span>
+            <div class="method__name">
+              <h3 id="method-card-title">Cartão de crédito</h3>
+              <span>Pago na página segura da Asaas</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" role="switch" aria-labelledby="method-card-title"
+                     [disabled]="!canManage() || s.status !== 'ACTIVE'"
+                     [ngModel]="cardEnabled()" (ngModelChange)="cardEnabled.set($event)">
+              <span class="switch__track" aria-hidden="true"></span>
+            </label>
+          </header>
+
+          <label class="field__label" for="min-card">Valor mínimo por pagamento com cartão</label>
+          <div class="money" [class.money--error]="cardMinError()">
+            <span class="money__prefix">R$</span>
+            <input id="min-card" type="number" inputmode="decimal" class="field__input" step="0.01" [min]="s.asaasMinAmount"
+                   [disabled]="!canManage()" [attr.aria-invalid]="cardMinError() ? true : null"
+                   [ngModel]="minCardAmount()" (ngModelChange)="minCardAmount.set($event)">
+          </div>
+          @if (cardMinError()) {
+            <span class="field__hint field__error">{{ cardMinError() }}</span>
+          }
+
+          <ul class="facts">
+            <li><span class="material-icons" aria-hidden="true">schedule</span>O dinheiro cai em cerca de 30 dias.</li>
+            <li><span class="material-icons" aria-hidden="true">percent</span>As tarifas são maiores que as do Pix.</li>
+            <li><span class="material-icons" aria-hidden="true">gpp_maybe</span>Pode haver contestação (chargeback), acompanhada pela Asaas.</li>
+            <li><span class="material-icons" aria-hidden="true">verified_user</span>A conta Asaas precisa ter o cartão de crédito liberado.</li>
+          </ul>
+        </section>
+      </div>
+
       @if (settingsMessage(); as msg) {
-        <div class="form-alert" [class.form-alert--error]="msg.type === 'error'" [class.form-alert--success]="msg.type === 'ok'">
+        <div class="form-alert" [class.form-alert--error]="msg.type === 'error'" [class.form-alert--success]="msg.type === 'ok'" role="status">
           <span class="material-icons" aria-hidden="true">{{ msg.type === 'ok' ? 'check_circle' : 'error_outline' }}</span>
           <span>{{ msg.text }}</span>
         </div>
       }
 
       @if (canManage()) {
-        <div class="section__actions">
-          <button type="button" class="btn btn--primary" appRipple [disabled]="isSavingSettings()" (click)="saveSettings()">
-            {{ isSavingSettings() ? 'Salvando…' : 'Salvar' }}
-          </button>
+        <div class="save-bar" [class.save-bar--dirty]="settingsDirty()">
+          <span class="save-bar__status">
+            @if (settingsDirty()) {
+              <span class="material-icons" aria-hidden="true">edit_note</span>
+              Alterações não salvas
+            } @else {
+              <span class="material-icons" aria-hidden="true">cloud_done</span>
+              Tudo salvo
+            }
+          </span>
+          <div class="save-bar__actions">
+            @if (settingsDirty()) {
+              <button type="button" class="btn btn--ghost" [disabled]="isSavingSettings()" (click)="discardSettings()">Descartar</button>
+            }
+            <button type="button" class="btn btn--primary" appRipple
+                    [disabled]="isSavingSettings() || !settingsDirty() || !!pixMinError() || !!cardMinError()"
+                    (click)="saveSettings()">
+              {{ isSavingSettings() ? 'Salvando…' : 'Salvar alterações' }}
+            </button>
+          </div>
         </div>
       }
     </div>
@@ -180,31 +342,53 @@
 <!-- ==================== RELATÓRIO DIÁRIO ==================== -->
 <div class="card section">
   <div class="report-header">
-    <div>
-      <h2 class="section__title">Pagamentos por Pix na comanda</h2>
-      <p class="field__hint">
-        Esses pagamentos não passam pelo caixa: use esta lista para conferir as vendas e emitir a NFC-e (a emissão é
-        responsabilidade do estabelecimento).
-      </p>
+    <div class="section__head">
+      <span class="material-icons section__icon" aria-hidden="true">receipt_long</span>
+      <div>
+        <h2 class="section__title">Pagamentos pelo cardápio</h2>
+        <p class="field__hint">
+          Esses pagamentos não passam pelo caixa. Use esta lista para conferir as vendas e emitir a NFC-e, que é
+          responsabilidade do estabelecimento.
+        </p>
+      </div>
     </div>
-    <input type="date" class="field__input report-date" [value]="reportDate()" (change)="changeReportDate($any($event.target).value)">
+    <div class="date-nav">
+      <button type="button" class="btn btn--ghost btn--icon" aria-label="Dia anterior" (click)="shiftReportDate(-1)">
+        <span class="material-icons" aria-hidden="true">chevron_left</span>
+      </button>
+      <input type="date" class="field__input report-date" aria-label="Dia do relatório" [max]="today"
+             [value]="reportDate()" (change)="changeReportDate($any($event.target).value)">
+      <button type="button" class="btn btn--ghost btn--icon" aria-label="Próximo dia" [disabled]="isReportToday()" (click)="shiftReportDate(1)">
+        <span class="material-icons" aria-hidden="true">chevron_right</span>
+      </button>
+      @if (!isReportToday()) {
+        <button type="button" class="btn btn--ghost" (click)="changeReportDate(today)">Hoje</button>
+      }
+    </div>
   </div>
 
   @if (isLoadingReport()) {
-    <p class="field__hint">Carregando…</p>
+    <div class="report-totals" aria-hidden="true">
+      <div class="skeleton skeleton--box"></div>
+      <div class="skeleton skeleton--box"></div>
+      <div class="skeleton skeleton--box"></div>
+    </div>
   }
   @if (!isLoadingReport() && report(); as r) {
     <div class="report-totals">
       <div><span>Pagamentos</span><strong>{{ r.count }}</strong></div>
       <div><span>Total recebido</span><strong>{{ currency(r.totalAmount) }}</strong></div>
-      <div><span>Taxa Comanda Única (split)</span><strong>{{ currency(r.totalPlatformFee) }}</strong></div>
+      <div><span>Taxa Comanda Única</span><strong>{{ currency(r.totalPlatformFee) }}</strong></div>
       @if (r.totalOverpaid > 0) {
         <div class="report-totals__warn"><span>Pago a mais (avaliar estorno)</span><strong>{{ currency(r.totalOverpaid) }}</strong></div>
       }
     </div>
 
     @if (r.payments.length === 0) {
-      <p class="field__hint">Nenhum Pix pago neste dia.</p>
+      <div class="empty">
+        <span class="material-icons" aria-hidden="true">event_busy</span>
+        <p>Nenhum pagamento pelo cardápio {{ isReportToday() ? 'hoje' : 'neste dia' }}.</p>
+      </div>
     } @else {
       <div class="table-wrapper">
         <table class="data-table data-table--compact">
@@ -212,8 +396,9 @@
             <tr>
               <th>Horário</th>
               <th>Mesa</th>
-              <th>Valor</th>
-              <th>Taxa</th>
+              <th>Forma</th>
+              <th class="num">Valor</th>
+              <th class="num">Taxa</th>
               <th>Situação</th>
               <th>Cobrança Asaas</th>
             </tr>
@@ -223,15 +408,21 @@
               <tr>
                 <td>{{ dateTime(item.paidAt) }}</td>
                 <td>{{ tableLabel(item.tableName, item.tableNumber) }}</td>
-                <td>{{ currency(item.amount) }}</td>
-                <td>{{ currency(item.platformFeeAmount) }}</td>
                 <td>
-                  {{ statusLabel(item.status) }}
+                  <span class="method-tag">
+                    <span class="material-icons" aria-hidden="true">{{ item.billingType === 'CREDIT_CARD' ? 'credit_card' : 'qr_code_2' }}</span>
+                    {{ item.billingType === 'CREDIT_CARD' ? 'Cartão' : 'Pix' }}
+                  </span>
+                </td>
+                <td class="num">{{ currency(item.amount) }}</td>
+                <td class="num">{{ currency(item.platformFeeAmount) }}</td>
+                <td>
+                  <span class="badge status" [attr.data-tone]="statusTone(item.status)">{{ statusLabel(item.status) }}</span>
                   @if (item.overpaidAmount) {
-                    <small class="overpaid">· {{ currency(item.overpaidAmount) }} a mais</small>
+                    <small class="overpaid">{{ currency(item.overpaidAmount) }} a mais</small>
                   }
                 </td>
-                <td class="mono">{{ item.asaasPaymentId || '—' }}</td>
+                <td class="mono muted">{{ item.asaasPaymentId || '—' }}</td>
               </tr>
             }
           </tbody>
@@ -240,6 +431,12 @@
     }
   }
   @if (!isLoadingReport() && !report()) {
-    <p class="field__hint">Não foi possível carregar o relatório.</p>
+    <div class="form-alert form-alert--error">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      <span>Não foi possível carregar o relatório.</span>
+    </div>
+    <div class="section__actions">
+      <button type="button" class="btn btn--ghost" (click)="loadReport()">Tentar novamente</button>
+    </div>
   }
 </div>

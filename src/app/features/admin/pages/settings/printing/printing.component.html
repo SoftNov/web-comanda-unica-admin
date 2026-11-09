@@ -298,13 +298,14 @@
             <span class="material-icons" aria-hidden="true">close</span> Limpar filtros
           </button>
         }
+        <span class="filters__live"><span class="live-dot" aria-hidden="true"></span> Atualiza sozinho</span>
       </div>
     </div>
 
     @if (isLoadingJobs() && !jobs()) {
-      <div class="jobs" aria-busy="true" aria-label="Carregando o histórico">
-        @for (row of [1, 2, 3, 4]; track row) {
-          <div class="card job job--skeleton"><span class="skeleton skeleton--title"></span><span class="skeleton"></span></div>
+      <div class="card jobs" aria-busy="true" aria-label="Carregando o histórico">
+        @for (row of [1, 2, 3, 4, 5]; track row) {
+          <div class="job--skeleton"><span class="skeleton skeleton--title"></span><span class="skeleton"></span></div>
         }
       </div>
     } @else if (loadJobsFailed() && !jobs()) {
@@ -327,105 +328,126 @@
           }
         </div>
       } @else {
-        <div class="history-summary" aria-live="polite">
-          <span>{{ page.totalElements }} {{ page.totalElements === 1 ? 'impressão' : 'impressões' }}</span>
-          <span class="history-summary__live"><span class="live-dot" aria-hidden="true"></span> Atualiza sozinho</span>
-        </div>
-      }
-
-      <div class="jobs" [class.jobs--loading]="isLoadingJobs()">
-        @for (job of page.content; track job.id) {
-          <article class="card job job--{{ jobStatus(job.status).tone }}">
-            <div class="job__main">
-              <span class="job__icon material-icons" aria-hidden="true">{{ eventIcon(job.eventType) }}</span>
-              <div class="job__body">
-                <div class="job__head">
-                  <div class="job__title">
-                    @if (job.orderNumber) {
-                      <button type="button" class="job__order" title="Ver todas as impressões deste pedido" (click)="showOrderHistory(job)">Pedido #{{ job.orderNumber }}</button>
-                    } @else {
-                      <strong>{{ eventLabel(job.eventType) }}</strong>
-                    }
-                    @if (job.tableLabel) {
-                      <span class="job__table">{{ job.tableLabel }}</span>
-                    }
-                    @if (job.reprint) {
-                      <span class="chip">Reimpressão</span>
+        <div class="card jobs" [class.jobs--loading]="isLoadingJobs()">
+          @for (group of jobGroups(); track group.day) {
+            <h3 class="jobs__day">{{ group.label }}</h3>
+            @for (job of group.jobs; track job.id) {
+              <article class="job job--{{ jobStatus(job.status).tone }}">
+                <!-- A linha inteira abre os detalhes; a seta é o caminho pelo teclado. -->
+                <div class="job__row" (click)="toggleJobDetails(job)">
+                  <span class="job__time">{{ jobClock(job.createdAt) }}</span>
+                  <div class="job__main">
+                    <div class="job__title">
+                      <span class="job__icon material-icons" aria-hidden="true">{{ eventIcon(job.eventType) }}</span>
+                      @if (job.orderNumber) {
+                        <button type="button" class="job__order" title="Ver todas as impressões deste pedido" (click)="$event.stopPropagation(); showOrderHistory(job)">Pedido #{{ job.orderNumber }}</button>
+                        @if (job.eventType !== 'ORDER_CREATED') {
+                          <span class="job__event">{{ eventLabel(job.eventType) }}</span>
+                        }
+                      } @else {
+                        <strong>{{ eventLabel(job.eventType) }}</strong>
+                      }
+                      @if (job.tableLabel) {
+                        <span class="job__table">{{ job.tableLabel }}</span>
+                      }
+                      @if (job.reprint) {
+                        <span class="chip">Reimpressão</span>
+                      }
+                    </div>
+                    @if (jobSummary(job); as summary) {
+                      <p class="job__summary" [title]="summary">{{ summary }}</p>
                     }
                   </div>
-                  <span class="badge badge--{{ jobStatus(job.status).tone }}">{{ jobStatus(job.status).label }}</span>
+                  <p class="job__place" [title]="jobPlace(job)">{{ jobPlace(job) }}</p>
+                  <span class="job__status badge badge--{{ jobStatus(job.status).tone }}">{{ jobStatus(job.status).label }}</span>
+                  <button type="button" class="job__toggle" [attr.aria-expanded]="expandedJobId() === job.id" [attr.aria-label]="'Detalhes de ' + jobTitle(job)">
+                    <span class="material-icons" aria-hidden="true">{{ expandedJobId() === job.id ? 'expand_less' : 'expand_more' }}</span>
+                  </button>
                 </div>
-                <p class="job__meta">
-                  @if (job.orderNumber && job.eventType !== 'ORDER_CREATED') {
-                    <span>{{ eventLabel(job.eventType) }}</span>
-                  }
-                  <span>{{ jobTime(job.createdAt) }}</span>
-                  <span>{{ job.sectorName || 'Sem setor' }}</span>
-                  <span>{{ job.printerName || 'Sem impressora' }}</span>
-                </p>
-                @if (jobSummary(job); as summary) {
-                  <p class="job__summary" [title]="summary">{{ summary }}</p>
-                }
-              </div>
-            </div>
 
-            @if (jobGuidance(job); as guidance) {
-              <p class="job__guidance job__guidance--{{ jobStatus(job.status).tone }}">{{ guidance }}</p>
-            }
-            @if (jobNotice()?.jobId === job.id) {
-              <p class="job__notice" [class.job__notice--error]="jobNotice()?.type === 'error'" role="status">{{ jobNotice()?.text }}</p>
-            }
+                @if (jobNeedsAttention(job)) {
+                  <div class="job__callout job__callout--{{ jobStatus(job.status).tone }}">
+                    <p>{{ jobGuidance(job) }}</p>
+                    <div class="job__buttons">
+                      @if (job.status === 'ERROR') {
+                        <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === job.id" (click)="confirmCancelJob(job)">Descartar</button>
+                        <button type="button" class="btn btn--primary btn--sm" [disabled]="busyId() === job.id" (click)="jobAction(job, 'retry')">Tentar de novo</button>
+                      } @else {
+                        <button type="button" class="btn btn--primary btn--sm" [disabled]="busyId() === job.id" (click)="jobAction(job, 'reprint')">Reimprimir</button>
+                      }
+                    </div>
+                  </div>
+                }
+                @if (jobNotice()?.jobId === job.id) {
+                  <p class="job__notice" [class.job__notice--error]="jobNotice()?.type === 'error'" role="status">{{ jobNotice()?.text }}</p>
+                }
 
-            @if (expandedJobId() === job.id) {
-              <div class="job__details">
-                <dl class="job__facts">
-                  <div><dt>Tipo</dt><dd>{{ eventLabel(job.eventType) }}</dd></div>
-                  <div><dt>Criado em</dt><dd>{{ dateTime(job.createdAt) }}</dd></div>
-                  <div><dt>Impresso em</dt><dd>{{ dateTime(job.printedAt) }}</dd></div>
-                  <div><dt>Tentativas</dt><dd>{{ job.attempts }}</dd></div>
-                </dl>
-                @if (job.status !== 'UNCONFIRMED') {
-                  <p class="item__line item__line--muted">{{ deliveryHint(job.deliveryState) }}</p>
-                }
-                @if (job.errorMessage && job.status !== 'ERROR') {
-                  <p class="item__line item__line--muted">{{ job.errorMessage }}</p>
-                }
-                @if (job.itemLines.length > 0) {
-                  <ul class="job__lines">
-                    @for (line of job.itemLines; track $index) {
-                      <li>{{ line }}</li>
+                @if (expandedJobId() === job.id) {
+                  <div class="job__details">
+                    @if (!jobNeedsAttention(job) && jobGuidance(job); as guidance) {
+                      <p class="item__line">{{ guidance }}</p>
                     }
-                  </ul>
+                    <dl class="job__facts">
+                      <div><dt>Tipo</dt><dd>{{ eventLabel(job.eventType) }}</dd></div>
+                      <div><dt>Criado em</dt><dd>{{ dateTime(job.createdAt) }}</dd></div>
+                      <div><dt>Impresso em</dt><dd>{{ dateTime(job.printedAt) }}</dd></div>
+                      <div><dt>Tentativas</dt><dd>{{ job.attempts }}</dd></div>
+                    </dl>
+                    @if (job.status !== 'UNCONFIRMED') {
+                      <p class="item__line item__line--muted">{{ deliveryHint(job.deliveryState) }}</p>
+                    }
+                    @if (job.errorMessage && job.status !== 'ERROR') {
+                      <p class="item__line item__line--muted">{{ job.errorMessage }}</p>
+                    }
+                    @if (job.itemLines.length > 0) {
+                      <ul class="job__lines">
+                        @for (line of job.itemLines; track $index) {
+                          <li>{{ line }}</li>
+                        }
+                      </ul>
+                    }
+                    @if (job.status === 'PENDING' || (canReprint(job) && !jobNeedsAttention(job))) {
+                      <div class="job__buttons">
+                        @if (job.status === 'PENDING') {
+                          <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === job.id" (click)="confirmCancelJob(job)">Cancelar</button>
+                        } @else {
+                          <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === job.id" (click)="jobAction(job, 'reprint')">Reimprimir</button>
+                        }
+                      </div>
+                    }
+                  </div>
                 }
-              </div>
+              </article>
             }
+          }
+        </div>
 
-            <div class="job__actions">
-              <button type="button" class="job__toggle" [attr.aria-expanded]="expandedJobId() === job.id" (click)="toggleJobDetails(job)">
-                <span class="material-icons" aria-hidden="true">{{ expandedJobId() === job.id ? 'expand_less' : 'expand_more' }}</span>
-                Detalhes
-              </button>
-              <div class="job__buttons">
-                @if (job.status === 'PENDING') {
-                  <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === job.id" (click)="confirmCancelJob(job)">Cancelar</button>
-                }
-                @if (job.status === 'ERROR') {
-                  <button type="button" class="btn btn--ghost btn--sm" [disabled]="busyId() === job.id" (click)="confirmCancelJob(job)">Descartar</button>
-                  <button type="button" class="btn btn--primary btn--sm" [disabled]="busyId() === job.id" (click)="jobAction(job, 'retry')">Tentar de novo</button>
-                }
-                @if (canReprint(job)) {
-                  <button type="button" class="btn btn--sm" [class.btn--primary]="job.status === 'UNCONFIRMED'" [class.btn--ghost]="job.status !== 'UNCONFIRMED'" [disabled]="busyId() === job.id" (click)="jobAction(job, 'reprint')">Reimprimir</button>
-                }
-              </div>
-            </div>
-          </article>
-        }
-      </div>
-      @if (page.totalPages > 1) {
-        <nav class="pagination" aria-label="Páginas do histórico">
-          <button type="button" class="btn btn--ghost btn--sm" [disabled]="page.page === 0" (click)="changeJobPage(-1, jobsTop)">Anterior</button>
-          <span class="field__hint">Página {{ page.page + 1 }} de {{ page.totalPages }}</span>
-          <button type="button" class="btn btn--ghost btn--sm" [disabled]="page.last" (click)="changeJobPage(1, jobsTop)">Próxima</button>
+        <nav class="pager" aria-label="Páginas do histórico">
+          <span class="pager__range" aria-live="polite">{{ jobRange(page) }}</span>
+          <label class="pager__size">
+            Por página
+            <select class="field__input" [ngModel]="jobPageSize()" (ngModelChange)="selectJobPageSize($event, jobsTop)">
+              @for (size of jobPageSizes; track size) {
+                <option [ngValue]="size">{{ size }}</option>
+              }
+            </select>
+          </label>
+          <div class="pager__pages">
+            <button type="button" class="pager__button" aria-label="Página anterior" [disabled]="page.page === 0" (click)="goToJobPage(page.page - 1, jobsTop)">
+              <span class="material-icons" aria-hidden="true">chevron_left</span>
+            </button>
+            @for (item of jobPageItems(); track $index) {
+              @if (item === null) {
+                <span class="pager__gap pager__number" aria-hidden="true">…</span>
+              } @else {
+                <button type="button" class="pager__button pager__number" [class.pager__button--current]="item === page.page" [attr.aria-current]="item === page.page ? 'page' : null" [attr.aria-label]="'Página ' + (item + 1)" (click)="goToJobPage(item, jobsTop)">{{ item + 1 }}</button>
+              }
+            }
+            <span class="pager__compact">{{ page.page + 1 }} de {{ page.totalPages }}</span>
+            <button type="button" class="pager__button" aria-label="Próxima página" [disabled]="page.last" (click)="goToJobPage(page.page + 1, jobsTop)">
+              <span class="material-icons" aria-hidden="true">chevron_right</span>
+            </button>
+          </div>
         </nav>
       }
       }

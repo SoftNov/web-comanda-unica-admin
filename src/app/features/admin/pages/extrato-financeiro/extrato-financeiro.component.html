@@ -81,6 +81,13 @@
             <span class="stat-card__value">{{ formatCurrency(resumo.recebidoPixComanda) }}</span>
           </div>
         }
+        @if (resumo.recebidoCartaoComanda > 0) {
+          <div class="stat-card">
+            <span class="material-icons stat-card__icon" aria-hidden="true">credit_card</span>
+            <span class="stat-card__label">Cartão no app</span>
+            <span class="stat-card__value">{{ formatCurrency(resumo.recebidoCartaoComanda) }}</span>
+          </div>
+        }
         @if (resumo.recebidoOnline > 0) {
           <div class="stat-card">
             <span class="material-icons stat-card__icon" aria-hidden="true">phone_iphone</span>

@@ -200,6 +200,8 @@ export class ComandasComponent {
         return 'Garçom';
       case 'PIX_COMANDA':
         return 'Pix no app';
+      case 'CARD_COMANDA':
+        return 'Cartão no app';
       default:
         return 'App do cliente (antigo)';
     }
