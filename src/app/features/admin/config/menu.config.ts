@@ -112,6 +112,8 @@ export const ADMIN_MENU_SEGMENTS: MenuSegment[] = [
     label: 'Financeiro',
     items: [
       { label: 'Financeiro', icon: 'payments', route: '/painel/financeiro', roles: ['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'] },
+      { label: 'Vendas para Nota Fiscal', icon: 'request_quote', route: '/painel/vendas-nota-fiscal', roles: ['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'] },
+      { label: 'Dados Fiscais', icon: 'assignment', route: '/painel/configuracoes/dados-fiscais', roles: ['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'] },
       { label: 'Pagamento na Comanda', icon: 'contactless', route: '/painel/configuracoes/pix-comanda', roles: ['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'] },
       { label: 'Assinatura', icon: 'card_membership', route: '/painel/assinatura', roles: ['OWNER', 'COMMERCIAL', 'ADMIN'] },
       {

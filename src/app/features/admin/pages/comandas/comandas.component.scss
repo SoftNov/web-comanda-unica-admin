@@ -405,3 +405,40 @@ select.field__input {
     white-space: nowrap;
   }
 }
+
+/* Forma de pagamento (vira o tPag da nota fiscal) */
+.payment-forms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.payment-form-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--color-border-strong);
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.payment-form-option .material-icons { font-size: 18px; color: var(--color-text-muted); }
+.payment-form-option:hover { border-color: var(--color-accent); }
+.payment-form-option--active { background: var(--color-accent); border-color: var(--color-accent); color: #fff; }
+.payment-form-option--active .material-icons { color: #fff; }
+
+.payment-form-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-bg);
+  color: var(--color-accent);
+  font-size: 0.75rem;
+}

@@ -319,7 +319,12 @@
                 @for (payment of comanda.payments; track payment.id) {
                   <tr>
                     <td>{{ payment.customerName ?? (payment.registeredByUserName ? 'Registrado por ' + payment.registeredByUserName : '—') }}</td>
-                    <td>{{ paymentMethodLabel(payment.method) }}</td>
+                    <td>
+                      {{ paymentMethodLabel(payment.method) }}
+                      @if (paymentFormLabel(payment.paymentForm); as formLabel) {
+                        <small class="payment-form-tag">{{ formLabel }}</small>
+                      }
+                    </td>
                     <td>{{ paymentTypeLabel(payment.type) }}</td>
                     <td>{{ formatCurrency(payment.amount) }}</td>
                     <td>
@@ -341,7 +346,10 @@
       @if (comanda.status === 'OPEN') {
         <section class="comanda-section">
           <h3 class="comanda-section__title">Registrar pagamento</h3>
-          <p class="field__hint">Registre o que o cliente pagou no caixa ou com o garçom (dinheiro, Pix ou maquininha do estabelecimento).</p>
+          <p class="field__hint">Registre o que o cliente pagou no caixa ou com o garçom. A forma de pagamento e o CPF vão para a nota fiscal.</p>
+          @if (comanda.consumerDocument) {
+            <p class="field__hint">CPF/CNPJ na nota: <strong>{{ formatConsumerDocument(comanda.consumerDocument) }}</strong></p>
+          }
 
           <form (submit)="$event.preventDefault(); submitPayment()" novalidate [formGroup]="paymentForm">
             <div class="field__row">
@@ -386,6 +394,48 @@
                   </select>
                 </div>
               </div>
+            </div>
+
+            <div class="field">
+              <span class="field__label" id="payment-form-label">Forma de pagamento</span>
+              <div class="payment-forms" role="radiogroup" aria-labelledby="payment-form-label">
+                @for (option of paymentFormOptions; track option.value) {
+                  <button
+                    type="button"
+                    role="radio"
+                    class="payment-form-option"
+                    [class.payment-form-option--active]="paymentForm.controls.paymentForm.value === option.value"
+                    [attr.aria-checked]="paymentForm.controls.paymentForm.value === option.value"
+                    (click)="selectPaymentForm(option.value)"
+                  >
+                    <span class="material-icons" aria-hidden="true">{{ option.icon }}</span>
+                    {{ option.label }}
+                  </button>
+                }
+              </div>
+              @if (paymentForm.controls.paymentForm.invalid && paymentForm.controls.paymentForm.touched) {
+                <span class="field__error">Escolha como o cliente pagou.</span>
+              }
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="payment-document">CPF ou CNPJ na nota <span class="field__optional">(opcional)</span></label>
+              <div class="field__control">
+                <input
+                  id="payment-document"
+                  type="text"
+                  inputmode="numeric"
+                  autocomplete="off"
+                  class="field__input"
+                  [class.field__input--invalid]="paymentForm.controls.consumerDocument.invalid && paymentForm.controls.consumerDocument.touched"
+                  formControlName="consumerDocument"
+                  placeholder="000.000.000-00"
+                  (input)="onConsumerDocumentInput($event)"
+                >
+              </div>
+              @if (paymentForm.controls.consumerDocument.invalid && paymentForm.controls.consumerDocument.touched) {
+                <span class="field__error">CPF ou CNPJ inválido.</span>
+              }
             </div>
 
             @if (paymentError()) {

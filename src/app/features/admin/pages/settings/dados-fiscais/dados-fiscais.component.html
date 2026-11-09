@@ -1,0 +1,245 @@
+<header class="page-header">
+  <h1 class="page-title">Dados Fiscais</h1>
+  <p class="page-subtitle">
+    O que a NFC-e precisa e o cadastro ainda não tinha: os dados do emitente e a tributação dos produtos. Preencha por
+    categoria e ajuste só os produtos que forem diferentes. Na dúvida, peça os códigos ao seu contador.
+  </p>
+</header>
+
+@if (carregando() && !dados()) {
+  <section class="card"><span class="skeleton skeleton--lg"></span><span class="skeleton"></span><span class="skeleton skeleton--sm"></span></section>
+} @else if (erroCarga()) {
+  <section class="card">
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      <span>{{ erroCarga() }}</span>
+      <button type="button" class="btn btn--ghost btn--sm" (click)="recarregar()">Tentar de novo</button>
+    </div>
+  </section>
+} @else {
+  @if (dados(); as dados) {
+  <!-- Progresso -->
+  <section class="overview" [attr.data-tone]="dados.completude.emitenteCompleto && totalIncompletos() === 0 ? 'ok' : 'warning'">
+    <div class="overview__ring" [style.--p]="progresso()">
+      <span>{{ progresso() }}%</span>
+    </div>
+    <div class="overview__text">
+      @if (dados.completude.emitenteCompleto && totalIncompletos() === 0) {
+        <strong>Tudo pronto para a nota</strong>
+        <span>Emitente e todos os produtos ativos com os dados fiscais. As vendas já saem completas na exportação.</span>
+      } @else {
+        <strong>{{ dados.completude.produtosAtivosCompletos }} de {{ dados.completude.produtosAtivos }} produtos ativos prontos</strong>
+        <span>
+          @if (!dados.completude.emitenteCompleto) { Falta completar o emitente. }
+          @if (totalIncompletos() > 0) { {{ totalIncompletos() }} {{ totalIncompletos() === 1 ? 'produto ainda está' : 'produtos ainda estão' }} sem NCM, CFOP, {{ usaCsosn() ? 'CSOSN' : 'CST' }} ou origem. }
+        </span>
+      }
+    </div>
+    <a class="btn btn--ghost btn--sm" routerLink="/painel/vendas-nota-fiscal">
+      <span class="material-icons" aria-hidden="true">request_quote</span>
+      Vendas para Nota Fiscal
+    </a>
+  </section>
+
+  <!-- Abas -->
+  <nav class="tabs" role="tablist" aria-label="Seções dos dados fiscais">
+    <button type="button" role="tab" class="tab" [class.tab--on]="aba() === 'emitente'" [attr.aria-selected]="aba() === 'emitente'" (click)="irPara('emitente')">
+      <span class="material-icons" aria-hidden="true">storefront</span>
+      Emitente
+      <span class="dot" [attr.data-ok]="dados.completude.emitenteCompleto"></span>
+    </button>
+    <button type="button" role="tab" class="tab" [class.tab--on]="aba() === 'categorias'" [attr.aria-selected]="aba() === 'categorias'" (click)="irPara('categorias')">
+      <span class="material-icons" aria-hidden="true">category</span>
+      Por categoria
+      <span class="count">{{ dados.categorias.length }}</span>
+    </button>
+    <button type="button" role="tab" class="tab" [class.tab--on]="aba() === 'produtos'" [attr.aria-selected]="aba() === 'produtos'" (click)="irPara('produtos')">
+      <span class="material-icons" aria-hidden="true">inventory_2</span>
+      Por produto
+      @if (totalIncompletos() > 0) { <span class="count count--warn">{{ totalIncompletos() }}</span> }
+    </button>
+  </nav>
+
+  <!-- Emitente -->
+  @if (aba() === 'emitente') {
+    <section class="card">
+      <dl class="facts">
+        <div><dt>Razão social</dt><dd>{{ dados.emitente.razaoSocial || dados.emitente.nomeFantasia }}</dd></div>
+        <div><dt>CNPJ</dt><dd class="mono">{{ cnpj(dados.emitente.cnpj) }}</dd></div>
+        <div><dt>Município</dt><dd>{{ dados.emitente.municipio || '—' }}{{ dados.emitente.uf ? '/' + dados.emitente.uf : '' }} · {{ cep(dados.emitente.cep) }}</dd></div>
+      </dl>
+      <p class="hint">Razão social, CNPJ e endereço vêm do cadastro do estabelecimento.</p>
+
+      <form class="emitter" (submit)="$event.preventDefault(); salvarEmitente()" novalidate>
+        <div class="emitter__field">
+          <label class="label" for="ie">Inscrição estadual</label>
+          <div class="row">
+            <input id="ie" class="input mono" inputmode="numeric" [value]="ie()" [disabled]="ieIsento()" placeholder="Só números" (input)="onIeInput($event)" />
+            <button type="button" class="toggle" role="switch" [attr.aria-checked]="ieIsento()" (click)="toggleIsento()">
+              <span class="toggle__track"><span class="toggle__thumb"></span></span>
+              Isento
+            </button>
+          </div>
+          <small class="hint">Está no cartão do CNPJ ou no cadastro da SEFAZ do seu estado.</small>
+        </div>
+
+        <div class="emitter__field">
+          <span class="label" id="regime-label">Regime tributário</span>
+          <div class="regimes" role="radiogroup" aria-labelledby="regime-label">
+            @for (r of regimes; track r.valor) {
+              <button type="button" role="radio" class="regime" [class.regime--on]="regime() === r.valor" [attr.aria-checked]="regime() === r.valor" (click)="onRegimeChange(r.valor)">
+                <strong>{{ r.rotulo }}</strong>
+                <small>{{ r.dica }}</small>
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="emitter__field">
+          <label class="label" for="ibge">Código IBGE do município</label>
+          <div class="row">
+            <input id="ibge" class="input mono" inputmode="numeric" maxlength="7" [value]="ibge()" placeholder="7 dígitos" (input)="onIbgeInput($event)" />
+            <button type="button" class="btn btn--ghost btn--sm" appRipple (click)="buscarIbge()" [disabled]="buscandoIbge()">
+              <span class="material-icons" aria-hidden="true">travel_explore</span>
+              {{ buscandoIbge() ? 'Buscando…' : 'Buscar pelo CEP' }}
+            </button>
+          </div>
+          @if (avisoIbge()) { <small class="hint hint--warn">{{ avisoIbge() }}</small> }
+        </div>
+
+        @if (erroEmitente()) {
+          <div class="form-alert form-alert--error" role="alert">
+            <span class="material-icons" aria-hidden="true">error_outline</span>
+            <span>{{ erroEmitente() }}</span>
+          </div>
+        }
+        <div class="emitter__actions">
+          @if (okEmitente() && !emitenteAlterado()) {
+            <span class="saved"><span class="material-icons" aria-hidden="true">check_circle</span> Salvo</span>
+          }
+          <button type="submit" class="btn btn--primary" appRipple [disabled]="salvandoEmitente() || !emitenteAlterado()">
+            {{ salvandoEmitente() ? 'Salvando…' : 'Salvar emitente' }}
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  <!-- Categorias -->
+  @if (aba() === 'categorias') {
+    <section class="card">
+      <p class="hint hint--block">
+        O padrão da categoria vale para todos os produtos dela. Normalmente basta preencher aqui: bebidas com ST, pratos
+        de produção própria, sobremesas…
+      </p>
+      @if (dados.categorias.length === 0) {
+        <div class="empty"><span class="material-icons" aria-hidden="true">category</span><p>Nenhuma categoria no cardápio.</p></div>
+      }
+      <ul class="list">
+        @for (categoria of dados.categorias; track categoria.id) {
+          <li class="entry" [class.entry--open]="editandoId() === categoria.id">
+            <button type="button" class="entry__row" (click)="editar(categoria.id)" [attr.aria-expanded]="editandoId() === categoria.id">
+              <span class="entry__main">
+                <strong>{{ categoria.nome }}</strong>
+                <small>
+                  @if (faltando(categoria.fiscal).length === 0) {
+                    NCM {{ ncm(categoria.fiscal.ncm) }} · CFOP {{ categoria.fiscal.cfop }} · {{ usaCsosn() ? 'CSOSN' : 'CST' }} {{ categoria.fiscal.csosnCst }}
+                  } @else {
+                    Sem padrão: {{ faltando(categoria.fiscal).join(', ') }}
+                  }
+                </small>
+              </span>
+              <span class="meter" [title]="categoria.produtosCompletos + ' de ' + categoria.quantidadeProdutos + ' produtos completos'">
+                <span class="meter__bar"><span [style.width.%]="categoria.quantidadeProdutos ? (categoria.produtosCompletos / categoria.quantidadeProdutos) * 100 : 0"></span></span>
+                <small>{{ categoria.produtosCompletos }}/{{ categoria.quantidadeProdutos }}</small>
+              </span>
+              @if (salvoId() === categoria.id) {
+                <span class="saved"><span class="material-icons" aria-hidden="true">check_circle</span></span>
+              }
+              <span class="material-icons entry__chevron" aria-hidden="true">expand_more</span>
+            </button>
+            @if (editandoId() === categoria.id) {
+              <div class="entry__form">
+                <app-fiscal-fields-form
+                  [valor]="categoria.fiscal"
+                  [usaCsosn]="usaCsosn()"
+                  [salvando]="salvandoId() === categoria.id"
+                  [erro]="erroEdicao()"
+                  rotuloSalvar="Salvar padrão da categoria"
+                  (salvar)="salvarCategoria(categoria, $event)"
+                  (cancelar)="editar(categoria.id)"
+                />
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+
+  <!-- Produtos -->
+  @if (aba() === 'produtos') {
+    <section class="card">
+      <div class="toolbar">
+        <div class="search">
+          <span class="material-icons" aria-hidden="true">search</span>
+          <input type="search" placeholder="Buscar produto, código ou categoria" [value]="busca()" (input)="busca.set($any($event.target).value)" />
+        </div>
+        <div class="filters" role="group" aria-label="Filtrar produtos">
+          <button type="button" class="filter" [class.filter--on]="filtro() === 'incompletos'" (click)="filtro.set('incompletos')">Incompletos ({{ totalIncompletos() }})</button>
+          <button type="button" class="filter" [class.filter--on]="filtro() === 'excecoes'" (click)="filtro.set('excecoes')">Com exceção</button>
+          <button type="button" class="filter" [class.filter--on]="filtro() === 'todos'" (click)="filtro.set('todos')">Todos ({{ dados.produtos.length }})</button>
+        </div>
+      </div>
+
+      @if (produtosFiltrados().length === 0) {
+        <div class="empty">
+          <span class="material-icons" aria-hidden="true">{{ filtro() === 'incompletos' ? 'task_alt' : 'inventory_2' }}</span>
+          <p>{{ filtro() === 'incompletos' && !busca() ? 'Nenhum produto ativo incompleto.' : 'Nenhum produto encontrado.' }}</p>
+        </div>
+      }
+
+      <ul class="list">
+        @for (produto of produtosFiltrados(); track produto.id) {
+          <li class="entry" [class.entry--open]="editandoId() === produto.id" [class.entry--inactive]="!produto.ativo">
+            <button type="button" class="entry__row" (click)="editar(produto.id)" [attr.aria-expanded]="editandoId() === produto.id">
+              <span class="entry__main">
+                <strong>{{ produto.nome }} @if (!produto.ativo) { <em class="muted">· inativo</em> }</strong>
+                <small>{{ produto.categoriaNome || 'Sem categoria' }}@if (produto.codigo) { · <span class="mono">{{ produto.codigo }}</span> }</small>
+              </span>
+              <span class="codes">
+                <span class="code" [class.code--own]="!!produto.proprio.ncm" title="NCM">{{ ncm(produto.efetivo.ncm) }}</span>
+                <span class="code" [class.code--own]="!!produto.proprio.cfop" title="CFOP">{{ produto.efetivo.cfop || '—' }}</span>
+                <span class="code" [class.code--own]="!!produto.proprio.csosnCst" [title]="usaCsosn() ? 'CSOSN' : 'CST'">{{ produto.efetivo.csosnCst || '—' }}</span>
+              </span>
+              @if (salvoId() === produto.id) {
+                <span class="saved"><span class="material-icons" aria-hidden="true">check_circle</span></span>
+              } @else {
+                <span class="status" [attr.data-ok]="produto.completo">
+                  {{ produto.completo ? (temExcecao(produto) ? 'Exceção' : 'Da categoria') : 'Falta ' + faltando(produto.efetivo).join(', ') }}
+                </span>
+              }
+              <span class="material-icons entry__chevron" aria-hidden="true">expand_more</span>
+            </button>
+            @if (editandoId() === produto.id) {
+              <div class="entry__form">
+                <p class="hint hint--block">Preencha só o que for diferente da categoria. Campo em branco usa o padrão dela.</p>
+                <app-fiscal-fields-form
+                  [valor]="produto.proprio"
+                  [herdado]="categoriaFiscal(produto)"
+                  [usaCsosn]="usaCsosn()"
+                  [salvando]="salvandoId() === produto.id"
+                  [erro]="erroEdicao()"
+                  rotuloSalvar="Salvar produto"
+                  (salvar)="salvarProduto(produto, $event)"
+                  (cancelar)="editar(produto.id)"
+                />
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    </section>
+  }
+  }
+}

@@ -1,0 +1,114 @@
+<form class="fiscal-form" (submit)="$event.preventDefault(); enviar()" novalidate>
+  <div class="grid">
+    <label class="f">
+      <span class="f__label">NCM</span>
+      <input
+        class="f__input mono"
+        inputmode="numeric"
+        maxlength="10"
+        [value]="campos().ncm ?? ''"
+        [placeholder]="placeholder('ncm', 'Ex.: 2202.10.00')"
+        [class.f__input--invalid]="invalidos().ncm"
+        (input)="onInput('ncm', $event)"
+      />
+      @if (invalidos().ncm) { <small class="f__error">{{ invalidos().ncm }}</small> }
+      @else { <small class="f__hint">Classificação do produto (8 dígitos).</small> }
+    </label>
+
+    <label class="f">
+      <span class="f__label">CFOP</span>
+      <input
+        class="f__input mono"
+        inputmode="numeric"
+        maxlength="5"
+        [value]="campos().cfop ?? ''"
+        [placeholder]="placeholder('cfop', 'Ex.: 5102')"
+        [class.f__input--invalid]="invalidos().cfop"
+        (input)="onInput('cfop', $event)"
+      />
+      @if (invalidos().cfop) { <small class="f__error">{{ invalidos().cfop }}</small> }
+      <span class="chips">
+        @for (s of sugestoesCfop; track s.valor) {
+          <button type="button" class="chip" [class.chip--on]="campos().cfop === s.valor" (click)="set('cfop', s.valor)">{{ s.rotulo }}</button>
+        }
+      </span>
+    </label>
+
+    <label class="f">
+      <span class="f__label">{{ rotuloSituacao() }}</span>
+      <input
+        class="f__input mono"
+        inputmode="numeric"
+        maxlength="3"
+        [value]="campos().csosnCst ?? ''"
+        [placeholder]="placeholder('csosnCst', usaCsosn() ? 'Ex.: 102' : 'Ex.: 00')"
+        [class.f__input--invalid]="invalidos().csosnCst"
+        (input)="onInput('csosnCst', $event)"
+      />
+      @if (invalidos().csosnCst) { <small class="f__error">{{ invalidos().csosnCst }}</small> }
+      <span class="chips">
+        @for (s of sugestoesSituacao(); track s.valor) {
+          <button type="button" class="chip" [class.chip--on]="campos().csosnCst === s.valor" (click)="set('csosnCst', s.valor)">{{ s.rotulo }}</button>
+        }
+      </span>
+    </label>
+
+    <label class="f">
+      <span class="f__label">Origem</span>
+      <select class="f__input" [value]="campos().origem ?? ''" (change)="onInput('origem', $event)">
+        <option value="">{{ herdado()?.origem ? 'Herda da categoria: ' + herdado()?.origem : 'Selecione' }}</option>
+        @for (o of origens; track o.valor) {
+          <option [value]="o.valor">{{ o.rotulo }}</option>
+        }
+      </select>
+    </label>
+
+    <label class="f">
+      <span class="f__label">CEST <em>(se houver ST)</em></span>
+      <input
+        class="f__input mono"
+        inputmode="numeric"
+        maxlength="9"
+        [value]="campos().cest ?? ''"
+        [placeholder]="placeholder('cest', 'Ex.: 03.002.00')"
+        [class.f__input--invalid]="invalidos().cest"
+        (input)="onInput('cest', $event)"
+      />
+      @if (invalidos().cest) { <small class="f__error">{{ invalidos().cest }}</small> }
+    </label>
+
+    <label class="f">
+      <span class="f__label">Unidade</span>
+      <input
+        class="f__input mono"
+        maxlength="6"
+        [value]="campos().unidade ?? ''"
+        [placeholder]="placeholder('unidade', 'UN')"
+        (input)="onInput('unidade', $event)"
+      />
+      <span class="chips">
+        @for (s of sugestoesUnidade; track s.valor) {
+          <button type="button" class="chip" [class.chip--on]="campos().unidade === s.valor" (click)="set('unidade', s.valor)">{{ s.rotulo }}</button>
+        }
+      </span>
+    </label>
+  </div>
+
+  @if (erro()) {
+    <div class="form-alert form-alert--error" role="alert">
+      <span class="material-icons" aria-hidden="true">error_outline</span>
+      <span>{{ erro() }}</span>
+    </div>
+  }
+
+  <div class="actions">
+    <button type="button" class="btn btn--ghost btn--sm" (click)="limpar()">
+      {{ herdado() ? 'Limpar (herdar tudo)' : 'Limpar' }}
+    </button>
+    <span class="actions__spacer"></span>
+    <button type="button" class="btn btn--ghost btn--sm" (click)="cancelar.emit()">Cancelar</button>
+    <button type="submit" class="btn btn--primary btn--sm" [disabled]="salvando() || temErro()">
+      {{ salvando() ? 'Salvando…' : rotuloSalvar() }}
+    </button>
+  </div>
+</form>

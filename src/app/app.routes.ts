@@ -146,6 +146,20 @@ export const routes: Routes = [
         title: 'Extrato Financeiro — Comanda Única'
       },
       {
+        path: 'vendas-nota-fiscal',
+        canActivate: [profileOrPlatformAdminGuard(['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'])],
+        loadComponent: () =>
+          import('./features/admin/pages/vendas-nota-fiscal/vendas-nota-fiscal.component').then((m) => m.VendasNotaFiscalComponent),
+        title: 'Vendas para Nota Fiscal — Comanda Única'
+      },
+      {
+        path: 'configuracoes/dados-fiscais',
+        canActivate: [profileGuard(['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'])],
+        loadComponent: () =>
+          import('./features/admin/pages/settings/dados-fiscais/dados-fiscais.component').then((m) => m.DadosFiscaisComponent),
+        title: 'Dados Fiscais — Comanda Única'
+      },
+      {
         path: 'cobrancas-plataforma',
         canActivate: [platformAdminGuard],
         loadComponent: () =>

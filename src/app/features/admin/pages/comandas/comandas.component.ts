@@ -7,6 +7,7 @@ import {
   ComandaDisplayStatus,
   ComandaOrderResponse,
   ComandaOrderStatus,
+  ComandaPaymentForm,
   ComandaPaymentMethod,
   ComandaPaymentType,
   ComandaResponse,
@@ -17,7 +18,15 @@ import {
 import { RestaurantTableResponse, TablesService } from '../../../../shared/services/tables.service';
 import { RippleDirective } from '../../../../shared/directives/ripple.directive';
 import { autoDismiss } from '../../../../shared/utils/auto-dismiss.util';
-import { formatCurrencyInput, parseCurrencyInput } from '../../../../shared/utils/br-format.util';
+import {
+  formatCNPJ,
+  formatCPF,
+  formatCurrencyInput,
+  isValidCNPJ,
+  isValidCPF,
+  onlyDigits,
+  parseCurrencyInput
+} from '../../../../shared/utils/br-format.util';
 import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
 import { AuthService } from '../../../auth/services/auth.service';
 
@@ -29,6 +38,26 @@ type StatusFilter = 'all' | ComandaStatus;
 function positiveCurrencyValidator(control: AbstractControl<string>): ValidationErrors | null {
   const amount = parseCurrencyInput(control.value);
   return control.value && (amount == null || amount <= 0) ? { min: true } : null;
+}
+
+// Forma real do pagamento no caixa/garçom — vira o tPag da nota fiscal (ver vendas-nota-fiscal.md).
+const PAYMENT_FORM_OPTIONS: { value: ComandaPaymentForm; label: string; icon: string }[] = [
+  { value: 'CASH', label: 'Dinheiro', icon: 'payments' },
+  { value: 'PIX', label: 'Pix', icon: 'qr_code_2' },
+  { value: 'DEBIT_CARD', label: 'Débito', icon: 'credit_card' },
+  { value: 'CREDIT_CARD', label: 'Crédito', icon: 'credit_score' },
+  { value: 'MEAL_VOUCHER', label: 'Vale-refeição', icon: 'restaurant' },
+  { value: 'FOOD_VOUCHER', label: 'Vale-alimentação', icon: 'shopping_basket' },
+  { value: 'OTHER', label: 'Outro', icon: 'more_horiz' }
+];
+
+// CPF/CNPJ na nota: vazio é válido; preenchido precisa ser um CPF ou CNPJ válido.
+function consumerDocumentValidator(control: AbstractControl<string>): ValidationErrors | null {
+  const digits = onlyDigits(control.value);
+  if (!digits) return null;
+  if (digits.length === 11 && isValidCPF(digits)) return null;
+  if (digits.length === 14 && isValidCNPJ(digits)) return null;
+  return { consumerDocument: true };
 }
 
 @Component({
@@ -84,8 +113,13 @@ export class ComandasComponent {
   readonly paymentForm = this.fb.nonNullable.group({
     // Texto mascarado em BRL ("R$ 12,34", ver formatCurrencyInput) — convertido para número só no envio.
     amount: this.fb.nonNullable.control('', [Validators.required, positiveCurrencyValidator]),
-    method: this.fb.nonNullable.control<ManualComandaPaymentMethod>('CASH_REGISTER', Validators.required)
+    method: this.fb.nonNullable.control<ManualComandaPaymentMethod>('CASH_REGISTER', Validators.required),
+    // Sem valor inicial de propósito: a equipe precisa escolher (vira o tPag da nota fiscal).
+    paymentForm: this.fb.control<ComandaPaymentForm | null>(null, Validators.required),
+    // CPF/CNPJ na nota — opcional, mascarado na digitação.
+    consumerDocument: this.fb.nonNullable.control('', consumerDocumentValidator)
   });
+  readonly paymentFormOptions = PAYMENT_FORM_OPTIONS;
   readonly isSubmittingPayment = signal(false);
   readonly paymentError = signal<string | null>(null);
 
@@ -190,6 +224,26 @@ export class ComandasComponent {
       default:
         return 'Parcial';
     }
+  }
+
+  paymentFormLabel(form: ComandaPaymentForm | null | undefined): string | null {
+    return form ? (PAYMENT_FORM_OPTIONS.find((option) => option.value === form)?.label ?? form) : null;
+  }
+
+  selectPaymentForm(form: ComandaPaymentForm): void {
+    this.paymentForm.controls.paymentForm.setValue(form);
+    this.paymentForm.controls.paymentForm.markAsTouched();
+  }
+
+  onConsumerDocumentInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digits = onlyDigits(input.value).slice(0, 14);
+    this.paymentForm.controls.consumerDocument.setValue(digits.length > 11 ? formatCNPJ(digits) : formatCPF(digits));
+  }
+
+  formatConsumerDocument(document: string | null | undefined): string {
+    if (!document) return '';
+    return document.length > 11 ? formatCNPJ(document) : formatCPF(document);
   }
 
   paymentMethodLabel(method: ComandaPaymentMethod): string {
@@ -318,7 +372,7 @@ export class ComandasComponent {
     this.paymentError.set(null);
     this.finalizeError.set(null);
     this.statusForm.reset({ status: comanda.status === 'CLOSED' ? 'OPEN' : 'CLOSED' });
-    this.paymentForm.reset({ amount: '', method: 'CASH_REGISTER' });
+    this.paymentForm.reset({ amount: '', method: 'CASH_REGISTER', paymentForm: null, consumerDocument: '' });
     this.selectedComanda.set(comanda);
   }
 
@@ -404,11 +458,17 @@ export class ComandasComponent {
     this.paymentError.set(null);
 
     this.comandasService
-      .registerPayment(comanda.id, { amount: parseCurrencyInput(value.amount) ?? 0, method: value.method })
+      .registerPayment(comanda.id, {
+        amount: parseCurrencyInput(value.amount) ?? 0,
+        method: value.method,
+        paymentForm: value.paymentForm as ComandaPaymentForm,
+        consumerDocument: onlyDigits(value.consumerDocument) || null
+      })
       .subscribe({
         next: (updated) => {
           this.isSubmittingPayment.set(false);
-          this.paymentForm.reset({ amount: '', method: 'CASH_REGISTER' });
+          // Mantém o CPF digitado: o próximo pagamento parcial da mesma comanda costuma ser da mesma nota.
+          this.paymentForm.reset({ amount: '', method: value.method, paymentForm: null, consumerDocument: value.consumerDocument });
           this.applyUpdatedComanda(updated);
         },
         error: (error: HttpErrorResponse) => {

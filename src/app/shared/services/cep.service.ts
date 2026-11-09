@@ -9,6 +9,8 @@ export interface CepAddress {
   neighborhood: string;
   city: string;
   state: string;
+  // Código IBGE do município (7 dígitos), quando a ViaCEP informar — usado em Dados Fiscais.
+  ibgeCode?: string | null;
 }
 
 // Resposta do nosso backend (GET /api/v1/cep/{cep} — ver CepController na api-comanda-unica-admin),
@@ -19,6 +21,8 @@ interface CepAddressResponse {
   neighborhood: string;
   city: string;
   state: string;
+  // Código IBGE do município (7 dígitos), quando a ViaCEP informar — usado em Dados Fiscais.
+  ibgeCode?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

@@ -22,6 +22,8 @@ export type ComandaPaymentMethod = 'ONLINE' | 'CASH_REGISTER' | 'CASH_WAITER' | 
 // Métodos aceitos para registro (ver ComandaApi#registerPayment no backend) — ONLINE só existe em
 // pagamentos antigos, de quando o cardápio processava pagamentos.
 export type ManualComandaPaymentMethod = Extract<ComandaPaymentMethod, 'CASH_REGISTER' | 'CASH_WAITER'>;
+// Forma real do pagamento manual — espelha FiscalPaymentForm do backend; vira o tPag da nota fiscal.
+export type ComandaPaymentForm = 'CASH' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'PIX' | 'MEAL_VOUCHER' | 'FOOD_VOUCHER' | 'OTHER';
 
 export interface ComandaOrderItemResponse {
   itemName: string;
@@ -42,6 +44,8 @@ export interface ComandaPaymentResponse {
   customerName?: string;
   type: ComandaPaymentType;
   method: ComandaPaymentMethod;
+  // Forma real (dinheiro, cartão, Pix...) — só nos pagamentos manuais registrados depois dela existir.
+  paymentForm?: ComandaPaymentForm | null;
   registeredByUserId?: string;
   registeredByUserName?: string;
   amount: number;
@@ -70,6 +74,8 @@ export interface ComandaResponse {
   // Nome do responsável pela reserva que originou esta comanda (check-in por CPF no QR Code) —
   // ausente quando aberta pelo fluxo normal de checkout, sem reserva envolvida.
   guestName?: string;
+  // CPF/CNPJ (só dígitos) para sair na nota fiscal.
+  consumerDocument?: string | null;
   // Preenchidos só na comanda individual de um Passe de Consumo (cartão com QR Code).
   consumptionPassId?: string;
   consumptionPassToken?: string;
@@ -110,6 +116,9 @@ export interface UpdateComandaStatusRequest {
 export interface RegisterComandaPaymentRequest {
   amount: number;
   method: ManualComandaPaymentMethod;
+  paymentForm: ComandaPaymentForm;
+  // Opcional — CPF ou CNPJ para sair na nota.
+  consumerDocument?: string | null;
 }
 
 export interface ApiErrorResponse {

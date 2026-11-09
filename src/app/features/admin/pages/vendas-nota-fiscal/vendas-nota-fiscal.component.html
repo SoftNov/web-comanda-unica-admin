@@ -1,0 +1,407 @@
+<header class="page-header">
+  <div>
+    <h1 class="page-title">Vendas para Nota Fiscal</h1>
+    <p class="page-subtitle">
+      Cada comanda encerrada vira uma venda no formato da NFC-e: itens, descontos, formas de pagamento e totais.
+      Exporte a planilha para o contador ou o arquivo para importar num emissor.
+    </p>
+  </div>
+</header>
+
+<!-- Estabelecimento -->
+<section class="card company">
+  @if (isPlatformAdmin()) {
+    <label class="field-label" for="company-search">Estabelecimento</label>
+    <div class="company__search">
+      <input
+        id="company-search"
+        class="field-input"
+        type="text"
+        placeholder="Buscar estabelecimento por nome…"
+        [value]="companySearchTerm()"
+        (input)="onCompanySearchTermChange($any($event.target).value)"
+        (keyup.enter)="searchCompanies()"
+      />
+      <button type="button" class="btn btn--ghost" appRipple (click)="searchCompanies()">
+        <span class="material-icons" aria-hidden="true">search</span>
+        Buscar
+      </button>
+    </div>
+    @if (isSearchingCompanies()) {
+      <p class="hint">Buscando…</p>
+    } @else if (companySearchResults().length > 0) {
+      <ul class="company__results">
+        @for (company of companySearchResults(); track company.companyId) {
+          <li><button type="button" (click)="selectCompanyFromSearch(company)">{{ company.companyName }}</button></li>
+        }
+      </ul>
+    }
+  } @else if (myCompanies().length > 1) {
+    <label class="field-label" for="company-select">Estabelecimento</label>
+    <select id="company-select" class="field-input" [value]="selectedCompanyId()" (change)="onMyCompanyChange($any($event.target).value)">
+      @for (company of myCompanies(); track company.companyId) {
+        <option [value]="company.companyId">{{ company.companyName }}</option>
+      }
+    </select>
+  }
+
+  @if (emitente(); as emitente) {
+    <dl class="issuer">
+      <div>
+        <dt>Emitente</dt>
+        <dd>{{ emitente.razaoSocial || emitente.nomeFantasia }}</dd>
+      </div>
+      <div>
+        <dt>CNPJ</dt>
+        <dd class="mono">{{ formatCnpj(emitente.cnpj) }}</dd>
+      </div>
+      <div>
+        <dt>Inscrição estadual</dt>
+        <dd [class.missing]="!emitente.inscricaoEstadual">{{ emitente.inscricaoEstadual || 'Não cadastrada' }}</dd>
+      </div>
+      <div>
+        <dt>Regime</dt>
+        <dd [class.missing]="!emitente.regimeTributario">{{ regimeLabel(emitente.regimeTributario) }}</dd>
+      </div>
+      @if (emitente.endereco; as endereco) {
+        <div class="issuer__address">
+          <dt>Endereço</dt>
+          <dd>
+            {{ endereco.logradouro }}, {{ endereco.numero }}@if (endereco.complemento) { — {{ endereco.complemento }} } ·
+            {{ endereco.bairro }} · {{ endereco.municipio }}/{{ endereco.uf }} · {{ formatCep(endereco.cep) }}
+          </dd>
+        </div>
+      }
+    </dl>
+  } @else if (selectedCompanyName() && !isPlatformAdmin() && myCompanies().length <= 1) {
+    <p class="hint">Estabelecimento: <strong>{{ selectedCompanyName() }}</strong></p>
+  }
+</section>
+
+@if (!hasCompany()) {
+  <section class="card empty">
+    <span class="material-icons empty__icon" aria-hidden="true">storefront</span>
+    <p>Selecione um estabelecimento para ver as vendas.</p>
+  </section>
+} @else {
+  <!-- Período e exportação -->
+  <section class="card toolbar">
+    <div class="toolbar__period">
+      <div class="presets" role="group" aria-label="Período">
+        @for (preset of periodPresets; track preset.id) {
+          <button
+            type="button"
+            class="preset"
+            [class.preset--active]="activePresetId() === preset.id"
+            [attr.aria-pressed]="activePresetId() === preset.id"
+            (click)="applyPreset(preset.id)"
+          >
+            {{ preset.label }}
+          </button>
+        }
+      </div>
+      <div class="dates">
+        <label>
+          <span>De</span>
+          <input type="date" class="field-input" [value]="startDate()" [max]="endDate()" (change)="onCustomStartDateChange($any($event.target).value)" />
+        </label>
+        <label>
+          <span>Até</span>
+          <input type="date" class="field-input" [value]="endDate()" [min]="startDate()" [max]="today" (change)="onCustomEndDateChange($any($event.target).value)" />
+        </label>
+        <button type="button" class="btn btn--ghost btn--icon" appRipple (click)="refresh()" [disabled]="isLoading()" aria-label="Atualizar" title="Atualizar">
+          <span class="material-icons" [class.spin]="isLoading()" aria-hidden="true">refresh</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="exports">
+      <button type="button" class="export" appRipple (click)="export('csv')" [disabled]="!!exportingFormat() || !hasSales()">
+        <span class="material-icons export__icon" aria-hidden="true">table_view</span>
+        <span class="export__text">
+          <strong>{{ exportingFormat() === 'csv' ? 'Gerando planilha…' : 'Planilha para o contador' }}</strong>
+          <small>CSV · uma linha por item, abre no Excel</small>
+        </span>
+        <span class="material-icons export__arrow" aria-hidden="true">download</span>
+      </button>
+      <button type="button" class="export" appRipple (click)="export('json')" [disabled]="!!exportingFormat() || !hasSales()">
+        <span class="material-icons export__icon" aria-hidden="true">data_object</span>
+        <span class="export__text">
+          <strong>{{ exportingFormat() === 'json' ? 'Gerando arquivo…' : 'Arquivo para integração' }}</strong>
+          <small>JSON · layout NFC-e para emissor ou API</small>
+        </span>
+        <span class="material-icons export__arrow" aria-hidden="true">download</span>
+      </button>
+    </div>
+    @if (exportError()) {
+      <div class="form-alert form-alert--error" role="alert">
+        <span class="material-icons" aria-hidden="true">error_outline</span>
+        <span>{{ exportError() }}</span>
+      </div>
+    }
+  </section>
+
+  <!-- Resumo -->
+  <section class="kpis" aria-label="Resumo do período">
+    @if (resumo(); as resumo) {
+      <div class="kpi">
+        <span class="kpi__label">Vendas</span>
+        <strong class="kpi__value">{{ resumo.quantidadeVendas }}</strong>
+        <span class="kpi__hint">comandas encerradas</span>
+      </div>
+      <div class="kpi">
+        <span class="kpi__label">Valor em produtos</span>
+        <strong class="kpi__value">{{ formatCurrency(resumo.valorProdutos) }}</strong>
+        <span class="kpi__hint">soma dos itens consumidos</span>
+      </div>
+      <div class="kpi">
+        <span class="kpi__label">Recebido</span>
+        <strong class="kpi__value">{{ formatCurrency(resumo.valorRecebido) }}</strong>
+        <span class="kpi__hint">pagamentos dessas vendas</span>
+      </div>
+      <div class="kpi" [attr.data-tone]="resumo.vendasComFormaAConfirmar > 0 ? 'warning' : 'ok'">
+        <span class="kpi__label">Forma a confirmar</span>
+        <strong class="kpi__value">{{ resumo.vendasComFormaAConfirmar }}</strong>
+        <span class="kpi__hint">{{ resumo.vendasComFormaAConfirmar > 0 ? 'vendas pagas no caixa/garçom' : 'todas identificadas' }}</span>
+      </div>
+
+      @if (resumo.porForma.length > 0) {
+        <div class="methods">
+          @for (forma of resumo.porForma; track forma.origem) {
+            <div class="method" [class.method--unknown]="!forma.formaPagamento">
+              <span class="material-icons" aria-hidden="true">{{ paymentIcon(forma) }}</span>
+              <span class="method__name">{{ forma.descricao }}</span>
+              <span class="tpag" [class.tpag--unknown]="!forma.formaPagamento" title="Código tPag da NFC-e">
+                {{ forma.formaPagamento ? 'tPag ' + forma.formaPagamento : 'tPag ?' }}
+              </span>
+              <strong>{{ formatCurrency(forma.valor) }}</strong>
+            </div>
+          }
+        </div>
+      }
+    } @else if (isLoading()) {
+      @for (row of [1, 2, 3, 4]; track row) {
+        <div class="kpi kpi--skeleton"><span class="skeleton skeleton--sm"></span><span class="skeleton skeleton--lg"></span></div>
+      }
+    }
+  </section>
+
+  <!-- Prontidão para emissão -->
+  @if (avisos().length > 0) {
+    <section class="card readiness">
+      <button type="button" class="readiness__head" (click)="toggleAvisos()" [attr.aria-expanded]="showAvisos()">
+        <span class="material-icons readiness__icon" aria-hidden="true">fact_check</span>
+        <span class="readiness__title">
+          <strong>Antes de emitir</strong>
+          <small>{{ avisos().length }} {{ avisos().length === 1 ? 'ponto' : 'pontos' }} para a nota sair completa</small>
+        </span>
+        <span class="material-icons readiness__chevron" [class.readiness__chevron--open]="showAvisos()" aria-hidden="true">expand_more</span>
+      </button>
+      @if (showAvisos()) {
+        <ul class="readiness__list">
+          @for (aviso of avisos(); track aviso.codigo) {
+            <li [attr.data-code]="aviso.codigo">
+              <span class="material-icons" aria-hidden="true">{{ avisoIcon(aviso) }}</span>
+              <span>{{ aviso.mensagem }}</span>
+              @if (avisoLinksToSettings(aviso)) {
+                <a class="readiness__link" routerLink="/painel/configuracoes/dados-fiscais">Completar</a>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </section>
+  }
+
+  <!-- Vendas -->
+  <section class="card sales">
+    <div class="sales__head">
+      <div>
+        <h2 class="sales__title">Vendas do período</h2>
+        <p class="hint">
+          {{ totalVendas() }} {{ totalVendas() === 1 ? 'venda' : 'vendas' }} · mais recentes primeiro. Toque numa venda para ver a prévia da nota.
+        </p>
+      </div>
+      @if (vendas().length > 0) {
+        <button type="button" class="chip" [class.chip--active]="onlyPending()" (click)="toggleOnlyPending()" [attr.aria-pressed]="onlyPending()">
+          <span class="material-icons" aria-hidden="true">{{ onlyPending() ? 'check_box' : 'check_box_outline_blank' }}</span>
+          Só para revisar ({{ pendingLoaded() }})
+        </button>
+      }
+    </div>
+
+    @if (loadError()) {
+      <div class="form-alert form-alert--error" role="alert">
+        <span class="material-icons" aria-hidden="true">error_outline</span>
+        <span>{{ loadError() }}</span>
+        <button type="button" class="btn btn--ghost btn--sm" (click)="refresh()">Tentar de novo</button>
+      </div>
+    } @else if (isLoading()) {
+      <ul class="sale-list" aria-hidden="true">
+        @for (row of skeletonRows; track row) {
+          <li class="sale sale--skeleton">
+            <span class="skeleton skeleton--md"></span>
+            <span class="skeleton skeleton--sm"></span>
+            <span class="skeleton skeleton--md"></span>
+          </li>
+        }
+      </ul>
+    } @else if (vendas().length === 0) {
+      <div class="empty">
+        <span class="material-icons empty__icon" aria-hidden="true">receipt_long</span>
+        <p><strong>Nenhuma venda no período.</strong></p>
+        <p class="hint">As vendas aparecem aqui quando a comanda é encerrada.</p>
+      </div>
+    } @else {
+      @if (onlyPending() && visibleVendas().length === 0) {
+        <p class="hint sales__none">Nenhuma venda carregada precisa de revisão.</p>
+      }
+      <ul class="sale-list">
+        @for (venda of visibleVendas(); track venda.referencia) {
+          <li class="sale" [class.sale--open]="expandedId() === venda.referencia">
+            <button type="button" class="sale__row" (click)="toggleExpanded(venda)" [attr.aria-expanded]="expandedId() === venda.referencia">
+              <span class="sale__when">
+                <strong>{{ formatDateTime(venda.dataVenda) }}</strong>
+                <small>{{ venda.mesa || 'Sem mesa' }} · {{ formatNumber(itemCount(venda)) }} {{ itemCount(venda) === 1 ? 'item' : 'itens' }}</small>
+              </span>
+              <span class="sale__methods">
+                @for (pagamento of paymentSummary(venda); track pagamento.origem) {
+                  <span class="pay" [class.pay--unknown]="!pagamento.formaPagamento" [title]="pagamento.descricao">
+                    <span class="material-icons" aria-hidden="true">{{ paymentIcon(pagamento) }}</span>
+                    {{ pagamento.formaPagamento ? 'tPag ' + pagamento.formaPagamento : 'A confirmar' }}
+                  </span>
+                }
+              </span>
+              <span class="sale__total">
+                <strong>{{ formatCurrency(venda.totais.valorNota) }}</strong>
+                @if (venda.totais.desconto > 0) {
+                  <small>desconto {{ formatCurrency(venda.totais.desconto) }}</small>
+                }
+              </span>
+              <span class="status" [attr.data-tone]="venda.pendencias.length > 0 ? 'warning' : 'ok'">
+                <span class="material-icons" aria-hidden="true">{{ venda.pendencias.length > 0 ? 'error_outline' : 'check_circle' }}</span>
+                {{ venda.pendencias.length > 0 ? 'Revisar' : 'Sem pendências' }}
+              </span>
+              <span class="material-icons sale__chevron" aria-hidden="true">expand_more</span>
+            </button>
+
+            @if (expandedId() === venda.referencia) {
+              <div class="preview">
+                @if (venda.pendencias.length > 0) {
+                  <ul class="issues">
+                    @for (pendencia of venda.pendencias; track pendencia.codigo) {
+                      <li>
+                        <span class="material-icons" aria-hidden="true">warning_amber</span>
+                        <span>{{ pendencia.mensagem }}</span>
+                      </li>
+                    }
+                  </ul>
+                }
+
+                <div class="preview__grid">
+                  <div class="receipt">
+                    <div class="receipt__head">
+                      <span>Prévia da NFC-e</span>
+                      <button type="button" class="ref" (click)="copyReference(venda, $event)" title="Copiar a referência completa">
+                        <span class="mono">#{{ shortReference(venda.referencia) }}</span>
+                        <span class="material-icons" aria-hidden="true">{{ copiedId() === venda.referencia ? 'check' : 'content_copy' }}</span>
+                      </button>
+                    </div>
+                    <p class="consumer">
+                      <span class="material-icons" aria-hidden="true">{{ venda.consumidor ? 'badge' : 'person_outline' }}</span>
+                      {{ venda.consumidor ? venda.consumidor.tipoDocumento + ' ' + formatDocument(venda.consumidor.documento) : 'Consumidor não identificado' }}
+                    </p>
+                    <div class="table-scroll">
+                      <table class="items">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Código</th>
+                            <th>Descrição</th>
+                            <th>NCM · CFOP · CSOSN/CST</th>
+                            <th class="num">Qtd</th>
+                            <th class="num">Unit.</th>
+                            <th class="num">Desc.</th>
+                            <th class="num">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (item of venda.itens; track item.numero) {
+                            <tr>
+                              <td class="muted">{{ item.numero }}</td>
+                              <td class="mono" [class.missing]="!item.codigo">{{ item.codigo || 'sem código' }}</td>
+                              <td>
+                                {{ item.descricao }}
+                                @if (item.categoria) { <small class="muted">· {{ item.categoria }}</small> }
+                                @if (item.observacao) { <small class="obs">{{ item.observacao }}</small> }
+                              </td>
+                              <td class="mono fiscal-cell" [class.missing]="!item.ncm || !item.cfop || !item.csosnCst">
+                                {{ formatNcm(item.ncm) }} ·{{ item.cfop || '—' }} · {{ item.csosnCst || '—' }}
+                              </td>
+                              <td class="num">{{ formatNumber(item.quantidade) }} {{ item.unidade }}</td>
+                              <td class="num">{{ formatCurrency(item.valorUnitario) }}</td>
+                              <td class="num">{{ item.desconto > 0 ? '−' + formatCurrency(item.desconto) : '—' }}</td>
+                              <td class="num">{{ formatCurrency(item.valorLiquido) }}</td>
+                            </tr>
+                          } @empty {
+                            <tr><td colspan="8" class="muted">Nenhum item consumido registrado.</td></tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                    <dl class="totals">
+                      <div><dt>Produtos</dt><dd>{{ formatCurrency(venda.totais.valorProdutos) }}</dd></div>
+                      @if (venda.totais.desconto > 0) {
+                        <div><dt>Desconto</dt><dd>−{{ formatCurrency(venda.totais.desconto) }}</dd></div>
+                      }
+                      <div class="totals__main"><dt>Total da nota</dt><dd>{{ formatCurrency(venda.totais.valorNota) }}</dd></div>
+                      @if (venda.totais.troco > 0) {
+                        <div><dt>Troco</dt><dd>{{ formatCurrency(venda.totais.troco) }}</dd></div>
+                      }
+                    </dl>
+                  </div>
+
+                  <div class="side">
+                    <h3 class="side__title">Pagamentos</h3>
+                    <ul class="payments">
+                      @for (pagamento of venda.pagamentos; track $index) {
+                        <li [class.payments__unknown]="!pagamento.formaPagamento">
+                          <span class="material-icons" aria-hidden="true">{{ paymentIcon(pagamento) }}</span>
+                          <span class="payments__text">
+                            <strong>{{ pagamento.descricao }}</strong>
+                            <small>
+                              {{ pagamento.formaPagamento ? 'tPag ' + pagamento.formaPagamento : 'tPag a definir' }} ·
+                              {{ formatDateTime(pagamento.dataPagamento) }}
+                            </small>
+                          </span>
+                          <strong>{{ formatCurrency(pagamento.valor) }}</strong>
+                        </li>
+                      } @empty {
+                        <li class="muted">Nenhum pagamento registrado.</li>
+                      }
+                    </ul>
+
+                    <h3 class="side__title">Dados fiscais dos itens</h3>
+                    <p class="hint">
+                      Vêm do cadastro em <a routerLink="/painel/configuracoes/dados-fiscais">Dados Fiscais</a> (padrão da categoria ou
+                      exceção do produto). Item em amarelo está incompleto.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+
+      @if (hasMore()) {
+        <div class="load-more">
+          <button type="button" class="btn btn--ghost" appRipple [disabled]="isLoadingMore()" (click)="loadMore()">
+            {{ isLoadingMore() ? 'Carregando…' : 'Carregar mais vendas' }}
+          </button>
+          <span class="hint">{{ vendas().length }} de {{ totalVendas() }}</span>
+        </div>
+      }
+    }
+  </section>
+}
