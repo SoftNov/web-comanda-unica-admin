@@ -444,6 +444,21 @@ export class ComandasComponent {
     return Math.round(((comanda.totalPaidAmount ?? 0) + (comanda.totalFeeAmount ?? 0)) * 100) / 100;
   }
 
+  // Taxa de serviço do próximo pagamento, somada ao saldo enquanto a comanda tiver o que cobrar.
+  pendingServiceFee(comanda: ComandaResponse): number {
+    return comanda.status !== 'CLOSED' && comanda.amountToCollect > 0 ? (comanda.feePerPayment ?? 0) : 0;
+  }
+
+  // Taxa de serviço da comanda: as já pagas + a do pagamento que falta.
+  serviceFeeTotal(comanda: ComandaResponse): number {
+    return Math.round(((comanda.totalFeeAmount ?? 0) + this.pendingServiceFee(comanda)) * 100) / 100;
+  }
+
+  // Saldo que o cliente ainda paga: consumo em aberto + taxa de serviço (ex.: 100,00 + 1,50 = 101,50).
+  balanceWithServiceFee(comanda: ComandaResponse): number {
+    return Math.round(((comanda.balanceAmount ?? 0) + this.pendingServiceFee(comanda)) * 100) / 100;
+  }
+
   isPaidInApp(method: string): boolean {
     return method === 'PIX_COMANDA' || method === 'CARD_COMANDA';
   }

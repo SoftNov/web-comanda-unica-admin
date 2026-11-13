@@ -93,7 +93,7 @@
             <th>Pedidos</th>
             <th>Total pedidos</th>
             <th>Total pago</th>
-            <th>Saldo</th>
+            <th>Falta pagar</th>
             <th>Aberta em</th>
             <th class="data-table__actions-col">Ações</th>
           </tr>
@@ -122,8 +122,8 @@
               </td>
               <td>{{ comanda.orders.length }}</td>
               <td>{{ formatCurrency(comanda.totalOrdersAmount) }}</td>
-              <td>{{ formatCurrency(comanda.totalPaidAmount) }}</td>
-              <td>{{ formatCurrency(comanda.balanceAmount) }}</td>
+              <td>{{ formatCurrency(paidWithServiceFee(comanda)) }}</td>
+              <td>{{ formatCurrency(balanceWithServiceFee(comanda)) }}</td>
               <td>{{ formatDateTime(comanda.openedAt) }}</td>
               <td class="data-table__actions-col">
                 <button type="button" class="icon-btn" title="Ver detalhes" (click)="openDetail(comanda)">
@@ -214,10 +214,10 @@
             <dt>Total pedidos</dt>
             <dd>{{ formatCurrency(comanda.totalOrdersAmount) }}</dd>
           </div>
-          @if (comanda.totalFeeAmount > 0) {
+          @if (serviceFeeTotal(comanda) > 0) {
             <div>
               <dt>Taxa de serviço</dt>
-              <dd>{{ formatCurrency(comanda.totalFeeAmount) }}</dd>
+              <dd>{{ formatCurrency(serviceFeeTotal(comanda)) }}</dd>
             </div>
           }
           <div>
@@ -225,8 +225,8 @@
             <dd>{{ formatCurrency(paidWithServiceFee(comanda)) }}</dd>
           </div>
           <div>
-            <dt>Saldo</dt>
-            <dd>{{ formatCurrency(comanda.balanceAmount) }}</dd>
+            <dt>Falta pagar</dt>
+            <dd>{{ formatCurrency(balanceWithServiceFee(comanda)) }}</dd>
           </div>
           <div>
             <dt>Aberta em</dt>
