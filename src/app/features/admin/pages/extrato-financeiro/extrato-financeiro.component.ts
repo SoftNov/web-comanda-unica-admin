@@ -5,7 +5,6 @@ import {
   ExtratoMetodo,
   ExtratoResumo,
   ExtratoService,
-  ExtratoStatusTaxa,
   ExtratoTransacao
 } from '../../../../shared/services/extrato.service';
 import { CompanyFeeRuleResponse, PlatformFeeRulesService } from '../../../../shared/services/platform-fee-rules.service';
@@ -46,18 +45,10 @@ const METHOD_LABELS: Record<ExtratoMetodo, string> = {
   ONLINE: 'App (antigo)'
 };
 
-const FEE_STATUS_LABELS: Record<ExtratoStatusTaxa, string> = {
-  PENDING: 'A cobrar',
-  PROCESSING: 'Em cobrança',
-  SETTLED: 'Paga',
-  FAILED: 'Recusada',
-  CANCELED: 'Cancelada'
-};
-
 const PAGE_SIZE = 20;
 
 // Extrato financeiro do estabelecimento, só com o que está registrado na base da Comanda Única:
-// pagamentos das comandas (caixa/garçom) e a taxa da plataforma sobre cada um.
+// pagamentos das comandas e a taxa por pagamento que o cliente pagou por cima de cada um.
 @Component({
   selector: 'app-extrato-financeiro',
   standalone: true,
@@ -120,8 +111,11 @@ export class ExtratoFinanceiroComponent {
     return METHOD_LABELS[method] ?? method;
   }
 
-  feeStatusLabel(status: ExtratoStatusTaxa | null): string {
-    return status ? (FEE_STATUS_LABELS[status] ?? status) : '—';
+  feeDestinationLabel(transacao: ExtratoTransacao): string {
+    if (transacao.taxaParaPlataforma == null) {
+      return '—';
+    }
+    return transacao.taxaParaPlataforma ? 'Comanda Única' : 'Estabelecimento';
   }
 
   tableLabel(transacao: ExtratoTransacao): string {

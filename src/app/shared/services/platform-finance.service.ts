@@ -6,14 +6,11 @@ import { RevenuePoint } from './dashboard.service';
 
 // Espelho de PlatformFinanceResponse — só com o que está registrado na base da Comanda Única.
 export interface PlatformFinanceSummary {
-  // Taxas geradas por dia sobre os pagamentos registrados nas comandas de todos os estabelecimentos.
+  // Taxas por pagamento recebidas via split por dia (pagamentos feitos no app, todos os estabelecimentos).
   feeSeries: RevenuePoint[];
   totalFeeAmount: number;
-  // Recebido na Asaas no período (cobranças semanais de taxas e mensalidades).
-  receivedFeeAmount: number;
+  // Mensalidades da assinatura recebidas na Asaas no período.
   receivedSubscriptionAmount: number;
-  // Saldo atual de taxas ainda não liquidadas (independe do período).
-  pendingFeeBalance: number;
 }
 
 // Situação do estabelecimento pela assinatura mais recente — espelho de
@@ -46,19 +43,6 @@ export function situationTone(situation: CompanySubscriptionSituation): 'ok' | '
   return 'off';
 }
 
-// Saldo de taxas não liquidadas de um estabelecimento (já descontado o crédito abatido).
-export interface CompanyPendingFee {
-  companyId: string;
-  tradeName: string;
-  situation: CompanySubscriptionSituation;
-  // PENDING: entra na próxima cobrança semanal. PROCESSING: já está numa cobrança aguardando a Asaas.
-  pendingAmount: number;
-  processingAmount: number;
-  feeCount: number;
-  // Taxa não liquidada mais antiga (UTC — exibir com os helpers de datetime.util).
-  oldestFeeAt: string | null;
-}
-
 // Espelho de PlatformOverviewResponse — estado atual, sem filtro de período.
 export interface PlatformOverview {
   totalCompanies: number;
@@ -67,14 +51,10 @@ export interface PlatformOverview {
   trialCompanies: number;
   pastDueCompanies: number;
   inactiveCompanies: number;
-  pendingFeeBalance: number;
-  processingFeeBalance: number;
-  companiesWithPendingFees: number;
-  pendingFeesByCompany: CompanyPendingFee[];
 }
 
-// Espelho de PlatformCompanyReportResponse.Row — plano/vencimento/mesas/taxas são o estado atual;
-// comandas, clientes e faturamento são do período consultado.
+// Espelho de PlatformCompanyReportResponse.Row — plano/vencimento/mesas são o estado atual;
+// comandas, clientes, faturamento e taxas recebidas são do período consultado.
 export interface PlatformCompanyReportRow {
   companyId: string;
   tradeName: string;
@@ -93,7 +73,8 @@ export interface PlatformCompanyReportRow {
   averageCustomersPerDay: number;
   revenue: number;
   averageTicket: number;
-  pendingFeeAmount: number;
+  // Taxas por pagamento recebidas via split no período (pagamentos no app).
+  platformFeeAmount: number;
 }
 
 export interface PlatformCompanyReport {

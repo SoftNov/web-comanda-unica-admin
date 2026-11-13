@@ -143,7 +143,7 @@
               <p class="plan-picker__title">Escolha seu plano</p>
               <p class="plan-picker__hint">
                 Ao trocar, a 1ª mensalidade do novo plano é cobrada na hora no cartão salvo, a assinatura
-                atual é encerrada e o crédito restante dela passa para o novo plano. O downgrade só é possível se as mesas
+                atual é encerrada e o novo plano começa a valer. O downgrade só é possível se as mesas
                 cadastradas couberem no plano menor.
               </p>
             } @else {
@@ -301,7 +301,7 @@
                 @if (cardFormOpen()) { <span class="billing-card__tag">Cartão atual</span> }
               </p>
               <p class="billing-card__detail">
-                Validade {{ cardExpiryLabel(pm) }} · usado na mensalidade e nas taxas
+                Validade {{ cardExpiryLabel(pm) }} · usado na mensalidade
               </p>
             </div>
           } @else {
@@ -309,8 +309,7 @@
             <div class="billing-card__text">
               <p class="billing-card__title">Nenhum cartão de cobrança cadastrado</p>
               <p class="billing-card__detail">
-                Cadastre um cartão de crédito para assinar. Ele também é usado na cobrança semanal das
-                taxas que o crédito da assinatura não cobrir.
+                Cadastre um cartão de crédito para assinar.
               </p>
             </div>
           }
@@ -379,57 +378,16 @@
 
     <p class="sub-card__fineprint">
       A mensalidade é cobrada automaticamente no cartão de cobrança salvo, com renovação mensal, e
-      pode ser cancelada a qualquer momento em "Cancelar renovação". As taxas da Comanda Única que o
-      crédito da assinatura não cobrir também são lançadas nesse cartão, semanalmente.
+      pode ser cancelada a qualquer momento em "Cancelar renovação".
     </p>
   </div>
-
-  @if (status()?.credit; as credit) {
-    <div class="card credit-card">
-      <div class="credit-card__head">
-        <div>
-          <span class="sub-card__eyebrow">Crédito da assinatura</span>
-          <p class="credit-card__available">{{ amountLabel(credit.available) }} <span>disponível</span></p>
-        </div>
-        <span class="credit-card__expiry">
-          <span class="material-icons" aria-hidden="true">savings</span>
-          Acumulativo
-        </span>
-      </div>
-
-      <div class="credit-meter" role="meter" aria-label="Crédito usado no período"
-           [attr.aria-valuenow]="creditUsedPercent()" aria-valuemin="0" aria-valuemax="100">
-        <div class="credit-meter__bar" [style.width.%]="creditUsedPercent()"></div>
-      </div>
-      <p class="sub-card__price-note">
-        O crédito abate as taxas da Comanda Única conforme os pagamentos entram. O saldo não usado
-        não expira: ele acumula e passa para o mês seguinte a cada renovação.
-      </p>
-
-      <dl class="credit-stats">
-        <div><dt>Total acumulado</dt><dd>{{ amountLabel(credit.granted) }}</dd></div>
-        <div><dt>Já usado</dt><dd>{{ amountLabel(credit.consumed) }}</dd></div>
-        @if (credit.expired > 0) {
-          <div><dt>Expirado</dt><dd>{{ amountLabel(credit.expired) }}</dd></div>
-        }
-      </dl>
-
-      <div class="credit-movements">
-        <p class="section-title">Movimentações</p>
-        <app-movement-grid [movements]="creditMovements()" [loading]="isLoadingMovements()"
-                           [error]="movementsLoadError()" [page]="movementsPage()"
-                           [totalPages]="movementsTotalPages()" [totalElements]="movementsTotal()"
-                           (pageChange)="loadMovements($event)" (retry)="loadMovements(movementsPage())" />
-      </div>
-    </div>
-  }
 
   @if (status()?.exists) {
     <div class="card charges-card">
       <div class="charges-card__head">
         <div>
           <span class="sub-card__eyebrow">Faturas</span>
-          <p class="sub-card__price-note">Mensalidades e taxas semanais cobradas no cartão de cobrança.</p>
+          <p class="sub-card__price-note">Mensalidades cobradas no cartão de cobrança.</p>
         </div>
         @if (!isLoadingCharges()) {
           <button type="button" class="charges-card__refresh" aria-label="Atualizar faturas" (click)="loadCharges()">

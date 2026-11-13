@@ -5,7 +5,7 @@ import { parseApiDate } from '../../../../shared/utils/datetime.util';
 
 type ChargeTone = 'success' | 'warning' | 'danger' | 'muted';
 
-// Faturas da assinatura (mensalidades e taxas semanais) em grid de cards — 2 colunas no celular.
+// Faturas da assinatura (mensalidades; no histórico, também as antigas taxas semanais) em grid de cards — 2 colunas no celular.
 @Component({
   selector: 'app-charge-grid',
   standalone: true,
@@ -25,7 +25,7 @@ export class ChargeGridComponent {
   private readonly dateFormatter = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'medium' });
 
   kindLabel(charge: PlatformCharge): string {
-    return charge.kind === 'SUBSCRIPTION' ? 'Mensalidade' : 'Taxas da semana';
+    return charge.kind === 'SUBSCRIPTION' ? 'Mensalidade' : 'Taxas (modelo antigo)';
   }
 
   statusLabel(charge: PlatformCharge): string {

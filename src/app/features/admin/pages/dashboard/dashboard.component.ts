@@ -10,18 +10,13 @@ import { RippleDirective } from '../../../../shared/directives/ripple.directive'
 import { PedidosComponent } from '../pedidos/pedidos.component';
 import { ServicosComponent } from '../servicos/servicos.component';
 import { SubscriptionBannerComponent } from '../../../../shared/components/subscription-banner/subscription-banner.component';
-import { SubscriptionService } from '../../../../shared/services/subscription.service';
 import { QuickServiceComponent } from '../../../../shared/components/quick-service/quick-service.component';
 import {
-  CompanyPendingFee,
   PlatformFinanceService,
   PlatformFinanceSummary,
-  PlatformOverview,
-  SITUATION_LABELS,
-  situationTone
+  PlatformOverview
 } from '../../../../shared/services/platform-finance.service';
 import { RouterLink } from '@angular/router';
-import { brDateTimeFormat, parseApiDate } from '../../../../shared/utils/datetime.util';
 
 const MANAGEMENT_PROFILES = ['ADMIN', 'OWNER', 'COMMERCIAL', 'MANAGER'];
 // Perfis operacionais que vivem na fila de pedidos no dia a dia — a home entra direto na mesma
@@ -84,17 +79,11 @@ export class DashboardComponent implements OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly floorPlansService = inject(FloorPlansService);
   private readonly dashboardService = inject(DashboardService);
-  private readonly subscriptionService = inject(SubscriptionService);
   private readonly extratoService = inject(ExtratoService);
   private readonly platformFinanceService = inject(PlatformFinanceService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
-  // Crédito da assinatura — vem do SubscriptionService (REST, já carregado pelo subscriptionGuard),
-  // NÃO do resumo operacional do WebSocket: o crédito não é métrica de tempo real e o payload do
-  // WS passa por serializadores diferentes do REST.
-  readonly subscriptionCreditAvailable = computed(() => this.subscriptionService.status()?.credit?.available ?? null);
   private readonly currencyFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
-  private readonly shortDateFormatter = brDateTimeFormat({ day: '2-digit', month: '2-digit', year: 'numeric' });
 
   readonly currentUser = this.authService.currentUser;
   readonly selectedCompany = this.authService.selectedCompany;
@@ -147,21 +136,17 @@ export class DashboardComponent implements OnDestroy {
   readonly grossPoints = computed<LineChartPoint[]>(() =>
     this.revenueSeries().map((point) => ({ date: point.date, amount: point.amount }))
   );
-  readonly netPoints = computed<LineChartPoint[]>(() =>
-    this.revenueSeries().map((point) => ({ date: point.date, amount: point.netAmount ?? 0 }))
-  );
   readonly revenueTotal = computed(() => this.revenueSeries().reduce((total, point) => total + point.amount, 0));
-  readonly revenueNetTotal = computed(() => this.revenueSeries().reduce((total, point) => total + (point.netAmount ?? 0), 0));
 
   // Recebido no período por onde entrou (caixa / garçom) — resumo do extrato, mesmo período do
-  // gráfico. A taxa da Comanda Única desses pagamentos é cobrada semanalmente no cartão.
+  // gráfico — e as taxas por pagamento cobradas no caixa/garçom, que ficam com o estabelecimento.
   readonly cashRegisterAmount = signal<number | null>(null);
   readonly cashWaiterAmount = signal<number | null>(null);
-  readonly platformFeesAmount = signal<number | null>(null);
+  readonly companyFeesAmount = signal<number | null>(null);
 
   // Aba "Comanda Única" — só para o platform admin (User.isPlatformAdmin), independente da empresa
-  // selecionada: taxas recebidas/geradas no período (PlatformFinanceService#getSummary) e o estado
-  // atual de estabelecimentos e taxas pendentes por estabelecimento (#getOverview).
+  // selecionada: mensalidades e taxas recebidas via split no período (PlatformFinanceService#getSummary)
+  // e o estado atual dos estabelecimentos (#getOverview).
   readonly isPlatformAdmin = this.authService.isPlatformAdmin;
   readonly platformSummary = signal<PlatformFinanceSummary | null>(null);
   readonly platformOverview = signal<PlatformOverview | null>(null);
@@ -172,19 +157,13 @@ export class DashboardComponent implements OnDestroy {
   readonly platformStartDate = signal(this.toIsoDate(this.daysAgo(29)));
   readonly platformEndDate = signal(this.toIsoDate(new Date()));
   readonly activePlatformPresetDays = signal<number | null>(30);
-  readonly pendingFeeSearch = signal('');
 
   readonly platformFeePoints = computed<LineChartPoint[]>(() =>
     (this.platformSummary()?.feeSeries ?? []).map((point) => ({ date: point.date, amount: point.amount }))
   );
   readonly platformReceivedTotal = computed(() => {
     const summary = this.platformSummary();
-    return summary ? summary.receivedFeeAmount + summary.receivedSubscriptionAmount : null;
-  });
-  readonly filteredPendingFees = computed<CompanyPendingFee[]>(() => {
-    const term = this.pendingFeeSearch().trim().toLocaleLowerCase('pt-BR');
-    const rows = this.platformOverview()?.pendingFeesByCompany ?? [];
-    return term ? rows.filter((row) => row.tradeName?.toLocaleLowerCase('pt-BR').includes(term)) : rows;
+    return summary ? summary.totalFeeAmount + summary.receivedSubscriptionAmount : null;
   });
 
   readonly floorPlans = signal<FloorPlanResponse[]>([]);
@@ -246,7 +225,7 @@ export class DashboardComponent implements OnDestroy {
     this.revenueSeries.set([]);
     this.cashRegisterAmount.set(null);
     this.cashWaiterAmount.set(null);
-    this.platformFeesAmount.set(null);
+    this.companyFeesAmount.set(null);
 
     this.activeTab.set(this.availableTabs()[0]?.id ?? 'floorplan');
 
@@ -376,14 +355,6 @@ export class DashboardComponent implements OnDestroy {
     this.loadPlatformOverview();
   }
 
-  readonly situationLabels = SITUATION_LABELS;
-  readonly situationTone = situationTone;
-
-  formatShortDate(value: string | null): string {
-    const date = parseApiDate(value);
-    return date ? this.shortDateFormatter.format(date) : '—';
-  }
-
   private loadPlatformSummary(): void {
     this.isLoadingPlatformSummary.set(true);
     this.platformSummaryError.set(null);
@@ -394,7 +365,7 @@ export class DashboardComponent implements OnDestroy {
       },
       error: () => {
         this.isLoadingPlatformSummary.set(false);
-        this.platformSummaryError.set('Não foi possível carregar as taxas do período selecionado.');
+        this.platformSummaryError.set('Não foi possível carregar o financeiro do período selecionado.');
       }
     });
   }
@@ -409,7 +380,7 @@ export class DashboardComponent implements OnDestroy {
       },
       error: () => {
         this.isLoadingPlatformOverview.set(false);
-        this.platformOverviewError.set('Não foi possível carregar os estabelecimentos e as taxas pendentes.');
+        this.platformOverviewError.set('Não foi possível carregar os estabelecimentos.');
       }
     });
   }
@@ -463,8 +434,8 @@ export class DashboardComponent implements OnDestroy {
       });
   }
 
-  // Gráfico de faturamento (pagamentos registrados nas comandas, bruto e líquido da taxa da
-  // Comanda Única) + o recebido por caixa/garçom no mesmo período (resumo do extrato). Tudo da base
+  // Gráfico de faturamento (pagamentos registrados nas comandas) + o recebido por caixa/garçom e as
+  // taxas do caixa/garçom no mesmo período (resumo do extrato). Tudo da base
   // da Comanda Única. O WebSocket (ver connectRealtimeSummary) segue alimentando só a "Operação".
   private loadFinancialReport(): void {
     const companyId = this.selectedCompany()?.companyId;
@@ -493,12 +464,12 @@ export class DashboardComponent implements OnDestroy {
       next: (extrato) => {
         this.cashRegisterAmount.set(extrato.resumo.recebidoCaixa);
         this.cashWaiterAmount.set(extrato.resumo.recebidoGarcom);
-        this.platformFeesAmount.set(extrato.resumo.taxasComandaUnica);
+        this.companyFeesAmount.set(extrato.resumo.taxasEstabelecimento);
       },
       error: () => {
         this.cashRegisterAmount.set(null);
         this.cashWaiterAmount.set(null);
-        this.platformFeesAmount.set(null);
+        this.companyFeesAmount.set(null);
       }
     });
   }

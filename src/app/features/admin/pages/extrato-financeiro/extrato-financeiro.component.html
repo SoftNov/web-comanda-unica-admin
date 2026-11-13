@@ -1,6 +1,6 @@
 <div class="page-header">
   <h1 class="page-title">Extrato Financeiro</h1>
-  <p class="page-subtitle">Pagamentos registrados nas comandas e as taxas da Comanda Única sobre eles.</p>
+  <p class="page-subtitle">Pagamentos registrados nas comandas e a taxa por pagamento que o cliente pagou por cima.</p>
 </div>
 
 <div class="card extrato-company">
@@ -97,18 +97,18 @@
         }
         <div class="stat-card">
           <span class="material-icons stat-card__icon" aria-hidden="true">percent</span>
-          <span class="stat-card__label">Taxas Comanda Única</span>
-          <span class="stat-card__value">{{ formatCurrency(resumo.taxasComandaUnica) }}</span>
+          <span class="stat-card__label">Taxas no caixa/garçom</span>
+          <span class="stat-card__value">{{ formatCurrency(resumo.taxasEstabelecimento) }}</span>
+        </div>
+        <div class="stat-card">
+          <span class="material-icons stat-card__icon" aria-hidden="true">call_split</span>
+          <span class="stat-card__label">Taxas no app (Comanda Única)</span>
+          <span class="stat-card__value">{{ formatCurrency(resumo.taxasPlataforma) }}</span>
         </div>
         <div class="stat-card">
           <span class="material-icons stat-card__icon" aria-hidden="true">account_balance_wallet</span>
           <span class="stat-card__label">Líquido</span>
           <span class="stat-card__value">{{ formatCurrency(resumo.liquido) }}</span>
-        </div>
-        <div class="stat-card">
-          <span class="material-icons stat-card__icon" aria-hidden="true">hourglass_empty</span>
-          <span class="stat-card__label">Taxas a cobrar (hoje)</span>
-          <span class="stat-card__value">{{ formatCurrency(resumo.taxasPendentes) }}</span>
         </div>
       </div>
     } @else if (isLoading()) {
@@ -188,9 +188,9 @@
               <th>Recebido por</th>
               <th>Registrado por</th>
               <th class="extrato-table__number">Valor</th>
-              <th class="extrato-table__number">Taxa Comanda Única</th>
+              <th class="extrato-table__number">Taxa por pagamento</th>
               <th class="extrato-table__number">Líquido</th>
-              <th>Taxa</th>
+              <th>Taxa ficou com</th>
             </tr>
           </thead>
           <tbody>
@@ -203,11 +203,7 @@
                 <td class="extrato-table__number">{{ formatCurrency(transacao.valor) }}</td>
                 <td class="extrato-table__number">{{ formatCurrency(transacao.taxaComandaUnica) }}</td>
                 <td class="extrato-table__number">{{ formatCurrency(transacao.liquido) }}</td>
-                <td>
-                  <span class="extrato-status" [class.extrato-status--pending]="transacao.statusTaxa === 'PENDING' || transacao.statusTaxa === 'PROCESSING'">
-                    {{ feeStatusLabel(transacao.statusTaxa) }}
-                  </span>
-                </td>
+                <td>{{ feeDestinationLabel(transacao) }}</td>
               </tr>
             }
           </tbody>

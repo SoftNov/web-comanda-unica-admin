@@ -430,6 +430,19 @@ export class ComandasComponent {
   }
 
   // --- Registrar pagamento (caixa/garçom) -----------------------------------------
+  // Valor digitado mais a taxa por pagamento — o que a equipe cobra do cliente. null sem valor.
+  paymentAmountWithFee(comanda: ComandaResponse): number | null {
+    const amount = parseCurrencyInput(this.paymentForm.controls.amount.value);
+    if (amount == null || amount <= 0) {
+      return null;
+    }
+    return Math.round((amount + (comanda.feePerPayment ?? 0)) * 100) / 100;
+  }
+
+  isPaidInApp(method: string): boolean {
+    return method === 'PIX_COMANDA' || method === 'CARD_COMANDA';
+  }
+
   onPaymentAmountInput(event: Event): void {
     const input = event.target as HTMLInputElement;
     this.paymentForm.controls.amount.setValue(formatCurrencyInput(input.value));

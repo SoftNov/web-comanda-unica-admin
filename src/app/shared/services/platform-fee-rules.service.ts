@@ -12,31 +12,24 @@ export interface PageResponse<T> {
   last: boolean;
 }
 
-// Cobrança por faixa: comanda com valor <= thresholdAmount paga percentageRate sobre o próprio
-// valor; acima de thresholdAmount, paga maxAmount fixo (não é um teto que o percentual atinge, é
-// um valor fixo direto assim que ultrapassa a faixa).
+// Taxa fixa que o cliente paga em cada pagamento da comanda, por cima do valor que abate. No app
+// (Pix/cartão) vai para a Comanda Única pelo split; no caixa/garçom fica com o estabelecimento.
 export interface PlatformFeeRuleResponse {
-  percentageRate: number;
-  thresholdAmount: number;
-  maxAmount: number;
+  fixedAmount: number;
   updatedAt: string;
 }
 
 export interface CompanyFeeRuleResponse {
   companyId: string;
   companyName: string;
-  // Regra efetiva: a customizada, se houver, senão a padrão vigente.
-  percentageRate: number;
-  thresholdAmount: number;
-  maxAmount: number;
+  // Taxa efetiva: a exceção da empresa, se houver, senão a padrão vigente.
+  fixedAmount: number;
   customized: boolean;
   updatedAt: string;
 }
 
 export interface UpsertPlatformFeeRuleRequest {
-  percentageRate: number;
-  thresholdAmount: number;
-  maxAmount: number;
+  fixedAmount: number;
 }
 
 export interface ListCompanyFeeRulesParams {

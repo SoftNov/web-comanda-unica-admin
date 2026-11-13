@@ -35,7 +35,8 @@ export interface StaffComandaResponse {
   totalAmount: number;
   paidAmount: number;
   remainingAmount: number;
-  discountAmount: number;
+  // Taxa fixa da Comanda Única cobrada por cima de cada pagamento.
+  feePerPayment?: number;
   amountToPay: number;
   // Estabelecimento exige o cartão de consumo: openOrEnter não abre a comanda compartilhada da
   // mesa e o pedido vai para a comanda individual do cartão (ver enterWithPass).

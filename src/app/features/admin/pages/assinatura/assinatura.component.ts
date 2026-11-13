@@ -8,7 +8,6 @@ import {
 } from '../../../../shared/components/card-brand-logo/card-brand-logo.component';
 import { AuthService } from '../../../auth/services/auth.service';
 import {
-  CreditMovement,
   PlatformCharge,
   SavedPaymentMethod,
   SubscriptionService,
@@ -17,17 +16,15 @@ import {
 import { parseApiDate } from '../../../../shared/utils/datetime.util';
 import { BillingCardFormComponent, BillingCardFormSummary } from './billing-card-form.component';
 import { ChargeGridComponent } from './charge-grid.component';
-import { MovementGridComponent } from './movement-grid.component';
 
 type ViewMode = 'offer' | 'active' | 'past-due';
 
 // 10 cards por página = 5 linhas de 2 no celular.
-const MOVEMENTS_PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-admin-assinatura',
   standalone: true,
-  imports: [RippleDirective, BillingCardFormComponent, CardBrandLogoComponent, ChargeGridComponent, MovementGridComponent],
+  imports: [RippleDirective, BillingCardFormComponent, CardBrandLogoComponent, ChargeGridComponent],
   templateUrl: './assinatura.component.html',
   styleUrl: './assinatura.component.scss'
 })
@@ -69,18 +66,11 @@ export class AssinaturaComponent {
   readonly status = signal<SubscriptionStatusResponse | null>(null);
   readonly companyName = computed(() => this.authService.selectedCompany()?.companyName ?? 'seu estabelecimento');
 
-  // Faturas na Asaas (mensalidades e taxas semanais).
+  // Faturas na Asaas (mensalidades; no histórico, também as antigas taxas semanais).
   readonly charges = signal<PlatformCharge[]>([]);
   readonly isLoadingCharges = signal(false);
   readonly chargesLoadError = signal(false);
 
-  readonly creditMovements = signal<CreditMovement[]>([]);
-  readonly isLoadingMovements = signal(false);
-  readonly movementsLoadError = signal(false);
-  // Paginação das movimentações (vem da API — PagedResponse).
-  readonly movementsPage = signal(0);
-  readonly movementsTotalPages = signal(0);
-  readonly movementsTotal = signal(0);
 
   readonly mode = computed<ViewMode>(() => {
     const s = this.status();
@@ -187,15 +177,6 @@ export class AssinaturaComponent {
     }
   }
 
-  // Percentual do crédito do período já consumido — barra do card de crédito.
-  readonly creditUsedPercent = computed(() => {
-    const credit = this.status()?.credit;
-    if (!credit || !credit.granted) {
-      return 0;
-    }
-    return Math.min(100, Math.max(0, Math.round((credit.consumed / credit.granted) * 100)));
-  });
-
   constructor() {
     this.load();
   }
@@ -214,9 +195,6 @@ export class AssinaturaComponent {
       next: (status) => {
         this.status.set(status);
         this.isLoading.set(false);
-        if (status.credit) {
-          this.loadMovements();
-        }
         if (status.exists) {
           this.loadCharges();
         }
@@ -334,9 +312,6 @@ export class AssinaturaComponent {
         this.loadCharges();
         if (status.status === 'ACTIVE' && !status.courtesy) {
           this.actionSuccess.set('Assinatura confirmada! A mensalidade foi cobrada no cartão salvo.');
-          if (status.credit) {
-            this.loadMovements();
-          }
           return;
         }
         this.actionSuccess.set('Assinatura criada. Aguardando a confirmação do pagamento pela operadora do cartão…');
@@ -355,42 +330,19 @@ export class AssinaturaComponent {
   private waitForActivation(attempt = 0): void {
     const companyId = this.authService.selectedCompany()?.companyId;
     const s = this.status();
-    if (!companyId || attempt >= 6 || (s?.status === 'ACTIVE' && !s.courtesy && s.credit)) {
+    if (!companyId || attempt >= 6 || (s?.status === 'ACTIVE' && !s.courtesy)) {
       return;
     }
     setTimeout(() => {
       this.subscriptionService.refresh(companyId).subscribe({
         next: (status) => {
           this.status.set(status);
-          if (status.credit) {
-            this.loadMovements();
-          }
           this.loadCharges();
           this.waitForActivation(attempt + 1);
         },
         error: () => this.waitForActivation(attempt + 1)
       });
     }, 2000);
-  }
-
-  // Sem argumento volta para a 1ª página — usado depois de assinar/trocar plano, quando entram
-  // movimentações novas (a API ordena da mais recente para a mais antiga).
-  loadMovements(page = 0): void {
-    this.isLoadingMovements.set(true);
-    this.movementsLoadError.set(false);
-    this.subscriptionService.getCreditMovements(page, MOVEMENTS_PAGE_SIZE).subscribe({
-      next: (result) => {
-        this.creditMovements.set(result.content);
-        this.movementsPage.set(result.page);
-        this.movementsTotalPages.set(result.totalPages);
-        this.movementsTotal.set(result.totalElements);
-        this.isLoadingMovements.set(false);
-      },
-      error: () => {
-        this.isLoadingMovements.set(false);
-        this.movementsLoadError.set(true);
-      }
-    });
   }
 
   loadCharges(): void {
@@ -462,7 +414,7 @@ export class AssinaturaComponent {
         this.status.set(status);
         this.changingPlanTarget.set(null);
         this.pendingPlan.set(null);
-        this.changePlanMessage.set({ type: 'ok', text: 'Plano atualizado. A mensalidade do novo plano foi cobrada no cartão e o crédito foi renovado.' });
+        this.changePlanMessage.set({ type: 'ok', text: 'Plano atualizado. A mensalidade do novo plano foi cobrada no cartão.' });
       },
       error: (error: unknown) => {
         this.changingPlanTarget.set(null);

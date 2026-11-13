@@ -84,7 +84,7 @@ function formatCpfCnpj(value: string | null | undefined): string {
   return digits.length > 11 ? formatCNPJ(digits) : formatCPF(digits);
 }
 
-// Cadastro/troca do cartão de cobrança (assinatura + taxas semanais). Os dados do cartão e do
+// Cadastro/troca do cartão de cobrança (assinatura). Os dados do cartão e do
 // titular vão uma única vez para a API, que tokeniza o cartão na Asaas e guarda só o token e
 // bandeira/final/validade — número e CVV nunca são gravados pela Comanda Única.
 @Component({

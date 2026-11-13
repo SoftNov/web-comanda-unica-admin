@@ -1,16 +1,20 @@
 <div class="page-header">
   <h1 class="page-title">Financeiro — Comanda Única</h1>
   <p class="page-subtitle">
-    Regra de cobrança da plataforma. Painel exclusivo da equipe Comanda Única.
+    Taxa fixa por pagamento da comanda. Painel exclusivo da equipe Comanda Única.
   </p>
 </div>
 
 <div class="card default-rule-card">
-  <h2 class="section-title">Regra padrão</h2>
-  <p class="field__hint">Aplicada a qualquer empresa sem customização própria.</p>
+  <h2 class="section-title">Taxa padrão por pagamento</h2>
+  <p class="field__hint">
+    O cliente paga esta taxa por cima de cada pagamento da comanda. Nos pagamentos pelo app (Pix ou cartão) ela vai
+    para a Comanda Única pelo split; no caixa ou com o garçom, fica com o estabelecimento. Vale para qualquer empresa
+    sem exceção própria.
+  </p>
 
   @if (isLoadingDefault()) {
-    <p class="field__hint">Carregando regra padrão…</p>
+    <p class="field__hint">Carregando taxa padrão…</p>
   } @else if (defaultError()) {
     <div class="form-alert form-alert--error" role="alert">
       <span class="material-icons" aria-hidden="true">error_outline</span>
@@ -20,52 +24,22 @@
     <form (submit)="$event.preventDefault(); submitDefaultForm()" novalidate [formGroup]="defaultForm">
       <div class="field__row">
         <div class="field">
-          <label class="field__label" for="default-percentage">Percentual até a faixa (%)</label>
+          <label class="field__label" for="default-fixed">Taxa por pagamento (R$)</label>
           <div class="field__control">
             <input
-              id="default-percentage"
+              id="default-fixed"
               type="number"
-              min="0.01"
+              min="0"
               max="100"
               step="0.01"
               class="field__input"
-              formControlName="percentageRate"
-              placeholder="1,00"
-            >
-          </div>
-        </div>
-        <div class="field">
-          <label class="field__label" for="default-threshold">Faixa (R$)</label>
-          <div class="field__control">
-            <input
-              id="default-threshold"
-              type="number"
-              min="0.01"
-              step="0.01"
-              class="field__input"
-              formControlName="thresholdAmount"
-              placeholder="50,00"
-            >
-          </div>
-        </div>
-        <div class="field">
-          <label class="field__label" for="default-max">Valor fixo acima da faixa (R$)</label>
-          <div class="field__control">
-            <input
-              id="default-max"
-              type="number"
-              min="0.01"
-              step="0.01"
-              class="field__input"
-              formControlName="maxAmount"
-              placeholder="3,00"
+              formControlName="fixedAmount"
+              placeholder="1,99"
             >
           </div>
         </div>
       </div>
-      <p class="field__hint">
-        Comandas até o valor da faixa pagam o percentual sobre o próprio valor; acima da faixa, pagam o valor fixo.
-      </p>
+      <p class="field__hint">Zero desliga a taxa.</p>
 
       @if (defaultSaveError()) {
         <div class="form-alert form-alert--error" role="alert">
@@ -76,30 +50,11 @@
 
       <div class="step-actions">
         <button type="submit" class="btn btn--primary" appRipple [disabled]="isSavingDefault()">
-          {{ isSavingDefault() ? 'Salvando…' : 'Salvar regra padrão' }}
+          {{ isSavingDefault() ? 'Salvando…' : 'Salvar taxa padrão' }}
         </button>
       </div>
     </form>
 
-    <div class="simulator">
-      <label class="field__label" for="simulator-amount">Simular cobrança para uma comanda de</label>
-      <div class="simulator__row">
-        <div class="field__control simulator__input">
-          <input
-            id="simulator-amount"
-            type="number"
-            min="0"
-            step="0.01"
-            class="field__input"
-            [value]="simulatorAmount()"
-            (input)="onSimulatorAmountChange($any($event.target).value)"
-          >
-        </div>
-        <span class="simulator__result">
-          {{ formatCurrency(simulatedFee(defaultRule()?.percentageRate, defaultRule()?.thresholdAmount, defaultRule()?.maxAmount)) }}
-        </span>
-      </div>
-    </div>
   }
 </div>
 
@@ -139,11 +94,8 @@
         <thead>
           <tr>
             <th>Empresa</th>
-            <th>Percentual</th>
-            <th>Faixa</th>
-            <th>Valor fixo</th>
-            <th>Cobrança simulada</th>
-            <th>Regra</th>
+            <th>Taxa por pagamento</th>
+            <th>Origem</th>
             <th>Atualizado em</th>
             <th class="data-table__actions-col">Ações</th>
           </tr>
@@ -151,31 +103,28 @@
         <tbody>
           @if (companies().length === 0) {
             <tr>
-              <td colspan="8" class="data-table__empty">Nenhuma empresa encontrada.</td>
+              <td colspan="5" class="data-table__empty">Nenhuma empresa encontrada.</td>
             </tr>
           }
           @for (company of companies(); track company.companyId) {
             <tr>
               <td>{{ company.companyName }}</td>
-              <td>{{ company.percentageRate }}%</td>
-              <td>{{ formatCurrency(company.thresholdAmount) }}</td>
-              <td>{{ formatCurrency(company.maxAmount) }}</td>
-              <td>{{ formatCurrency(simulatedFee(company.percentageRate, company.thresholdAmount, company.maxAmount)) }}</td>
+              <td>{{ formatCurrency(company.fixedAmount) }}</td>
               <td>
                 <span class="badge" [class]="company.customized ? 'badge--warning' : 'badge--muted'">
-                  {{ company.customized ? 'Customizada' : 'Padrão' }}
+                  {{ company.customized ? 'Exceção' : 'Padrão' }}
                 </span>
               </td>
               <td>{{ formatDateTime(company.updatedAt) }}</td>
               <td class="data-table__actions-col">
-                <button type="button" class="icon-btn" title="Customizar regra" (click)="openEditModal(company)">
+                <button type="button" class="icon-btn" title="Definir taxa da empresa" (click)="openEditModal(company)">
                   <span class="material-icons" aria-hidden="true">edit</span>
                 </button>
                 @if (company.customized) {
                   <button
                     type="button"
                     class="icon-btn icon-btn--danger"
-                    title="Remover customização (volta à regra padrão)"
+                    title="Remover exceção (volta à taxa padrão)"
                     [disabled]="removingCompanyId() === company.companyId"
                     (click)="removeCustomization(company)"
                   >
@@ -209,7 +158,7 @@
   <div class="modal-backdrop" (click)="closeEditModal()">
     <div class="modal-card modal-card--sm card" (click)="$event.stopPropagation()">
       <div class="modal-card__header">
-        <h2 class="step-heading">Customizar regra — {{ company.companyName }}</h2>
+        <h2 class="step-heading">Taxa por pagamento — {{ company.companyName }}</h2>
         <button type="button" class="icon-btn" (click)="closeEditModal()" aria-label="Fechar">
           <span class="material-icons" aria-hidden="true">close</span>
         </button>
@@ -217,46 +166,19 @@
 
       <form (submit)="$event.preventDefault(); submitCompanyForm()" novalidate [formGroup]="companyForm">
         <div class="field">
-          <label class="field__label" for="company-percentage">Percentual até a faixa (%)</label>
+          <label class="field__label" for="company-fixed">Taxa por pagamento (R$)</label>
           <div class="field__control">
             <input
-              id="company-percentage"
+              id="company-fixed"
               type="number"
-              min="0.01"
+              min="0"
               max="100"
               step="0.01"
               class="field__input"
-              formControlName="percentageRate"
+              formControlName="fixedAmount"
             >
           </div>
-        </div>
-
-        <div class="field">
-          <label class="field__label" for="company-threshold">Faixa (R$)</label>
-          <div class="field__control">
-            <input
-              id="company-threshold"
-              type="number"
-              min="0.01"
-              step="0.01"
-              class="field__input"
-              formControlName="thresholdAmount"
-            >
-          </div>
-        </div>
-
-        <div class="field">
-          <label class="field__label" for="company-max">Valor fixo acima da faixa (R$)</label>
-          <div class="field__control">
-            <input
-              id="company-max"
-              type="number"
-              min="0.01"
-              step="0.01"
-              class="field__input"
-              formControlName="maxAmount"
-            >
-          </div>
+          <p class="field__hint">Vale só para esta empresa, no lugar da taxa padrão. Zero isenta a empresa.</p>
         </div>
 
         @if (companySaveError()) {

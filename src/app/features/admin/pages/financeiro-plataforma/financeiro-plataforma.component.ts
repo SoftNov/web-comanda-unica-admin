@@ -19,10 +19,10 @@ interface ApiErrorResponse {
   codigoErro?: string;
 }
 
-// Painel financeiro exclusivo da Comanda Única — regra de cobrança da plataforma sobre o valor
-// das comandas, por faixa (até thresholdAmount paga percentageRate; acima disso, maxAmount
-// fixo), com uma regra padrão e customização por empresa. Ver PlatformFeeRuleApi no backend;
-// rota gateada por platformAdminGuard (ver app.routes.ts).
+// Painel financeiro exclusivo da Comanda Única — taxa fixa que o cliente paga em cada pagamento da
+// comanda (no app vai para a plataforma pelo split; no caixa/garçom fica com o estabelecimento), com
+// uma taxa padrão e exceção por empresa. Ver PlatformFeeRuleApi no backend; rota gateada por
+// platformAdminGuard (ver app.routes.ts).
 @Component({
   selector: 'app-admin-financeiro-plataforma',
   standalone: true,
@@ -44,13 +44,8 @@ export class FinanceiroPlataformaComponent {
   readonly defaultSaveError = signal<string | null>(null);
 
   readonly defaultForm = this.fb.nonNullable.group({
-    percentageRate: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01), Validators.max(100)]),
-    thresholdAmount: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
-    maxAmount: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)])
+    fixedAmount: this.fb.control<number | null>(null, [Validators.required, Validators.min(0), Validators.max(100)])
   });
-
-  // --- Simulador ----------------------------------------------------------------------
-  readonly simulatorAmount = signal<number | null>(100);
 
   // --- Empresas -------------------------------------------------------------------------
   readonly companies = signal<CompanyFeeRuleResponse[]>([]);
@@ -70,9 +65,7 @@ export class FinanceiroPlataformaComponent {
   readonly companySaveError = signal<string | null>(null);
 
   readonly companyForm = this.fb.nonNullable.group({
-    percentageRate: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01), Validators.max(100)]),
-    thresholdAmount: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)]),
-    maxAmount: this.fb.control<number | null>(null, [Validators.required, Validators.min(0.01)])
+    fixedAmount: this.fb.control<number | null>(null, [Validators.required, Validators.min(0), Validators.max(100)])
   });
 
   readonly removingCompanyId = signal<string | null>(null);
@@ -92,26 +85,6 @@ export class FinanceiroPlataformaComponent {
     return parsed ? this.dateTimeFormatter.format(parsed) : '—';
   }
 
-  // Cálculo ao vivo, sem ida ao backend — cobrança por faixa: até thresholdAmount cobra o
-  // percentual sobre o próprio valor; acima disso, cobra maxAmount fixo (não é mais um teto que
-  // o percentual eventualmente atinge).
-  simulatedFee(
-    percentageRate: number | null | undefined,
-    thresholdAmount: number | null | undefined,
-    maxAmount: number | null | undefined
-  ): number {
-    const amount = this.simulatorAmount();
-    if (amount == null || percentageRate == null || thresholdAmount == null || maxAmount == null) {
-      return 0;
-    }
-    return amount <= thresholdAmount ? amount * (percentageRate / 100) : maxAmount;
-  }
-
-  onSimulatorAmountChange(value: string): void {
-    const parsed = Number(value.replace(',', '.'));
-    this.simulatorAmount.set(isNaN(parsed) ? null : parsed);
-  }
-
   // --- Regra padrão -----------------------------------------------------------------
   private loadDefaultRule(): void {
     this.isLoadingDefault.set(true);
@@ -120,12 +93,12 @@ export class FinanceiroPlataformaComponent {
     this.platformFeeRulesService.getDefault().subscribe({
       next: (rule) => {
         this.defaultRule.set(rule);
-        this.defaultForm.reset({ percentageRate: rule.percentageRate, thresholdAmount: rule.thresholdAmount, maxAmount: rule.maxAmount });
+        this.defaultForm.reset({ fixedAmount: rule.fixedAmount });
         this.isLoadingDefault.set(false);
       },
       error: () => {
         this.isLoadingDefault.set(false);
-        this.defaultError.set('Não foi possível carregar a regra padrão.');
+        this.defaultError.set('Não foi possível carregar a taxa padrão.');
       }
     });
   }
@@ -137,11 +110,7 @@ export class FinanceiroPlataformaComponent {
     }
 
     const value = this.defaultForm.getRawValue();
-    const payload: UpsertPlatformFeeRuleRequest = {
-      percentageRate: value.percentageRate ?? 0,
-      thresholdAmount: value.thresholdAmount ?? 0,
-      maxAmount: value.maxAmount ?? 0
-    };
+    const payload: UpsertPlatformFeeRuleRequest = { fixedAmount: value.fixedAmount ?? 0 };
 
     this.isSavingDefault.set(true);
     this.defaultSaveError.set(null);
@@ -150,7 +119,7 @@ export class FinanceiroPlataformaComponent {
       next: (rule) => {
         this.isSavingDefault.set(false);
         this.defaultRule.set(rule);
-        // Empresas sem customização exibem a regra padrão — recarrega a página atual pra refletir.
+        // Empresas sem exceção exibem a taxa padrão — recarrega a página atual pra refletir.
         this.loadCompanies(this.page());
       },
       error: (error: HttpErrorResponse) => {
@@ -199,14 +168,10 @@ export class FinanceiroPlataformaComponent {
     }
   }
 
-  // --- Customização por empresa ---------------------------------------------------------
+  // --- Exceção por empresa --------------------------------------------------------------
   openEditModal(company: CompanyFeeRuleResponse): void {
     this.companySaveError.set(null);
-    this.companyForm.reset({
-      percentageRate: company.percentageRate,
-      thresholdAmount: company.thresholdAmount,
-      maxAmount: company.maxAmount
-    });
+    this.companyForm.reset({ fixedAmount: company.fixedAmount });
     this.editingCompany.set(company);
   }
 
@@ -225,11 +190,7 @@ export class FinanceiroPlataformaComponent {
     }
 
     const value = this.companyForm.getRawValue();
-    const payload: UpsertPlatformFeeRuleRequest = {
-      percentageRate: value.percentageRate ?? 0,
-      thresholdAmount: value.thresholdAmount ?? 0,
-      maxAmount: value.maxAmount ?? 0
-    };
+    const payload: UpsertPlatformFeeRuleRequest = { fixedAmount: value.fixedAmount ?? 0 };
 
     this.isSavingCompany.set(true);
     this.companySaveError.set(null);

@@ -1,7 +1,7 @@
 <div class="page-header">
   <h1 class="page-title">Cobranças da plataforma</h1>
   <p class="page-subtitle">
-    Taxas da Comanda Única geradas pelos estabelecimentos e cobranças na Asaas (mensalidades e taxas semanais).
+    Mensalidades cobradas na Asaas e taxas por pagamento recebidas pelo split dos pagamentos feitos no app.
   </p>
 </div>
 
@@ -24,28 +24,18 @@
   @if (summary(); as s) {
     <div class="stat-grid">
       <div class="stat-card">
-        <span class="material-icons stat-card__icon" aria-hidden="true">percent</span>
-        <span class="stat-card__label">Taxas geradas no período</span>
+        <span class="material-icons stat-card__icon" aria-hidden="true">call_split</span>
+        <span class="stat-card__label">Taxas recebidas (split)</span>
         <span class="stat-card__value">{{ formatCurrency(s.totalFeeAmount) }}</span>
-      </div>
-      <div class="stat-card">
-        <span class="material-icons stat-card__icon" aria-hidden="true">receipt_long</span>
-        <span class="stat-card__label">Taxas recebidas (Asaas)</span>
-        <span class="stat-card__value">{{ formatCurrency(s.receivedFeeAmount) }}</span>
       </div>
       <div class="stat-card">
         <span class="material-icons stat-card__icon" aria-hidden="true">card_membership</span>
         <span class="stat-card__label">Mensalidades recebidas</span>
         <span class="stat-card__value">{{ formatCurrency(s.receivedSubscriptionAmount) }}</span>
       </div>
-      <div class="stat-card">
-        <span class="material-icons stat-card__icon" aria-hidden="true">hourglass_empty</span>
-        <span class="stat-card__label">Taxas a cobrar (hoje)</span>
-        <span class="stat-card__value">{{ formatCurrency(s.pendingFeeBalance) }}</span>
-      </div>
     </div>
     <div class="platform-chart">
-      <app-line-chart [points]="feePoints()" primaryLabel="Taxas geradas" [height]="220" />
+      <app-line-chart [points]="feePoints()" primaryLabel="Taxas recebidas" [height]="220" />
     </div>
   } @else if (summaryError()) {
     <div class="form-alert form-alert--error" role="alert">

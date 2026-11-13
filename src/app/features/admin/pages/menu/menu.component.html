@@ -142,9 +142,6 @@
                   } @else {
                     {{ formatCurrency(item.price) }}
                   }
-                  <span class="price-base-hint">
-                    Você recebe {{ formatCurrency(item.basePrice) }} · taxa {{ formatCurrency(feeAmount(item)) }}
-                  </span>
                 </td>
                 <td>
                   <button type="button" class="badge-btn" (click)="toggleStatus(item)" title="Alternar status">
@@ -420,10 +417,7 @@
         </div>
 
         <h3 class="form-section-title">Preço</h3>
-        <p class="field__hint">
-          Informe o valor que você quer receber por este produto — a taxa da Comanda Única é somada
-          automaticamente ao preço exibido no cardápio, para o cliente pagar.
-        </p>
+        <p class="field__hint">O preço informado é o mesmo exibido no cardápio e cobrado do cliente.</p>
 
         <div class="field__row">
           <div class="field">
@@ -443,9 +437,6 @@
             @if (itemForm.controls.price.invalid && itemForm.controls.price.touched) {
               <span class="field__error">Informe um preço válido.</span>
             }
-            @if (editingItem(); as item) {
-              <span class="field__hint">Hoje no cardápio: {{ formatCurrency(item.price) }}</span>
-            }
           </div>
 
           <div class="field">
@@ -461,52 +452,9 @@
                 (input)="onPromotionalPriceInput($event)"
               >
             </div>
-            @if (editingItem(); as item) {
-              <span class="field__hint">
-                Hoje no cardápio: {{ item.promotionalPrice != null ? formatCurrency(item.promotionalPrice) : '—' }}
-              </span>
-            }
           </div>
         </div>
 
-        @if (priceBreakdown() || promotionalPriceBreakdown()) {
-          <div class="price-preview">
-            @if (priceBreakdown(); as breakdown) {
-              <div class="price-preview__group">
-                <span class="price-preview__title">Preço normal</span>
-                <span class="price-preview__line">
-                  <span>Você recebe</span>
-                  <span>{{ formatCurrency(breakdown.base) }}</span>
-                </span>
-                <span class="price-preview__line">
-                  <span>Taxa Comanda Única{{ feePercentLabel() ? ' (' + feePercentLabel() + '%)' : '' }}</span>
-                  <span>+ {{ formatCurrency(breakdown.fee) }}</span>
-                </span>
-                <span class="price-preview__line price-preview__line--total">
-                  <span>Preço no cardápio</span>
-                  <span>{{ formatCurrency(breakdown.total) }}</span>
-                </span>
-              </div>
-            }
-            @if (promotionalPriceBreakdown(); as breakdown) {
-              <div class="price-preview__group">
-                <span class="price-preview__title">Preço promocional</span>
-                <span class="price-preview__line">
-                  <span>Você recebe</span>
-                  <span>{{ formatCurrency(breakdown.base) }}</span>
-                </span>
-                <span class="price-preview__line">
-                  <span>Taxa Comanda Única{{ feePercentLabel() ? ' (' + feePercentLabel() + '%)' : '' }}</span>
-                  <span>+ {{ formatCurrency(breakdown.fee) }}</span>
-                </span>
-                <span class="price-preview__line price-preview__line--total">
-                  <span>Preço no cardápio</span>
-                  <span>{{ formatCurrency(breakdown.total) }}</span>
-                </span>
-              </div>
-            }
-          </div>
-        }
 
         <div class="field__row">
           <div class="field">

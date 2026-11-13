@@ -45,38 +45,8 @@ export interface SubscriptionStatusResponse {
   autoRenew: boolean;
   // Há uma assinatura paga renovando — pode cancelar a renovação (POST /subscription/cancel).
   cancellable: boolean;
-  // Cartão de cobrança salvo (assinatura + taxas semanais). null quando nenhum foi cadastrado.
+  // Cartão de cobrança salvo (assinatura). null quando nenhum foi cadastrado.
   paymentMethod: SavedPaymentMethod | null;
-  // Resumo do crédito da assinatura do período vigente. null quando nunca houve crédito
-  // (cortesia / nunca assinou).
-  credit: CreditSummary | null;
-}
-
-export type SubscriptionCreditStatus = 'ACTIVE' | 'EXPIRED';
-
-export interface CreditSummary {
-  granted: number;
-  consumed: number;
-  expired: number;
-  available: number;
-  periodStart: string;
-  periodEnd: string;
-  status: SubscriptionCreditStatus;
-}
-
-export type CreditMovementType =
-  | 'SUBSCRIPTION_CREDIT'
-  | 'FEE_CREDIT_CONSUMPTION'
-  | 'FEE_CREDIT_CONSUMPTION_REVERSAL'
-  | 'CREDIT_EXPIRATION';
-
-export interface CreditMovement {
-  type: CreditMovementType;
-  amount: number;
-  description: string | null;
-  referenceType: string | null;
-  referenceId: string | null;
-  createdAt: string;
 }
 
 export interface PagedResponse<T> {
@@ -125,7 +95,7 @@ export interface SaveCreditCardRequest {
 
 export type PlatformChargeKind = 'SUBSCRIPTION' | 'PLATFORM_FEE';
 
-// Uma cobrança da Comanda Única na Asaas — mensalidade ou taxas semanais (espelho de
+// Uma cobrança da Comanda Única na Asaas — mensalidade (ou, no histórico, a antiga cobrança semanal de taxas) (espelho de
 // PlatformChargeResponse). companyName só vem no extrato da plataforma.
 export interface PlatformCharge {
   id: string;
@@ -201,16 +171,9 @@ export class SubscriptionService {
     );
   }
 
-  // Faturas (mensalidades e taxas semanais) na Asaas, mais recentes primeiro.
+  // Faturas (mensalidades; no histórico, também as antigas cobranças semanais de taxas) na Asaas, mais recentes primeiro.
   getCharges(page = 0, size = 10): Observable<PagedResponse<PlatformCharge>> {
     return this.http.get<PagedResponse<PlatformCharge>>(`${this.baseUrl}/charges`, {
-      params: { page: String(page), size: String(size) }
-    });
-  }
-
-  // Movimentações de crédito (concessão / consumo / devolução / expiração), mais recentes primeiro.
-  getCreditMovements(page = 0, size = 20): Observable<PagedResponse<CreditMovement>> {
-    return this.http.get<PagedResponse<CreditMovement>>(`${this.baseUrl}/credit/movements`, {
       params: { page: String(page), size: String(size) }
     });
   }

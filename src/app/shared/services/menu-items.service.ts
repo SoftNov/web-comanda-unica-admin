@@ -29,15 +29,9 @@ export interface MenuItemResponse {
   sku?: string;
   imageUrl?: string;
   images: MenuItemImageResponse[];
-  // price/promotionalPrice já incluem a taxa da Comanda Única embutida (o que o cliente vê e
-  // paga); basePrice/basePromotionalPrice são o valor que o lojista definiu para receber, sem a
-  // taxa (ver PlatformFeeCalculator no backend).
+  // Preço definido pelo lojista — o mesmo exibido e cobrado do cliente no cardápio.
   price: number;
-  basePrice: number;
   promotionalPrice?: number;
-  basePromotionalPrice?: number;
-  // Percentual da taxa Comanda Única vigente para a empresa (ex.: 5 = 5%).
-  feePercentage?: number;
   promotionStart?: string;
   promotionEnd?: string;
   active: boolean;
@@ -64,10 +58,8 @@ export interface MenuItemPayload {
   description?: string;
   internalCode?: string;
   sku?: string;
-  // Valor que o lojista quer receber pelo produto, sem a taxa da Comanda Única — o backend calcula
-  // e devolve o preço final (com taxa embutida) em MenuItemResponse.price.
-  basePrice: number;
-  basePromotionalPrice?: number;
+  price: number;
+  promotionalPrice?: number;
   promotionStart?: string;
   promotionEnd?: string;
   active?: boolean;
@@ -94,8 +86,8 @@ export interface UpdateMenuItemRequest extends MenuItemPayload {
 }
 
 export interface UpdatePriceRequest {
-  basePrice: number;
-  basePromotionalPrice?: number;
+  price: number;
+  promotionalPrice?: number;
   promotionStart?: string;
   promotionEnd?: string;
 }

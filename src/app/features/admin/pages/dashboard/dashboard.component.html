@@ -39,14 +39,14 @@
     <div class="card revenue-section">
       <div class="revenue-section__header">
         <div class="revenue-section__heading">
-          <h2 class="revenue-section__title">Taxas da Comanda Única</h2>
+          <h2 class="revenue-section__title">Receita da Comanda Única</h2>
           <div class="revenue-section__totals">
             <div class="revenue-section__total">
               <span class="revenue-section__total-value revenue-section__total-value--net">
-                {{ isLoadingPlatformSummary() ? '—' : formatCurrency(platformSummary()?.receivedFeeAmount) }}
+                {{ isLoadingPlatformSummary() ? '—' : formatCurrency(platformSummary()?.totalFeeAmount) }}
               </span>
               <span class="revenue-section__total-label">taxas recebidas</span>
-              <span class="revenue-section__total-detail">cobranças semanais confirmadas na Asaas</span>
+              <span class="revenue-section__total-detail">split dos pagamentos feitos no app</span>
             </div>
             <div class="revenue-section__total">
               <span class="revenue-section__total-value">
@@ -54,13 +54,6 @@
               </span>
               <span class="revenue-section__total-label">mensalidades recebidas</span>
               <span class="revenue-section__total-detail">total recebido {{ formatCurrency(platformReceivedTotal()) }}</span>
-            </div>
-            <div class="revenue-section__total">
-              <span class="revenue-section__total-value">
-                {{ isLoadingPlatformSummary() ? '—' : formatCurrency(platformSummary()?.totalFeeAmount) }}
-              </span>
-              <span class="revenue-section__total-label">taxas geradas</span>
-              <span class="revenue-section__total-detail">sobre os pagamentos das comandas no período</span>
             </div>
           </div>
         </div>
@@ -117,7 +110,7 @@
           {{ platformSummaryError() }}
         </div>
       } @else if (isLoadingPlatformSummary() && !platformSummary()) {
-        <p class="field__hint">Carregando taxas…</p>
+        <p class="field__hint">Carregando…</p>
       } @else {
         <div class="revenue-section__chart-wrapper">
           @if (isLoadingPlatformSummary()) {
@@ -125,14 +118,14 @@
               <span class="revenue-section__spinner"></span>
             </div>
           }
-          <app-line-chart [points]="platformFeePoints()" primaryLabel="Taxas geradas" [height]="240" />
+          <app-line-chart [points]="platformFeePoints()" primaryLabel="Taxas recebidas" [height]="240" />
         </div>
       }
     </div>
 
     <div class="card operation-section">
       <div class="operation-section__header">
-        <h2 class="operation-section__title">Estabelecimentos e taxas pendentes</h2>
+        <h2 class="operation-section__title">Estabelecimentos</h2>
         <a class="btn btn--ghost revenue-section__refresh" routerLink="/painel/relatorio-estabelecimentos" appRipple>
           <span class="material-icons" aria-hidden="true">summarize</span>
           Relatório de estabelecimentos
@@ -182,79 +175,6 @@
           <span class="stat-card__value">{{ isLoadingPlatformOverview() ? '—' : platformOverview()?.inactiveCompanies }}</span>
           <span class="stat-card__detail">teste encerrado, expirada, cancelada ou sem assinatura</span>
         </div>
-        <div class="stat-card">
-          <span class="material-icons stat-card__icon" aria-hidden="true">hourglass_top</span>
-          <span class="stat-card__label">Taxas pendentes</span>
-          <span class="stat-card__value">{{ isLoadingPlatformOverview() ? '—' : formatCurrency(platformOverview()?.pendingFeeBalance) }}</span>
-          <span class="stat-card__detail">entram na próxima cobrança semanal</span>
-        </div>
-        <div class="stat-card">
-          <span class="material-icons stat-card__icon" aria-hidden="true">sync</span>
-          <span class="stat-card__label">Em processamento</span>
-          <span class="stat-card__value">{{ isLoadingPlatformOverview() ? '—' : formatCurrency(platformOverview()?.processingFeeBalance) }}</span>
-          <span class="stat-card__detail">cobrança aguardando a Asaas</span>
-        </div>
-        <div class="stat-card">
-          <span class="material-icons stat-card__icon" aria-hidden="true">store</span>
-          <span class="stat-card__label">Estabelecimentos com taxa pendente</span>
-          <span class="stat-card__value">{{ isLoadingPlatformOverview() ? '—' : platformOverview()?.companiesWithPendingFees }}</span>
-        </div>
-      </div>
-
-      <div class="pending-fees">
-        <div class="pending-fees__header">
-          <h3 class="pending-fees__title">Taxas pendentes por estabelecimento</h3>
-          <input
-            type="search"
-            class="field__input pending-fees__search"
-            placeholder="Buscar estabelecimento"
-            [value]="pendingFeeSearch()"
-            (input)="pendingFeeSearch.set($any($event.target).value)"
-          />
-        </div>
-
-        @if (isLoadingPlatformOverview() && !platformOverview()) {
-          <p class="field__hint">Carregando…</p>
-        } @else if (filteredPendingFees().length === 0) {
-          <p class="field__hint">
-            {{ pendingFeeSearch() ? 'Nenhum estabelecimento encontrado.' : 'Nenhuma taxa pendente no momento.' }}
-          </p>
-        } @else {
-          <div class="pending-fees__table-wrapper">
-            <table class="pending-fees__table">
-              <thead>
-                <tr>
-                  <th>Estabelecimento</th>
-                  <th>Situação</th>
-                  <th class="pending-fees__number">Pendente</th>
-                  <th class="pending-fees__number">Em processamento</th>
-                  <th class="pending-fees__number">Taxas</th>
-                  <th>Mais antiga</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (row of filteredPendingFees(); track row.companyId) {
-                  <tr>
-                    <td>{{ row.tradeName }}</td>
-                    <td>
-                      <span
-                        class="pending-fees__status"
-                        [class.pending-fees__status--warn]="situationTone(row.situation) === 'warn'"
-                        [class.pending-fees__status--off]="situationTone(row.situation) === 'off'"
-                      >
-                        {{ situationLabels[row.situation] }}
-                      </span>
-                    </td>
-                    <td class="pending-fees__number">{{ formatCurrency(row.pendingAmount) }}</td>
-                    <td class="pending-fees__number">{{ formatCurrency(row.processingAmount) }}</td>
-                    <td class="pending-fees__number">{{ row.feeCount }}</td>
-                    <td>{{ formatShortDate(row.oldestFeeAt) }}</td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
       </div>
     </div>
   }
@@ -275,15 +195,9 @@
               }
             </div>
             <div class="revenue-section__total">
-              <span class="revenue-section__total-value">{{ platformFeesAmount() != null ? formatCurrency(platformFeesAmount()) : '—' }}</span>
-              <span class="revenue-section__total-label">taxas Comanda Única</span>
-              <span class="revenue-section__total-detail">cobradas semanalmente no cartão</span>
-            </div>
-            <div class="revenue-section__total">
-              <span class="revenue-section__total-value revenue-section__total-value--net">
-                {{ isLoadingRevenue() ? '—' : formatCurrency(revenueNetTotal()) }}
-              </span>
-              <span class="revenue-section__total-label">líquido</span>
+              <span class="revenue-section__total-value">{{ companyFeesAmount() != null ? formatCurrency(companyFeesAmount()) : '—' }}</span>
+              <span class="revenue-section__total-label">taxas no caixa/garçom</span>
+              <span class="revenue-section__total-detail">pagas pelos clientes por cima — ficam com você</span>
             </div>
           </div>
         </div>
@@ -350,9 +264,7 @@
           }
           <app-line-chart
             [points]="grossPoints()"
-            [comparisonPoints]="netPoints()"
             primaryLabel="Faturado"
-            comparisonLabel="Líquido"
             [height]="260"
           />
         </div>
@@ -412,18 +324,6 @@
           <span class="stat-card__label">Itens no carrinho</span>
           <span class="stat-card__value">{{ isLoadingSummary() ? '—' : summary()?.openCartItemsCount }}</span>
         </div>
-        <div class="stat-card">
-          <span class="material-icons stat-card__icon" aria-hidden="true">hourglass_top</span>
-          <span class="stat-card__label">Taxa da Comanda Única pendente</span>
-          <span class="stat-card__value">{{ isLoadingSummary() ? '—' : formatCurrency(summary()?.pendingFeeBalance) }}</span>
-        </div>
-        @if (subscriptionCreditAvailable() != null) {
-          <div class="stat-card">
-            <span class="material-icons stat-card__icon" aria-hidden="true">card_giftcard</span>
-            <span class="stat-card__label">Crédito da assinatura disponível</span>
-            <span class="stat-card__value">{{ formatCurrency(subscriptionCreditAvailable()) }}</span>
-          </div>
-        }
       </div>
     </div>
   }

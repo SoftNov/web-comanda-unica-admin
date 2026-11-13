@@ -24,8 +24,8 @@ export interface PlatformChargeFilters {
   size?: number;
 }
 
-// Extrato da plataforma (platform admin): cobranças da Comanda Única na Asaas — mensalidades e
-// taxas semanais de todos os estabelecimentos —, só com o que está registrado na base (ver
+// Extrato da plataforma (platform admin): cobranças da Comanda Única na Asaas — mensalidades (e, no
+// histórico, as antigas taxas semanais) de todos os estabelecimentos —, só com o que está registrado na base (ver
 // GET /api/v1/platform/finance/charges no backend).
 @Injectable({ providedIn: 'root' })
 export class PlatformExtratoService {

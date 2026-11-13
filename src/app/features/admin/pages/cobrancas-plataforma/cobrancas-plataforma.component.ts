@@ -15,9 +15,9 @@ const STATUS_OPTIONS: { value: PlatformChargeStatusFilter | ''; label: string }[
   { value: 'FAILED', label: 'Recusadas / estornadas' }
 ];
 
-// Painel da plataforma (platform admin): taxas geradas sobre os pagamentos das comandas e as
-// cobranças da Comanda Única na Asaas (mensalidades e taxas semanais) — só com o que está
-// registrado na base.
+// Painel da plataforma (platform admin): taxas por pagamento recebidas via split e as cobranças da
+// Comanda Única na Asaas (mensalidades; no histórico, também as antigas taxas semanais) — só com o
+// que está registrado na base.
 @Component({
   selector: 'app-admin-cobrancas-plataforma',
   standalone: true,
@@ -65,7 +65,7 @@ export class CobrancasPlataformaComponent {
   }
 
   kindLabel(charge: PlatformCharge): string {
-    return charge.kind === 'SUBSCRIPTION' ? 'Mensalidade' : 'Taxas';
+    return charge.kind === 'SUBSCRIPTION' ? 'Mensalidade' : 'Taxas (modelo antigo)';
   }
 
   statusLabel(charge: PlatformCharge): string {

@@ -25,12 +25,12 @@ export class FaqComponent {
     {
       question: 'Existe mensalidade?',
       answer:
-        'Não. O Comanda Única não cobra mensalidade fixa. Você paga apenas pelas comandas efetivamente utilizadas no período.'
+        'Sim. O Comanda Única é uma assinatura mensal, com valor de acordo com a quantidade de mesas do seu estabelecimento.'
     },
     {
       question: 'Como é feita a cobrança?',
       answer:
-        'Cada comanda fechada gera uma pequena taxa de utilização da plataforma. Se não houver atendimento, não há cobrança.'
+        'A mensalidade é cobrada no cartão de crédito cadastrado na assinatura. Não há fidelidade: você pode cancelar quando quiser.'
     },
     {
       question: 'Preciso instalar algum programa?',

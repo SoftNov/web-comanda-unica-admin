@@ -5,11 +5,8 @@ import { environment } from '../../../environments/environment';
 
 // Onde o pagamento foi recebido — espelha PaymentMethod do backend. ONLINE só aparece em
 // pagamentos antigos, de quando o cardápio processava pagamentos; PIX_COMANDA é o Pix pago pelo
-// cliente no cardápio (taxa recebida via split, já paga).
+// cliente no cardápio (a taxa por pagamento foi para a Comanda Única pelo split).
 export type ExtratoMetodo = 'CASH_REGISTER' | 'CASH_WAITER' | 'ONLINE' | 'PIX_COMANDA' | 'CARD_COMANDA';
-
-// Situação da taxa da Comanda Única sobre o pagamento — espelha PendingPlatformFeeStatus.
-export type ExtratoStatusTaxa = 'PENDING' | 'PROCESSING' | 'SETTLED' | 'FAILED' | 'CANCELED';
 
 export interface ExtratoResumo {
   totalRecebido: number;
@@ -19,10 +16,12 @@ export interface ExtratoResumo {
   recebidoOnline: number;
   recebidoPixComanda: number;
   recebidoCartaoComanda: number;
-  taxasComandaUnica: number;
+  // Taxas por pagamento pagas pelos clientes por cima do valor: as do app foram para a Comanda
+  // Única (split); as do caixa/garçom ficaram com o estabelecimento.
+  taxasPlataforma: number;
+  taxasEstabelecimento: number;
+  // O que ficou com o estabelecimento: totalRecebido + taxasEstabelecimento.
   liquido: number;
-  // Saldo ATUAL de taxas ainda não pagas (independe do período).
-  taxasPendentes: number;
 }
 
 export interface ExtratoTransacao {
@@ -35,8 +34,10 @@ export interface ExtratoTransacao {
   metodo: ExtratoMetodo;
   tipo: 'FULL' | 'PARTIAL' | 'OWN_BILL' | 'ITEMS' | null;
   valor: number;
+  // Taxa paga pelo cliente por cima do valor (null = sem taxa). taxaParaPlataforma: true = foi para a
+  // Comanda Única (app); false = ficou com o estabelecimento (caixa/garçom).
   taxaComandaUnica: number | null;
-  statusTaxa: ExtratoStatusTaxa | null;
+  taxaParaPlataforma: boolean | null;
   liquido: number;
   registradoPor: string | null;
 }
@@ -65,7 +66,7 @@ export interface ExtratoFiltros {
 
 // Extrato financeiro do estabelecimento a partir da base da Comanda Única (ver
 // GET /api/v1/companies/{companyId}/extrato no backend): pagamentos registrados nas comandas e a
-// taxa da plataforma sobre cada um.
+// taxa por pagamento que o cliente pagou por cima de cada um.
 @Injectable({ providedIn: 'root' })
 export class ExtratoService {
   private readonly http = inject(HttpClient);

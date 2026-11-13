@@ -21,7 +21,7 @@ type SortKey =
   | 'averageCustomersPerDay'
   | 'revenue'
   | 'averageTicket'
-  | 'pendingFeeAmount';
+  | 'platformFeeAmount';
 
 const SITUATION_FILTERS: { value: SituationFilter; label: string }[] = [
   { value: 'ALL', label: 'Todos' },
@@ -103,7 +103,7 @@ export class RelatorioEstabelecimentosComponent {
       customersPerDay: rows.reduce((sum, row) => sum + row.averageCustomersPerDay, 0),
       revenue,
       averageTicket: comandas > 0 ? revenue / comandas : 0,
-      pendingFees: rows.reduce((sum, row) => sum + row.pendingFeeAmount, 0)
+      platformFees: rows.reduce((sum, row) => sum + row.platformFeeAmount, 0)
     };
   });
 
@@ -204,7 +204,7 @@ export class RelatorioEstabelecimentosComponent {
       'Média de clientes/dia',
       'Faturamento',
       'Ticket médio',
-      'Taxas pendentes'
+      'Taxas recebidas (split)'
     ];
     const number = (value: number) => value.toFixed(2).replace('.', ',');
     const lines = this.rows().map((row) => [
@@ -220,7 +220,7 @@ export class RelatorioEstabelecimentosComponent {
       number(row.averageCustomersPerDay),
       number(row.revenue),
       number(row.averageTicket),
-      number(row.pendingFeeAmount)
+      number(row.platformFeeAmount)
     ]);
     const csv = [header, ...lines].map((cols) => cols.map((col) => this.csvField(col)).join(';')).join('\n');
     // BOM para o Excel abrir os acentos corretamente.

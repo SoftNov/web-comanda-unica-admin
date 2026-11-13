@@ -17,7 +17,7 @@ export type ComandaDisplayStatus = 'OPEN' | 'OPEN_PARTIAL' | 'CLOSED';
 export type ComandaOrderStatus = 'RECEIVED' | 'IN_PREPARATION' | 'READY' | 'DELIVERED' | 'CLOSED' | 'CANCELLED';
 export type ComandaPaymentType = 'FULL' | 'PARTIAL' | 'OWN_BILL' | 'ITEMS';
 // PIX_COMANDA / CARD_COMANDA = Pix / cartão de crédito pago pelo próprio cliente no cardápio (Asaas do
-// estabelecimento) — a taxa vem por split.
+// estabelecimento) — a taxa por pagamento vai para a Comanda Única pelo split.
 export type ComandaPaymentMethod = 'ONLINE' | 'CASH_REGISTER' | 'CASH_WAITER' | 'PIX_COMANDA' | 'CARD_COMANDA';
 // Métodos aceitos para registro (ver ComandaApi#registerPayment no backend) — ONLINE só existe em
 // pagamentos antigos, de quando o cardápio processava pagamentos.
@@ -48,22 +48,12 @@ export interface ComandaPaymentResponse {
   paymentForm?: ComandaPaymentForm | null;
   registeredByUserId?: string;
   registeredByUserName?: string;
+  // O que abateu da comanda.
   amount: number;
-  // Parcela de amount que é o valor base (sem a taxa da plataforma embutida) — só para auditoria.
-  baseAmount?: number;
+  // Taxa fixa paga pelo cliente por cima de amount. No app (PIX_COMANDA/CARD_COMANDA) foi para a
+  // Comanda Única pelo split; no caixa/garçom ficou com o estabelecimento.
+  feeAmount?: number | null;
   paidAt: string;
-  // Taxa da Comanda Única gerada por este pagamento (cobrada na cobrança semanal) — nulo quando
-  // não gerou taxa.
-  pendingFeeAmount?: number;
-  // Taxa recebida na hora via split (só PIX_COMANDA e CARD_COMANDA).
-  splitFeeAmount?: number | null;
-}
-
-// Taxas da Comanda Única sobre os pagamentos da comanda (espelho de ComandaFeesResponse).
-export interface ComandaFeesResponse {
-  platformFeeAmount: number;
-  // Parte ainda não liquidada — entra na próxima cobrança semanal no cartão do estabelecimento.
-  pendingFeeAmount: number;
 }
 
 export interface ComandaResponse {
@@ -85,19 +75,19 @@ export interface ComandaResponse {
   totalOrdersAmount: number;
   totalPaidAmount: number;
   balanceAmount: number;
-  // Quanto a equipe deve realmente pedir ao cliente para fechar a comanda (pagamento manual em
-  // dinheiro) — igual a balanceAmount na maioria dos casos, com desconto quando a taxa da
-  // plataforma embutida no preço dos itens ultrapassa o valor padronizado da faixa.
+  // Quanto ainda falta abater da comanda (= balanceAmount).
   amountToCollect: number;
-  discountAmount: number;
+  // Taxa fixa da Comanda Única que o cliente paga por cima de cada pagamento — no caixa/garçom
+  // ela fica com o estabelecimento. 0 = sem taxa.
+  feePerPayment: number;
+  // Soma das taxas já pagas pelos clientes nesta comanda.
+  totalFeeAmount: number;
   openedAt: string;
   closedAt?: string;
   closedByUserId?: string;
   closedByUserName?: string;
   orders: ComandaOrderResponse[];
   payments: ComandaPaymentResponse[];
-  // Taxas da Comanda Única sobre os pagamentos — ausente quando nenhum pagamento gerou taxa.
-  fees?: ComandaFeesResponse;
 }
 
 export interface ComandaListParams {

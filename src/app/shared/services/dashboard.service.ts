@@ -17,18 +17,14 @@ export interface DashboardSummaryResponse {
   ordersValueToday: number;
   openCartItemsCount: number;
   revenueToday: number;
-  // Saldo de taxas da Comanda Única ainda não pagas (entram na próxima cobrança semanal no cartão)
-  // — ver PendingPlatformFeeRepository no backend.
-  pendingFeeBalance: number;
   generatedAt: string;
 }
 
 export interface RevenuePoint {
   date: string;
-  // Faturado (bruto) no dia — pagamentos registrados nas comandas.
+  // Faturado no dia — pagamentos registrados nas comandas (no financeiro da plataforma: taxas
+  // recebidas via split).
   amount: number;
-  // Bruto menos a taxa da Comanda Única gerada sobre esses pagamentos.
-  netAmount: number | null;
 }
 
 @Injectable({ providedIn: 'root' })

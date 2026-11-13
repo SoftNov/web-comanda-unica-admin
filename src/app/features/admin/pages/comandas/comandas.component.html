@@ -222,10 +222,10 @@
             <dt>Saldo</dt>
             <dd>{{ formatCurrency(comanda.balanceAmount) }}</dd>
           </div>
-          @if (comanda.discountAmount > 0) {
-            <div class="comanda-summary__discount">
-              <dt>Desconto da plataforma</dt>
-              <dd>-{{ formatCurrency(comanda.discountAmount) }}</dd>
+          @if (comanda.totalFeeAmount > 0) {
+            <div>
+              <dt>Taxas pagas pelos clientes</dt>
+              <dd>{{ formatCurrency(comanda.totalFeeAmount) }}</dd>
             </div>
           }
           <div>
@@ -245,26 +245,6 @@
           }
         </dl>
       </div>
-
-      @if (comanda.fees; as fees) {
-        <section class="comanda-section">
-          <h3 class="comanda-section__title">Taxa da Comanda Única</h3>
-          <p class="field__hint">
-            Gerada sobre os pagamentos desta comanda e cobrada semanalmente no cartão de cobrança do
-            estabelecimento (abatendo antes o crédito da assinatura).
-          </p>
-          <dl class="comanda-fees">
-            <div>
-              <dt>Total de taxas</dt>
-              <dd>{{ formatCurrency(fees.platformFeeAmount) }}</dd>
-            </div>
-            <div>
-              <dt>Ainda a cobrar</dt>
-              <dd>{{ formatCurrency(fees.pendingFeeAmount) }}</dd>
-            </div>
-          </dl>
-        </section>
-      }
 
       <section class="comanda-section">
         <h3 class="comanda-section__title">Pedidos</h3>
@@ -311,7 +291,7 @@
                   <th>Método</th>
                   <th>Tipo</th>
                   <th>Valor</th>
-                  <th>Taxa Comanda Única</th>
+                  <th>Taxa por pagamento</th>
                   <th>Horário</th>
                 </tr>
               </thead>
@@ -328,10 +308,11 @@
                     <td>{{ paymentTypeLabel(payment.type) }}</td>
                     <td>{{ formatCurrency(payment.amount) }}</td>
                     <td>
-                      @if (payment.splitFeeAmount != null) {
-                        {{ formatCurrency(payment.splitFeeAmount) }} <small class="field__hint">(paga via split)</small>
+                      @if (payment.feeAmount) {
+                        {{ formatCurrency(payment.feeAmount) }}
+                        <small class="field__hint">{{ isPaidInApp(payment.method) ? '(Comanda Única, via split)' : '(do estabelecimento)' }}</small>
                       } @else {
-                        {{ payment.pendingFeeAmount != null ? formatCurrency(payment.pendingFeeAmount) : '—' }}
+                        —
                       }
                     </td>
                     <td>{{ formatDateTime(payment.paidAt) }}</td>
@@ -354,7 +335,7 @@
           <form (submit)="$event.preventDefault(); submitPayment()" novalidate [formGroup]="paymentForm">
             <div class="field__row">
               <div class="field">
-                <label class="field__label" for="payment-amount">Valor a cobrar (saldo: {{ formatCurrency(comanda.amountToCollect) }})</label>
+                <label class="field__label" for="payment-amount">Valor a abater (saldo: {{ formatCurrency(comanda.amountToCollect) }})</label>
                 <div class="field__control payment-amount">
                   <input
                     id="payment-amount"
@@ -377,8 +358,13 @@
                     Valor total
                   </button>
                 </div>
-                @if (comanda.discountAmount > 0) {
-                  <span class="field__hint">Já inclui desconto da plataforma de {{ formatCurrency(comanda.discountAmount) }}.</span>
+                @if (comanda.feePerPayment > 0) {
+                  <span class="field__hint">
+                    + taxa Comanda Única de {{ formatCurrency(comanda.feePerPayment) }} (fica com o estabelecimento).
+                    @if (paymentAmountWithFee(comanda); as total) {
+                      Cobrar do cliente: <strong>{{ formatCurrency(total) }}</strong>
+                    }
+                  </span>
                 }
                 @if (paymentForm.controls.amount.invalid && paymentForm.controls.amount.touched) {
                   <span class="field__error">Informe um valor maior que zero.</span>

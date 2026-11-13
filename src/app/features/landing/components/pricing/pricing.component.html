@@ -4,16 +4,15 @@
       <span class="eyebrow">Modelo de cobrança</span>
       <h2 class="section-title" style="margin-top: 16px;">Um modelo justo para qualquer restaurante</h2>
       <p class="section-subtitle">
-        Sem planos complicados. Sem mensalidades. Sem fidelidade.
-        Você paga apenas pelas comandas utilizadas.
+        Uma assinatura mensal pelo número de mesas. Sem fidelidade: cancele quando quiser.
       </p>
     </div>
 
     <div class="pricing__card card" appScrollReveal="up" [revealDelay]="100">
-      <div class="pricing__badge">Pagamento por Uso</div>
+      <div class="pricing__badge">Assinatura mensal</div>
 
       <p class="pricing__description">
-        Cada atendimento realizado gera uma pequena taxa de utilização da plataforma.
+        O valor da mensalidade acompanha a quantidade de mesas do seu estabelecimento. O preço do cardápio é o que você define.
       </p>
 
       <ul class="pricing__included">
@@ -25,27 +24,7 @@
         }
       </ul>
 
-      <div class="pricing__fees">
-        <h3 class="pricing__fees-title">Taxas de pagamento com cartão</h3>
-        <ul class="pricing__fees-list">
-          @for (fee of paymentFees; track fee.label) {
-            <li>
-              <span>{{ fee.label }}</span>
-              <strong>{{ fee.value }}</strong>
-            </li>
-          }
-        </ul>
-        <p class="pricing__fees-hint">
-          Cobrada só sobre os pagamentos feitos com cartão pelo cardápio digital. Dinheiro e maquininha própria não têm taxa.
-        </p>
-      </div>
-
       <a routerLink="/criar-conta" class="btn btn--success pricing__cta" appRipple>Criar minha conta</a>
-
-      <p class="pricing__note">
-        <span class="material-icons" aria-hidden="true">info</span>
-        Se nenhuma comanda for utilizada, não há cobrança de uso da plataforma.
-      </p>
     </div>
   </div>
 </section>
