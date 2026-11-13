@@ -2,8 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <title>Comanda Única — Comanda digital sem mensalidade para bares e restaurantes</title>
-  <meta name="description" content="Comanda Única é o sistema de comanda digital para bares, restaurantes e hamburguerias que cobra apenas pelo uso. Sem mensalidade, sem fidelidade, sem limite de usuários ou mesas.">
+  <title>Comanda Única — Sistema de comanda digital para bares e restaurantes</title>
+  <meta name="description" content="Comanda digital com QR Code na mesa, pedidos em tempo real, impressão por setor, Pix e controle de caixa para bares, restaurantes e hamburguerias. Sem fidelidade.">
   <meta name="robots" content="index, follow">
   <meta name="facebook-domain-verification" content="ytmn2vuxw7919708kni2dzp60zgw7j" />
   <base href="/">
@@ -21,17 +21,18 @@
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="Comanda Única">
   <meta property="og:locale" content="pt_BR">
-  <meta property="og:title" content="Comanda Única — Comanda digital sem mensalidade para bares e restaurantes">
-  <meta property="og:description" content="Controle comandas, mesas, pedidos, caixa e funcionários em uma única plataforma. Pague apenas pelas comandas realmente utilizadas — sem mensalidade e sem fidelidade.">
+  <meta property="og:title" content="Comanda Única — Sistema de comanda digital para bares e restaurantes">
+  <meta property="og:description" content="Controle comandas, mesas, pedidos, caixa e funcionários em uma única plataforma na nuvem. Assinatura mensal pelo número de mesas, sem fidelidade.">
   <meta property="og:url" content="https://www.comandaunica.com.br/">
   <meta property="og:image" content="https://www.comandaunica.com.br/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Comanda Única — painel de comandas, mesas e pedidos">
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Comanda Única — Comanda digital sem mensalidade para bares e restaurantes">
-  <meta name="twitter:description" content="Controle comandas, mesas, pedidos, caixa e funcionários em uma única plataforma. Pague apenas pelas comandas realmente utilizadas.">
+  <meta name="twitter:title" content="Comanda Única — Sistema de comanda digital para bares e restaurantes">
+  <meta name="twitter:description" content="Controle comandas, mesas, pedidos, caixa e funcionários em uma única plataforma na nuvem. Assinatura mensal pelo número de mesas, sem fidelidade.">
   <meta name="twitter:image" content="https://www.comandaunica.com.br/og-image.png">
 
   <!-- JSON-LD structured data -->
@@ -41,28 +42,29 @@
       "@graph": [
         {
           "@type": "Organization",
+          "@id": "https://www.comandaunica.com.br/#organization",
           "name": "Comanda Única",
           "url": "https://www.comandaunica.com.br/",
-          "logo": "https://www.comandaunica.com.br/favicon.ico",
-          "description": "Sistema de comanda digital para bares, restaurantes e hamburguerias com cobrança por uso.",
-          "sameAs": [
-            "https://www.instagram.com/",
-            "https://www.facebook.com/",
-            "https://www.linkedin.com/"
-          ]
+          "logo": "https://www.comandaunica.com.br/logo.png",
+          "description": "Sistema de comanda digital para bares, restaurantes e hamburguerias."
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://www.comandaunica.com.br/#website",
+          "name": "Comanda Única",
+          "url": "https://www.comandaunica.com.br/",
+          "inLanguage": "pt-BR",
+          "publisher": { "@id": "https://www.comandaunica.com.br/#organization" }
         },
         {
           "@type": "SoftwareApplication",
           "name": "Comanda Única",
           "applicationCategory": "BusinessApplication",
           "operatingSystem": "Web",
-          "description": "Comanda digital com QR Code, pedidos em tempo real, gestão financeira e de funcionários para bares e restaurantes. Sem mensalidade — cobrança apenas pelo uso.",
-          "offers": {
-            "@type": "Offer",
-            "priceCurrency": "BRL",
-            "price": "0",
-            "description": "Pagamento por uso: cobrança apenas sobre as comandas efetivamente utilizadas, sem mensalidade fixa."
-          }
+          "url": "https://www.comandaunica.com.br/",
+          "inLanguage": "pt-BR",
+          "description": "Comanda digital com QR Code na mesa, pedidos em tempo real, impressão por setor, Pix na comanda, gestão financeira e de funcionários para bares e restaurantes. Assinatura mensal pelo número de mesas, sem fidelidade.",
+          "publisher": { "@id": "https://www.comandaunica.com.br/#organization" }
         }
       ]
     }

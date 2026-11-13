@@ -1,4 +1,5 @@
-import { Directive, ElementRef, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Directive, ElementRef, Input, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 @Directive({
   selector: '[appScrollReveal]',
@@ -9,6 +10,7 @@ import { Directive, ElementRef, Input, OnDestroy, OnInit, inject } from '@angula
 })
 export class ScrollRevealDirective implements OnInit, OnDestroy {
   private readonly el = inject(ElementRef<HTMLElement>);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private observer?: IntersectionObserver;
 
   /** 'up' (fade + slide up) or 'fade' (fade only). */
@@ -22,7 +24,8 @@ export class ScrollRevealDirective implements OnInit, OnDestroy {
       host.style.transitionDelay = `${this.revealDelay}ms`;
     }
 
-    if (!('IntersectionObserver' in window)) {
+    // No pré-render (servidor) o conteúdo já sai visível, para o Google e para quem abre sem JS.
+    if (!this.isBrowser || !('IntersectionObserver' in window)) {
       host.classList.add('is-visible');
       return;
     }

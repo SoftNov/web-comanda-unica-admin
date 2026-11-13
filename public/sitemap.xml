@@ -2,7 +2,12 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://www.comandaunica.com.br/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
+    <lastmod>2026-11-13</lastmod>
+  </url>
+  <url>
+    <loc>https://www.comandaunica.com.br/termos-de-uso</loc>
+  </url>
+  <url>
+    <loc>https://www.comandaunica.com.br/politica-de-privacidade</loc>
   </url>
 </urlset>

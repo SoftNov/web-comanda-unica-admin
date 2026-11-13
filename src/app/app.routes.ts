@@ -11,7 +11,7 @@ export const routes: Routes = [
   {
     path: '',
     loadComponent: () => import('./features/landing/pages/home/home.component').then((m) => m.HomeComponent),
-    title: 'Comanda Única — Comanda digital sem mensalidade para bares e restaurantes'
+    title: 'Comanda Única — Sistema de comanda digital para bares e restaurantes'
   },
   {
     path: 'entrar',

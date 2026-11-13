@@ -1,4 +1,10 @@
 User-agent: *
 Allow: /
+Disallow: /painel
+Disallow: /entrar
+Disallow: /recuperar-senha
+Disallow: /ativar-conta
+Disallow: /escolher-empresa
+Disallow: /downloads/
 
 Sitemap: https://www.comandaunica.com.br/sitemap.xml

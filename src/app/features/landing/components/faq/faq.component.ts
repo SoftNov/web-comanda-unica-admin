@@ -1,4 +1,5 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { ScrollRevealDirective } from '../../../../shared/directives/scroll-reveal.directive';
 
 interface FaqItem {
@@ -13,7 +14,10 @@ interface FaqItem {
   templateUrl: './faq.component.html',
   styleUrl: './faq.component.scss'
 })
-export class FaqComponent {
+export class FaqComponent implements OnInit, OnDestroy {
+  private static readonly SCHEMA_ID = 'faq-schema';
+  private readonly document = inject(DOCUMENT);
+
   readonly openIndex = signal<number | null>(0);
 
   readonly items: FaqItem[] = [
@@ -60,9 +64,33 @@ export class FaqComponent {
     {
       question: 'Existe limite de comandas?',
       answer:
-        'Não há limite de comandas, mesas ou usuários. Você utiliza o quanto precisar e paga apenas pelo uso real.'
+        'Não há limite de comandas nem de usuários. O valor da assinatura acompanha a quantidade de mesas cadastradas.'
     }
   ];
+
+  /** Publica o FAQ como FAQPage (schema.org) para o Google; entra no HTML pré-renderizado. */
+  ngOnInit(): void {
+    if (this.document.getElementById(FaqComponent.SCHEMA_ID)) {
+      return;
+    }
+    const script = this.document.createElement('script');
+    script.id = FaqComponent.SCHEMA_ID;
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: this.items.map((item) => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: { '@type': 'Answer', text: item.answer }
+      }))
+    });
+    this.document.head.appendChild(script);
+  }
+
+  ngOnDestroy(): void {
+    this.document.getElementById(FaqComponent.SCHEMA_ID)?.remove();
+  }
 
   toggle(index: number): void {
     this.openIndex.update((current) => (current === index ? null : index));

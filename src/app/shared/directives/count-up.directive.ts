@@ -1,4 +1,5 @@
-import { Directive, ElementRef, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Directive, ElementRef, Input, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 @Directive({
   selector: '[appCountUp]',
@@ -6,6 +7,7 @@ import { Directive, ElementRef, Input, OnDestroy, OnInit, inject } from '@angula
 })
 export class CountUpDirective implements OnInit, OnDestroy {
   private readonly el = inject(ElementRef<HTMLElement>);
+  private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private observer?: IntersectionObserver;
   private frame?: number;
 
@@ -16,6 +18,13 @@ export class CountUpDirective implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     const host = this.el.nativeElement;
+
+    // No pré-render (servidor) grava o valor final, que é o que o Google deve ler.
+    if (!this.isBrowser) {
+      host.textContent = `${this.countPrefix}${this.target}${this.countSuffix}`;
+      return;
+    }
+
     host.textContent = `${this.countPrefix}0${this.countSuffix}`;
 
     if (!('IntersectionObserver' in window)) {
