@@ -439,6 +439,11 @@ export class ComandasComponent {
     return Math.round((amount + (comanda.feePerPayment ?? 0)) * 100) / 100;
   }
 
+  // O que os clientes pagaram de fato: o que abateu da comanda + a taxa de serviço de cada pagamento.
+  paidWithServiceFee(comanda: ComandaResponse): number {
+    return Math.round(((comanda.totalPaidAmount ?? 0) + (comanda.totalFeeAmount ?? 0)) * 100) / 100;
+  }
+
   isPaidInApp(method: string): boolean {
     return method === 'PIX_COMANDA' || method === 'CARD_COMANDA';
   }

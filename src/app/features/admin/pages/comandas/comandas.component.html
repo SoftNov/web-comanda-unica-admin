@@ -214,20 +214,20 @@
             <dt>Total pedidos</dt>
             <dd>{{ formatCurrency(comanda.totalOrdersAmount) }}</dd>
           </div>
+          @if (comanda.totalFeeAmount > 0) {
+            <div>
+              <dt>Taxa de serviço</dt>
+              <dd>{{ formatCurrency(comanda.totalFeeAmount) }}</dd>
+            </div>
+          }
           <div>
             <dt>Total pago</dt>
-            <dd>{{ formatCurrency(comanda.totalPaidAmount) }}</dd>
+            <dd>{{ formatCurrency(paidWithServiceFee(comanda)) }}</dd>
           </div>
           <div>
             <dt>Saldo</dt>
             <dd>{{ formatCurrency(comanda.balanceAmount) }}</dd>
           </div>
-          @if (comanda.totalFeeAmount > 0) {
-            <div>
-              <dt>Taxas pagas pelos clientes</dt>
-              <dd>{{ formatCurrency(comanda.totalFeeAmount) }}</dd>
-            </div>
-          }
           <div>
             <dt>Aberta em</dt>
             <dd>{{ formatDateTime(comanda.openedAt) }}</dd>
@@ -291,7 +291,7 @@
                   <th>Método</th>
                   <th>Tipo</th>
                   <th>Valor</th>
-                  <th>Taxa por pagamento</th>
+                  <th>Taxa de serviço</th>
                   <th>Horário</th>
                 </tr>
               </thead>
@@ -360,7 +360,7 @@
                 </div>
                 @if (comanda.feePerPayment > 0) {
                   <span class="field__hint">
-                    + taxa Comanda Única de {{ formatCurrency(comanda.feePerPayment) }} (fica com o estabelecimento).
+                    + taxa de serviço de {{ formatCurrency(comanda.feePerPayment) }} (fica com o estabelecimento).
                     @if (paymentAmountWithFee(comanda); as total) {
                       Cobrar do cliente: <strong>{{ formatCurrency(total) }}</strong>
                     }
